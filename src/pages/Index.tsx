@@ -1,19 +1,40 @@
 import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TrendingUp, TrendingDown, DollarSign, Target, Zap, Bot, CreditCard, PiggyBank } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target, Zap, Bot, CreditCard, PiggyBank, LogOut, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import SaveStack from '@/components/SaveStack';
+import SaveHistory from '@/components/SaveHistory';
 import BudgetSuggestions from '@/components/BudgetSuggestions';
 import TransactionFeed from '@/components/TransactionFeed';
 import NetWorthProjection from '@/components/NetWorthProjection';
 import SpendingChart from '@/components/SpendingChart';
 
 const Index = () => {
+  const { user, loading, signOut } = useAuth();
   const [totalBudget] = useState(4500);
   const [spent, setSpent] = useState(2850);
   const [remaining, setRemaining] = useState(totalBudget - spent);
+
+  // Redirect to auth if not logged in
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center">
+        <div className="text-center">
+          <PiggyBank className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
   
   const categories = [
     { name: 'Food & Dining', budget: 800, spent: 650, color: 'bg-accent' },
@@ -45,14 +66,26 @@ const Index = () => {
       <div className="container mx-auto p-6 space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Bot className="h-8 w-8 text-primary" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              SmartBudget AI
-            </h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PiggyBank className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Livin Salti
+              </h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm">
+                <Users className="h-4 w-4 mr-2" />
+                Invite Friends
+              </Button>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Your AI-powered financial assistant that learns, adapts, and helps you build wealth in real-time
+            Save. Match. Grow — Together. Turn skipped purchases into your future net worth.
           </p>
         </div>
 
@@ -104,13 +137,22 @@ const Index = () => {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="suggestions">AI Insights</TabsTrigger>
+        <Tabs defaultValue="save-stack" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="save-stack">Save & Stack</TabsTrigger>
+            <TabsTrigger value="history">My Saves</TabsTrigger>
+            <TabsTrigger value="dashboard">Budget</TabsTrigger>
             <TabsTrigger value="projections">Net Worth</TabsTrigger>
             <TabsTrigger value="transactions">Live Feed</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="save-stack">
+            <SaveStack />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <SaveHistory />
+          </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -146,10 +188,6 @@ const Index = () => {
               {/* Spending Chart */}
               <SpendingChart />
             </div>
-          </TabsContent>
-
-          <TabsContent value="suggestions">
-            <BudgetSuggestions />
           </TabsContent>
 
           <TabsContent value="projections">

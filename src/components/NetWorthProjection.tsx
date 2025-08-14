@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
 import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
 
 interface NetWorthProjectionProps {
@@ -13,7 +14,7 @@ interface NetWorthProjectionProps {
 const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
   const [monthlyContribution, setMonthlyContribution] = useState(500);
   const [targetAmount, setTargetAmount] = useState(10000);
-  const [interestRate] = useState(7); // 7% annual return
+  const [interestRate, setInterestRate] = useState(8); // 8% annual return default
 
   const calculateProjections = () => {
     const monthly = currentSavings + monthlyContribution;
@@ -62,6 +63,48 @@ const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
       totalMonthly * (Math.pow(1 + monthlyRate, 60) - 1) / monthlyRate;
   };
 
+  const getInvestmentType = (rate: number) => {
+    const types = [
+      {
+        name: 'High-Yield Savings',
+        range: '1-3%',
+        description: 'Safe but low returns. Good for emergency funds.',
+        active: rate >= 1 && rate <= 3
+      },
+      {
+        name: 'CDs & Bonds',
+        range: '3-5%',
+        description: 'Conservative with predictable returns. Lower risk.',
+        active: rate > 3 && rate <= 5
+      },
+      {
+        name: 'Conservative Portfolio',
+        range: '5-7%',
+        description: 'Mix of bonds and stocks. Balanced risk/return.',
+        active: rate > 5 && rate <= 7
+      },
+      {
+        name: 'Market Index Funds',
+        range: '7-10%',
+        description: 'Historical stock market average. Recommended for long-term.',
+        active: rate > 7 && rate <= 10
+      },
+      {
+        name: 'Aggressive Growth',
+        range: '10-12%',
+        description: 'High-growth stocks and sectors. Higher volatility.',
+        active: rate > 10 && rate <= 12
+      },
+      {
+        name: 'Speculative Investments',
+        range: '12%+',
+        description: 'Crypto, individual stocks, startups. Very high risk.',
+        active: rate > 12
+      }
+    ];
+    return types;
+  };
+
   return (
     <div className="space-y-6">
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
@@ -107,10 +150,44 @@ const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
               />
             </div>
 
-            <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-sm text-muted-foreground">
-                Assuming {interestRate}% annual return (market average)
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="interest-rate">Expected Annual Return: {interestRate}%</Label>
+                <Slider
+                  id="interest-rate"
+                  min={1}
+                  max={15}
+                  step={0.5}
+                  value={[interestRate]}
+                  onValueChange={(value) => setInterestRate(value[0])}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>1%</span>
+                  <span>8% (Recommended)</span>
+                  <span>15%</span>
+                </div>
+              </div>
+              
+              {/* Investment Type Recommendations */}
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Investment Type Guidance:</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {getInvestmentType(interestRate).map((type, index) => (
+                    <div key={index} className={`p-2 rounded-lg border text-xs ${type.active ? 'bg-primary/10 border-primary/30' : 'bg-muted/20'}`}>
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{type.name}</span>
+                        <Badge variant={type.active ? "default" : "secondary"} className="text-xs">
+                          {type.range}
+                        </Badge>
+                      </div>
+                      {type.active && (
+                        <p className="text-muted-foreground mt-1">{type.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

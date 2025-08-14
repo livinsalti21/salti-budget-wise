@@ -1,0 +1,200 @@
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
+
+interface NetWorthProjectionProps {
+  currentSavings: number;
+}
+
+const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
+  const [monthlyContribution, setMonthlyContribution] = useState(500);
+  const [targetAmount, setTargetAmount] = useState(10000);
+  const [interestRate] = useState(7); // 7% annual return
+
+  const calculateProjections = () => {
+    const monthly = currentSavings + monthlyContribution;
+    const annually = currentSavings + (monthlyContribution * 12);
+    
+    // Compound interest calculations
+    const monthlyRate = interestRate / 100 / 12;
+    const fiveYearValue = currentSavings * Math.pow(1 + interestRate/100, 5) + 
+      monthlyContribution * (Math.pow(1 + monthlyRate, 60) - 1) / monthlyRate;
+
+    return {
+      weekly: currentSavings + (monthlyContribution / 4),
+      monthly,
+      yearly: annually,
+      fiveYear: fiveYearValue
+    };
+  };
+
+  const projections = calculateProjections();
+
+  const scenarios = [
+    {
+      title: 'Conservative Saver',
+      monthlyExtra: 200,
+      description: 'Cut one dining out per week',
+      color: 'bg-success'
+    },
+    {
+      title: 'Aggressive Saver',
+      monthlyExtra: 500,
+      description: 'Optimize all categories',
+      color: 'bg-accent'
+    },
+    {
+      title: 'Investment Focused',
+      monthlyExtra: 800,
+      description: 'Side hustle + optimization',
+      color: 'bg-primary'
+    }
+  ];
+
+  const getScenarioProjection = (extraMonthly: number) => {
+    const totalMonthly = monthlyContribution + extraMonthly;
+    const monthlyRate = interestRate / 100 / 12;
+    return currentSavings * Math.pow(1 + interestRate/100, 5) + 
+      totalMonthly * (Math.pow(1 + monthlyRate, 60) - 1) / monthlyRate;
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Net Worth Projection
+          </CardTitle>
+          <CardDescription>
+            See how your savings grow over time with compound interest
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Projection Calculator
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="monthly-contribution">Monthly Contribution</Label>
+              <Input
+                id="monthly-contribution"
+                type="number"
+                value={monthlyContribution}
+                onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                className="text-lg font-medium"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="target-amount">Target Goal</Label>
+              <Input
+                id="target-amount"
+                type="number"
+                value={targetAmount}
+                onChange={(e) => setTargetAmount(Number(e.target.value))}
+                className="text-lg font-medium"
+              />
+            </div>
+
+            <div className="p-3 rounded-lg bg-muted/50">
+              <p className="text-sm text-muted-foreground">
+                Assuming {interestRate}% annual return (market average)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Projections</CardTitle>
+            <CardDescription>Based on current savings rate</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 rounded-lg bg-success-light">
+                <p className="text-sm text-muted-foreground">Weekly</p>
+                <p className="text-xl font-bold text-success">${projections.weekly.toFixed(0)}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-primary/10">
+                <p className="text-sm text-muted-foreground">Monthly</p>
+                <p className="text-xl font-bold text-primary">${projections.monthly.toFixed(0)}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-accent/10">
+                <p className="text-sm text-muted-foreground">Yearly</p>
+                <p className="text-xl font-bold text-accent">${projections.yearly.toLocaleString()}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-warning/10">
+                <p className="text-sm text-muted-foreground">5 Years</p>
+                <p className="text-xl font-bold text-warning">${projections.fiveYear.toFixed(0)}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-success" />
+                <span className="font-medium">Goal Progress</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                You'll reach your ${targetAmount.toLocaleString()} goal in approximately{' '}
+                <span className="font-medium text-success">
+                  {Math.ceil((targetAmount - currentSavings) / monthlyContribution)} months
+                </span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>What-If Scenarios</CardTitle>
+          <CardDescription>See how extra savings impact your 5-year wealth</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {scenarios.map((scenario) => {
+              const projection = getScenarioProjection(scenario.monthlyExtra);
+              const difference = projection - projections.fiveYear;
+              
+              return (
+                <div key={scenario.title} className="p-4 rounded-lg border space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${scenario.color}`} />
+                    <h4 className="font-medium">{scenario.title}</h4>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground">{scenario.description}</p>
+                  
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">+${scenario.monthlyExtra}/month</p>
+                    <p className="text-lg font-bold">${projection.toFixed(0)}</p>
+                    <Badge variant="secondary" className="text-xs">
+                      +${difference.toFixed(0)} more
+                    </Badge>
+                  </div>
+                  
+                  <Button variant="outline" className="w-full">
+                    Adopt This Plan
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default NetWorthProjection;

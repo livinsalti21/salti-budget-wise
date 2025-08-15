@@ -13,6 +13,7 @@ import BudgetSuggestions from '@/components/BudgetSuggestions';
 import TransactionFeed from '@/components/TransactionFeed';
 import NetWorthProjection from '@/components/NetWorthProjection';
 import SpendingChart from '@/components/SpendingChart';
+import GameDashboard from '@/components/GameDashboard';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -138,9 +139,10 @@ const Index = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="save-stack" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="save-stack">Save & Stack</TabsTrigger>
             <TabsTrigger value="history">My Saves</TabsTrigger>
+            <TabsTrigger value="game">Challenges</TabsTrigger>
             <TabsTrigger value="dashboard">Budget</TabsTrigger>
             <TabsTrigger value="projections">Net Worth</TabsTrigger>
             <TabsTrigger value="transactions">Live Feed</TabsTrigger>
@@ -152,6 +154,10 @@ const Index = () => {
 
           <TabsContent value="history">
             <SaveHistory />
+          </TabsContent>
+
+          <TabsContent value="game">
+            <GameDashboard />
           </TabsContent>
 
           <TabsContent value="dashboard" className="space-y-6">

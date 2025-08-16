@@ -28,21 +28,30 @@ const NotificationCenter = () => {
   const loadNotifications = async () => {
     if (!user) return;
 
-    try {
-      const { data: notifs } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (notifs) {
-        setNotifications(notifs);
-        setUnreadCount(notifs.filter(n => !n.read).length);
+    // TODO: Remove mock data once notifications table is created
+    const mockNotifications: Notification[] = [
+      {
+        id: '1',
+        type: 'save_recorded',
+        title: 'Save recorded!',
+        message: 'You saved $20 today - that\'s worth $201 in 20 years',
+        payload: {},
+        read: false,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: '2', 
+        type: 'match_invite',
+        title: 'Match invitation',
+        message: 'Alex invited you to match their $15 save',
+        payload: {},
+        read: true,
+        created_at: new Date(Date.now() - 86400000).toISOString()
       }
-    } catch (error) {
-      console.log('Notifications not available yet');
-    }
+    ];
+    
+    setNotifications(mockNotifications);
+    setUnreadCount(mockNotifications.filter(n => !n.read).length);
   };
 
   useEffect(() => {
@@ -50,33 +59,20 @@ const NotificationCenter = () => {
   }, [user]);
 
   const markAsRead = async (notificationId: string) => {
-    try {
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notificationId);
-      
-      loadNotifications();
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
+    // TODO: Implement once notifications table is created
+    setNotifications(prev => prev.map(n => 
+      n.id === notificationId ? { ...n, read: true } : n
+    ));
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
 
   const markAllAsRead = async () => {
-    try {
-      await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('user_id', user?.id)
-        .eq('read', false);
-      
-      loadNotifications();
-      toast({
-        title: "All notifications marked as read",
-      });
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
+    // TODO: Implement once notifications table is created
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+    toast({
+      title: "All notifications marked as read",
+    });
   };
 
   const getNotificationIcon = (type: string) => {

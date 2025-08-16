@@ -33,37 +33,56 @@ const TemplateStore = () => {
   const { toast } = useToast();
 
   const loadTemplates = async () => {
-    try {
-      const { data } = await supabase
-        .from('templates')
-        .select('*')
-        .eq('is_active', true)
-        .order('price_cents', { ascending: true });
-
-      if (data) {
-        setTemplates(data);
+    // TODO: Remove mock data once templates table is created
+    const mockTemplates: Template[] = [
+      {
+        id: '1',
+        name: 'Student Budget',
+        description: 'Perfect starter budget for college students',
+        price_cents: 0,
+        template_data: {
+          categories: [
+            { name: 'Food', limit: 30000 },
+            { name: 'Entertainment', limit: 15000 },
+            { name: 'Transportation', limit: 10000 }
+          ]
+        },
+        is_active: true
+      },
+      {
+        id: '2',
+        name: 'Family Budget Pro',
+        description: 'Comprehensive budget for families with detailed categories',
+        price_cents: 1999,
+        template_data: {
+          categories: [
+            { name: 'Groceries', limit: 80000 },
+            { name: 'Housing', limit: 200000 },
+            { name: 'Entertainment', limit: 25000 },
+            { name: 'Savings', limit: 50000 }
+          ]
+        },
+        is_active: true
       }
-    } catch (error) {
-      console.log('Templates not available yet');
-    }
+    ];
+    
+    setTemplates(mockTemplates);
   };
 
   const loadPurchases = async () => {
     if (!user) return;
 
-    try {
-      const { data } = await supabase
-        .from('purchases')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('status', 'completed');
-
-      if (data) {
-        setPurchases(data);
+    // TODO: Remove mock data once purchases table is created
+    const mockPurchases: Purchase[] = [
+      {
+        id: '1',
+        template_id: '1',
+        status: 'completed',
+        created_at: new Date().toISOString()
       }
-    } catch (error) {
-      console.log('Purchases not available yet');
-    }
+    ];
+    
+    setPurchases(mockPurchases);
   };
 
   useEffect(() => {
@@ -80,32 +99,28 @@ const TemplateStore = () => {
 
     setIsLoading(true);
     try {
-      // For now, simulate a successful purchase
-      // In a real app, this would integrate with Stripe
+      // TODO: Implement real purchase flow once purchases table is created
+      // Simulate successful purchase for now
+      const newPurchase: Purchase = {
+        id: Math.random().toString(),
+        template_id: template.id,
+        status: 'completed',
+        created_at: new Date().toISOString()
+      };
       
-      const { error } = await supabase
-        .from('purchases')
-        .insert({
-          user_id: user.id,
-          template_id: template.id,
-          amount_cents: template.price_cents,
-          status: 'completed'
-        });
-
-      if (error) throw error;
+      setPurchases(prev => [...prev, newPurchase]);
 
       toast({
         title: "Template purchased! 🎉",
         description: `${template.name} has been added to your budget templates.`,
       });
 
-      loadPurchases();
       setSelectedTemplate(null);
 
     } catch (error: any) {
       toast({
         title: "Purchase failed",
-        description: error.message,
+        description: error.message || "Something went wrong",
         variant: "destructive",
       });
     } finally {

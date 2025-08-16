@@ -3,38 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { 
-  Coffee, 
-  Users, 
-  TrendingUp, 
-  Shield, 
-  ArrowRight, 
-  Star,
-  Lock,
-  CheckCircle,
-  Target,
-  Award,
-  Play,
-  Download,
-  Instagram,
-  Youtube
-} from "lucide-react";
+import { Coffee, Users, TrendingUp, Shield, ArrowRight, Star, Lock, CheckCircle, Target, Award, Play, Download, Instagram, Youtube } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-
 export default function Landing() {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const [dailySave, setDailySave] = useState([5]);
   const [animatedValue, setAnimatedValue] = useState(0);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setAnimatedValue(prev => prev + Math.random() * 100);
     }, 2000);
     return () => clearInterval(timer);
   }, []);
-
   const calculateFutureValue = (dailyAmount: number, years: number) => {
     const annualRate = 0.07;
     const dailyRate = annualRate / 365;
@@ -42,7 +26,6 @@ export default function Landing() {
     const futureValue = dailyAmount * (((1 + dailyRate) ** days - 1) / dailyRate);
     return futureValue;
   };
-
   const handleGetStarted = () => {
     if (user) {
       navigate("/");
@@ -50,9 +33,7 @@ export default function Landing() {
       navigate("/auth");
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center justify-between border-b">
         <div className="flex items-center space-x-2">
@@ -214,14 +195,7 @@ export default function Landing() {
               </label>
               <div className="flex items-center space-x-4 mb-4">
                 <span className="text-sm text-muted-foreground">$1</span>
-                <Slider
-                  value={dailySave}
-                  onValueChange={setDailySave}
-                  max={50}
-                  min={1}
-                  step={1}
-                  className="flex-1"
-                />
+                <Slider value={dailySave} onValueChange={setDailySave} max={50} min={1} step={1} className="flex-1" />
                 <span className="text-sm text-muted-foreground">$50</span>
               </div>
               <div className="text-center">
@@ -232,16 +206,16 @@ export default function Landing() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              {[1, 5, 10, 20, 30].map((years) => (
-                <div key={years} className="text-center p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg border">
+              {[1, 5, 10, 20, 30].map(years => <div key={years} className="text-center p-4 bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg border">
                   <div className="text-lg font-bold text-primary">
-                    ${calculateFutureValue(dailySave[0], years).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    ${calculateFutureValue(dailySave[0], years).toLocaleString('en-US', {
+                  maximumFractionDigits: 0
+                })}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {years} year{years > 1 ? 's' : ''}
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
 
             <div className="text-center">
@@ -318,74 +292,7 @@ export default function Landing() {
       </section>
 
       {/* Social Proof */}
-      <section className="py-20 px-4 lg:px-6 bg-gradient-to-br from-secondary to-background">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by <span className="text-primary">Thousands</span>
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Join families and friends building wealth together
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <Card className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-warning fill-current" />
-                ))}
-              </div>
-              <p className="text-muted-foreground mb-4">
-                "Livin Salti helped our family save $12,000 in just 8 months. The matching feature makes it so fun!"
-              </p>
-              <div className="font-semibold">Sarah M.</div>
-              <div className="text-sm text-muted-foreground">Mother of 3</div>
-            </Card>
-
-            <Card className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-warning fill-current" />
-                ))}
-              </div>
-              <p className="text-muted-foreground mb-4">
-                "The security features give me complete peace of mind. My data stays private while building wealth."
-              </p>
-              <div className="font-semibold">Michael R.</div>
-              <div className="text-sm text-muted-foreground">Software Engineer</div>
-            </Card>
-
-            <Card className="p-6 text-center">
-              <div className="flex justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 text-warning fill-current" />
-                ))}
-              </div>
-              <p className="text-muted-foreground mb-4">
-                "My college friends and I challenge each other weekly. We've saved over $5,000 together!"
-              </p>
-              <div className="font-semibold">Jessica L.</div>
-              <div className="text-sm text-muted-foreground">College Student</div>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-3xl font-bold text-primary mb-2">50,000+</div>
-              <div className="text-muted-foreground">Active Savers</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-accent mb-2">$2.5M+</div>
-              <div className="text-muted-foreground">Total Saved</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-success mb-2">125,000+</div>
-              <div className="text-muted-foreground">Matches Made</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
 
       {/* Final CTA */}
       <section className="py-20 px-4 lg:px-6 bg-gradient-to-r from-primary to-accent">
@@ -469,6 +376,5 @@ export default function Landing() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }

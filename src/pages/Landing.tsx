@@ -79,13 +79,13 @@ export default function Landing() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-              Save n Stack. Match. Grow —{" "}
+              Save smarter, stack faster,{" "}
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Together. Safely.
+                live your way.
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Encrypted, private, and fully secure — your future net worth, protected.
+              Build wealth through habits. Celebrate every win. Transform small saves into lifelong gains — together.
             </p>
             
             {/* Animated Dashboard Preview */}
@@ -143,9 +143,9 @@ export default function Landing() {
       <section className="py-20 px-4 lg:px-6">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Build Better Money Habits</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to transform your financial future
+              Turn everyday decisions into wealth-building moments with friends and family
             </p>
           </div>
 
@@ -159,7 +159,7 @@ export default function Landing() {
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription className="text-base">
-                  Skip a purchase and instantly update your budget. Track every dollar saved with one tap.
+                  Build the habit of conscious spending. Every skipped purchase becomes a celebrated win and future wealth.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -173,7 +173,7 @@ export default function Landing() {
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription className="text-base">
-                  Invite friends & family to match your save in one tap. Double your impact together.
+                  Create accountability circles. When friends match your saves, you both celebrate shared future wealth creation.
                 </CardDescription>
               </CardContent>
             </Card>
@@ -187,7 +187,7 @@ export default function Landing() {
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription className="text-base">
-                  Watch your savings compound over time (1–30 years). See exactly where you're headed.
+                  Visualize how today's small decision becomes tomorrow's freedom. Every save reveals your path to financial independence.
                 </CardDescription>
               </CardContent>
             </Card>

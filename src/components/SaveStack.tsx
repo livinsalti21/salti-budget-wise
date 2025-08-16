@@ -94,7 +94,7 @@ const SaveStack = () => {
             Save & Stack
           </CardTitle>
           <CardDescription>
-            Skip a purchase and stack your savings for the future
+            Build the habit of conscious spending. Every save becomes future wealth and celebrates your progress.
           </CardDescription>
         </CardHeader>
         <CardContent>

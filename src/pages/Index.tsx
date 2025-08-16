@@ -6,6 +6,7 @@ import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
 import MySaves from "@/components/MySaves";
+import HabitTracker from "@/components/HabitTracker";
 import { Button } from '@/components/ui/button';
 import { PiggyBank, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,14 +54,15 @@ const Index = () => {
             </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Save. Match. Grow — Together. Turn skipped purchases into your future net worth.
+            Build wealth through habits. Celebrate progress. Transform small saves into lifelong gains — together.
           </p>
         </div>
 
       <Tabs defaultValue="mysaves" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="mysaves">My Saves</TabsTrigger>
           <TabsTrigger value="save">Save & Stack</TabsTrigger>
+          <TabsTrigger value="habits">Habits</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="challenges">Challenges</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
@@ -72,6 +74,10 @@ const Index = () => {
 
         <TabsContent value="save">
           <SaveStack />
+        </TabsContent>
+
+        <TabsContent value="habits">
+          <HabitTracker />
         </TabsContent>
 
         <TabsContent value="budget">

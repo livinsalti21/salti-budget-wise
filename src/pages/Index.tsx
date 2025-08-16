@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StackletManager from "@/components/StackletManager";
 import SaveToStacklet from "@/components/SaveToStacklet";
 import PaydayRules from "@/components/PaydayRules";
+import StreaksAndBadges from "@/components/StreaksAndBadges";
+import GroupChallenges from "@/components/GroupChallenges";
 import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
@@ -65,15 +67,16 @@ const Index = () => {
         </div>
 
       <Tabs defaultValue="stacklets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-9">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-10">
           <TabsTrigger value="stacklets">Stacklets</TabsTrigger>
           <TabsTrigger value="save">Save</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
-          <TabsTrigger value="pods">Pods</TabsTrigger>
+          <TabsTrigger value="streaks">Streaks</TabsTrigger>
+          <TabsTrigger value="challenges">Challenges</TabsTrigger>
           <TabsTrigger value="habits">Habits</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="challenges">Challenges</TabsTrigger>
+          <TabsTrigger value="games">Games</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
@@ -87,6 +90,14 @@ const Index = () => {
 
         <TabsContent value="rules">
           <PaydayRules />
+        </TabsContent>
+
+        <TabsContent value="streaks">
+          <StreaksAndBadges />
+        </TabsContent>
+
+        <TabsContent value="challenges">
+          <GroupChallenges />
         </TabsContent>
 
         <TabsContent value="pods">
@@ -105,7 +116,7 @@ const Index = () => {
           <TemplateStore />
         </TabsContent>
 
-        <TabsContent value="challenges">
+        <TabsContent value="games">
           <GameDashboard />
         </TabsContent>
 

@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SaveStack from "@/components/SaveStack";
+import EnhancedSaveStack from "@/components/EnhancedSaveStack";
 import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
 import MySaves from "@/components/MySaves";
 import HabitTracker from "@/components/HabitTracker";
+import GroupPods from "@/components/GroupPods";
+import TemplateStore from "@/components/TemplateStore";
+import NotificationCenter from "@/components/NotificationCenter";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users } from 'lucide-react';
+import { PiggyBank, LogOut, Users, Bell, Store } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
@@ -43,6 +46,7 @@ const Index = () => {
               </h1>
             </div>
             <div className="flex items-center gap-2">
+              <NotificationCenter />
               <Button variant="outline" size="sm">
                 <Users className="h-4 w-4 mr-2" />
                 Invite Friends
@@ -54,16 +58,18 @@ const Index = () => {
             </div>
           </div>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Build wealth through habits. Celebrate progress. Transform small saves into lifelong gains — together.
+            Save smarter, stack faster, live your way. Turn small saves into future wealth — celebrate every step.
           </p>
         </div>
 
       <Tabs defaultValue="mysaves" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
           <TabsTrigger value="mysaves">My Saves</TabsTrigger>
           <TabsTrigger value="save">Save & Stack</TabsTrigger>
+          <TabsTrigger value="pods">Pods</TabsTrigger>
           <TabsTrigger value="habits">Habits</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="challenges">Challenges</TabsTrigger>
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
@@ -73,7 +79,11 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="save">
-          <SaveStack />
+          <EnhancedSaveStack />
+        </TabsContent>
+
+        <TabsContent value="pods">
+          <GroupPods />
         </TabsContent>
 
         <TabsContent value="habits">
@@ -82,6 +92,10 @@ const Index = () => {
 
         <TabsContent value="budget">
           <BudgetTracker />
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <TemplateStore />
         </TabsContent>
 
         <TabsContent value="challenges">

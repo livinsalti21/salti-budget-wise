@@ -72,18 +72,20 @@ const Index = () => {
       <UserOnboarding />
 
       <Tabs defaultValue="stacklets" className="space-y-6">
-        <div className="flex gap-3 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1">
-          <TabsTrigger value="stacklets" className="scroll-snap-child shrink-0">Stacklets</TabsTrigger>
-          <TabsTrigger value="save" className="scroll-snap-child shrink-0">Save</TabsTrigger>
-          <TabsTrigger value="rules" className="scroll-snap-child shrink-0">Rules</TabsTrigger>
-          <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">Streaks</TabsTrigger>
-          <TabsTrigger value="challenges" className="scroll-snap-child shrink-0">Challenges</TabsTrigger>
-          <TabsTrigger value="match" className="scroll-snap-child shrink-0">Match</TabsTrigger>
-          <TabsTrigger value="habits" className="scroll-snap-child shrink-0">Habits</TabsTrigger>
-          <TabsTrigger value="budget" className="scroll-snap-child shrink-0">Budget</TabsTrigger>
-          <TabsTrigger value="templates" className="scroll-snap-child shrink-0">Templates</TabsTrigger>
-          <TabsTrigger value="games" className="scroll-snap-child shrink-0">Games</TabsTrigger>
-          <TabsTrigger value="history" className="scroll-snap-child shrink-0">History</TabsTrigger>
+        <div className="relative">
+          <TabsList className="flex gap-3 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
+            <TabsTrigger value="stacklets" className="scroll-snap-child shrink-0">Stacklets</TabsTrigger>
+            <TabsTrigger value="save" className="scroll-snap-child shrink-0">Save</TabsTrigger>
+            <TabsTrigger value="rules" className="scroll-snap-child shrink-0">Rules</TabsTrigger>
+            <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">Streaks</TabsTrigger>
+            <TabsTrigger value="challenges" className="scroll-snap-child shrink-0">Challenges</TabsTrigger>
+            <TabsTrigger value="match" className="scroll-snap-child shrink-0">Match</TabsTrigger>
+            <TabsTrigger value="habits" className="scroll-snap-child shrink-0">Habits</TabsTrigger>
+            <TabsTrigger value="budget" className="scroll-snap-child shrink-0">Budget</TabsTrigger>
+            <TabsTrigger value="templates" className="scroll-snap-child shrink-0">Templates</TabsTrigger>
+            <TabsTrigger value="games" className="scroll-snap-child shrink-0">Games</TabsTrigger>
+            <TabsTrigger value="history" className="scroll-snap-child shrink-0">History</TabsTrigger>
+          </TabsList>
         </div>
 
         <TabsContent value="stacklets">

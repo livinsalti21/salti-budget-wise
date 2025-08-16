@@ -123,4 +123,43 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* iOS Safari fixes */
+  html, body { 
+    -webkit-text-size-adjust: 100%; 
+  }
+  
+  :root { 
+    height: -webkit-fill-available; 
+  }
+  
+  body { 
+    min-height: 100vh; 
+    min-height: -webkit-fill-available; 
+    padding-top: env(safe-area-inset-top); 
+  }
+  
+  * { 
+    -webkit-tap-highlight-color: transparent; 
+  }
+
+  /* Prevent heading collisions on small screens */
+  h1, h2 { 
+    line-height: 1.2; 
+    word-break: break-word; 
+  }
+
+  /* Input zoom prevention on iOS */
+  input, select, textarea { 
+    font-size: 16px; 
+  }
+
+  /* Horizontal scroll improvements */
+  .scroll-snap-x { 
+    scroll-snap-type: x mandatory; 
+  }
+  
+  .scroll-snap-child { 
+    scroll-snap-align: start; 
+  }
 }

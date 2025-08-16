@@ -41,29 +41,29 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-      <div className="container mx-auto p-6 space-y-8">
+      <div className="container mx-auto px-4 md:px-6 py-6 space-y-8">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
               <PiggyBank className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
                 Livin Salti
               </h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2">
               <NotificationCenter />
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Users className="h-4 w-4 mr-2" />
                 Invite Friends
               </Button>
-              <Button variant="outline" size="sm" onClick={signOut}>
+              <Button variant="outline" size="sm" onClick={signOut} className="w-full sm:w-auto">
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
               </Button>
             </div>
           </div>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto px-4 sm:px-0">
             Save smarter, stack faster, live your way. Turn small saves into future wealth — celebrate every step.
           </p>
         </div>
@@ -72,19 +72,19 @@ const Index = () => {
       <UserOnboarding />
 
       <Tabs defaultValue="stacklets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-11">
-          <TabsTrigger value="stacklets">Stacklets</TabsTrigger>
-          <TabsTrigger value="save">Save</TabsTrigger>
-          <TabsTrigger value="rules">Rules</TabsTrigger>
-          <TabsTrigger value="streaks">Streaks</TabsTrigger>
-          <TabsTrigger value="challenges">Challenges</TabsTrigger>
-          <TabsTrigger value="match">Match</TabsTrigger>
-          <TabsTrigger value="habits">Habits</TabsTrigger>
-          <TabsTrigger value="budget">Budget</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="games">Games</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
+        <div className="flex gap-3 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1">
+          <TabsTrigger value="stacklets" className="scroll-snap-child shrink-0">Stacklets</TabsTrigger>
+          <TabsTrigger value="save" className="scroll-snap-child shrink-0">Save</TabsTrigger>
+          <TabsTrigger value="rules" className="scroll-snap-child shrink-0">Rules</TabsTrigger>
+          <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">Streaks</TabsTrigger>
+          <TabsTrigger value="challenges" className="scroll-snap-child shrink-0">Challenges</TabsTrigger>
+          <TabsTrigger value="match" className="scroll-snap-child shrink-0">Match</TabsTrigger>
+          <TabsTrigger value="habits" className="scroll-snap-child shrink-0">Habits</TabsTrigger>
+          <TabsTrigger value="budget" className="scroll-snap-child shrink-0">Budget</TabsTrigger>
+          <TabsTrigger value="templates" className="scroll-snap-child shrink-0">Templates</TabsTrigger>
+          <TabsTrigger value="games" className="scroll-snap-child shrink-0">Games</TabsTrigger>
+          <TabsTrigger value="history" className="scroll-snap-child shrink-0">History</TabsTrigger>
+        </div>
 
         <TabsContent value="stacklets">
           <StackletManager />

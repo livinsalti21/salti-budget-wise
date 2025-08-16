@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Coffee, Users, TrendingUp, Shield, ArrowRight, Star, Lock, CheckCircle, Target, Award, Play, Download, Instagram, Youtube } from "lucide-react";
+import { Coffee, Users, TrendingUp, Shield, ArrowRight, Star, Lock, CheckCircle, Target, Award, Play, Download, Instagram, Youtube, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 export default function Landing() {
@@ -106,9 +106,9 @@ export default function Landing() {
                 Start Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                <Play className="mr-2 h-5 w-5" />
-                Learn More
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6" onClick={() => navigate('/sponsor-auth')}>
+                <Heart className="mr-2 h-5 w-5" />
+                Become a Sponsor
               </Button>
             </div>
 
@@ -309,9 +309,9 @@ export default function Landing() {
               Sign Up Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-primary">
-              <Download className="mr-2 h-5 w-5" />
-              Download App
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-primary" onClick={() => navigate('/sponsor-auth')}>
+              <Heart className="mr-2 h-5 w-5" />
+              Become a Sponsor
             </Button>
           </div>
 

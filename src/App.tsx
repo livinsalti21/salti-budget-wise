@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import SponsorAuth from "./pages/SponsorAuth";
+import SponsorDashboard from "./pages/SponsorDashboard";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +23,8 @@ const App = () => (
           <Routes>
             <Route path="/app" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/sponsor-auth" element={<SponsorAuth />} />
+            <Route path="/sponsor-dashboard" element={<SponsorDashboard />} />
             <Route path="/" element={<Landing />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

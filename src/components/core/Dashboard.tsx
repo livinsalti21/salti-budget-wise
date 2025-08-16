@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface DashboardData {
@@ -15,140 +13,16 @@ interface DashboardData {
   savingStreak: number;
 }
 
-interface ChartData {
-  month: string;
-  saved: number;
-  projected: number;
-}
-
-interface SpendingData {
-  category: string;
-  amount: number;
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
-  const [data, setData] = useState<DashboardData>({
-    totalSaved: 0,
-    monthlyIncome: 0,
-    monthlyExpenses: 0,
-    savingsThisMonth: 0,
-    projectedNetWorth: 0,
-    savingStreak: 0
+  const [data] = useState<DashboardData>({
+    totalSaved: 15000, // $150
+    monthlyIncome: 350000, // $3500
+    monthlyExpenses: 280000, // $2800
+    savingsThisMonth: 5000, // $50
+    projectedNetWorth: 133000, // $1330
+    savingStreak: 7
   });
-  const [chartData, setChartData] = useState<ChartData[]>([]);
-  const [spendingData, setSpendingData] = useState<SpendingData[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    }
-  }, [user]);
-
-  const loadDashboardData = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-
-      // Load total saved from save_events
-      const { data: saveEvents, error: saveError } = await supabase
-        .from('save_events')
-        .select('amount_cents, created_at')
-        .eq('user_id', user.id);
-
-      if (saveError) throw saveError;
-
-      const totalSaved = saveEvents?.reduce((sum, event) => sum + event.amount_cents, 0) || 0;
-
-      // For now, use mock data for budget until tables are properly synced
-      const budget = null; // Temporarily disable budget loading
-
-      // Mock data for demo
-      const monthlyIncome = 350000; // $3500
-      const monthlyExpenses = 280000; // $2800
-
-      // Calculate savings this month
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-
-      const savingsThisMonth = saveEvents?.filter(event => 
-        new Date(event.created_at) >= monthStart
-      ).reduce((sum, event) => sum + event.amount_cents, 0) || 0;
-
-      // Calculate projected net worth (30 years at 8%)
-      const projectedNetWorth = (totalSaved / 100) * Math.pow(1.08, 30);
-
-      // Load user streak
-      const { data: streak } = await supabase
-        .from('user_streaks')
-        .select('consecutive_days')
-        .eq('user_id', user.id)
-        .single();
-
-      // Generate chart data for last 6 months
-      const chartData = generateChartData(saveEvents || []);
-      const spendingData = generateSpendingData([]);
-
-      setData({
-        totalSaved,
-        monthlyIncome,
-        monthlyExpenses,
-        savingsThisMonth,
-        projectedNetWorth,
-        savingStreak: streak?.consecutive_days || 0
-      });
-
-      setChartData(chartData);
-      setSpendingData(spendingData);
-
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const generateChartData = (saveEvents: any[]): ChartData[] => {
-    const months = [];
-    const now = new Date();
-    
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = date.toISOString().slice(0, 7);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-      
-      const monthSavings = saveEvents
-        .filter(event => event.created_at.startsWith(monthKey))
-        .reduce((sum, event) => sum + event.amount_cents, 0) / 100;
-
-      const projected = monthSavings * Math.pow(1.08, 30);
-
-      months.push({
-        month: monthName,
-        saved: monthSavings,
-        projected: projected
-      });
-    }
-    
-    return months;
-  };
-
-  const generateSpendingData = (budgetItems: any[]): SpendingData[] => {
-    const categoryTotals = budgetItems
-      .filter(item => item.category !== 'Income')
-      .reduce((acc: Record<string, number>, item) => {
-        acc[item.category] = (acc[item.category] || 0) + item.planned_cents / 100;
-        return acc;
-      }, {});
-
-    return Object.entries(categoryTotals).map(([category, amount]) => ({
-      category,
-      amount: amount as number
-    }));
-  };
 
   const formatCurrency = (cents: number) => {
     return (cents / 100).toFixed(2);
@@ -158,22 +32,6 @@ export default function Dashboard() {
     const balance = data.monthlyIncome - data.monthlyExpenses;
     return balance >= 0 ? 'text-success' : 'text-destructive';
   };
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-16 bg-secondary rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -239,53 +97,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Savings Projection Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Savings Growth</CardTitle>
-            <CardDescription>Your savings journey over the last 6 months</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value: number, name: string) => [
-                    `$${value.toFixed(2)}`,
-                    name === 'saved' ? 'Saved' : '30Y Projection'
-                  ]}
-                />
-                <Line type="monotone" dataKey="saved" stroke="hsl(var(--primary))" strokeWidth={2} />
-                <Line type="monotone" dataKey="projected" stroke="hsl(var(--success))" strokeWidth={2} strokeDasharray="5 5" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Spending Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Spending Breakdown</CardTitle>
-            <CardDescription>Your monthly budget by category</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={spendingData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="category" />
-                <YAxis />
-                <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']} />
-                <Bar dataKey="amount" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Monthly Summary */}
       <Card>
         <CardHeader>
@@ -326,6 +137,35 @@ export default function Dashboard() {
               </Badge>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Welcome Message */}
+      <Card className="bg-gradient-to-r from-primary/10 to-accent/10">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <h3 className="text-xl font-bold mb-2">Welcome to Livin Salti! 🎉</h3>
+            <p className="text-muted-foreground mb-4">
+              Start your wealth-building journey by making your first save. Every small step counts!
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="p-3 bg-background/50 rounded-lg">
+                <PiggyBank className="h-6 w-6 mx-auto mb-1 text-primary" />
+                <div className="font-medium">Save & Stack</div>
+                <div className="text-muted-foreground">Log your conscious spending choices</div>
+              </div>
+              <div className="p-3 bg-background/50 rounded-lg">
+                <Target className="h-6 w-6 mx-auto mb-1 text-accent" />
+                <div className="font-medium">See Your Future</div>
+                <div className="text-muted-foreground">Watch small saves become big wealth</div>
+              </div>
+              <div className="p-3 bg-background/50 rounded-lg">
+                <TrendingUp className="h-6 w-6 mx-auto mb-1 text-success" />
+                <div className="font-medium">Build Habits</div>
+                <div className="text-muted-foreground">Celebrate every financial win</div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

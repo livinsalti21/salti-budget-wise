@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, DollarSign, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface BudgetItem {
@@ -37,7 +35,6 @@ const CATEGORIES = [
 
 export default function BudgetInput() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [budget, setBudget] = useState<Budget>({
     month: new Date().toISOString().slice(0, 7) + '-01',
     title: 'Monthly Budget',
@@ -49,29 +46,12 @@ export default function BudgetInput() {
     planned_cents: 0
   });
 
-  useEffect(() => {
-    if (user) {
-      loadBudget();
-    }
-  }, [user]);
-
-  const loadBudget = async () => {
-    if (!user) return;
-    
-    try {
-      // For now, just initialize with empty budget - tables are being synced
-      console.log('Budget loading will be implemented once Supabase types are updated');
-    } catch (error) {
-      console.error('Error loading budget:', error);
-    }
-  };
-
   const saveBudget = async () => {
     if (!user || budget.items.length === 0) return;
     
     setLoading(true);
     try {
-      // Store in localStorage temporarily until database is ready
+      // Store in localStorage for demo
       const budgetData = {
         ...budget,
         user_id: user.id,
@@ -79,19 +59,11 @@ export default function BudgetInput() {
       };
       
       localStorage.setItem(`budget_${user.id}`, JSON.stringify(budgetData));
-
-      toast({
-        title: "Success!",
-        description: "Budget saved successfully",
-      });
+      alert("Budget saved successfully!");
       
     } catch (error) {
       console.error('Error saving budget:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save budget",
-        variant: "destructive"
-      });
+      alert("Failed to save budget");
     } finally {
       setLoading(false);
     }
@@ -99,11 +71,7 @@ export default function BudgetInput() {
 
   const addItem = () => {
     if (!newItem.category || newItem.planned_cents <= 0) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields with valid values",
-        variant: "destructive"
-      });
+      alert("Please fill in all fields with valid values");
       return;
     }
 

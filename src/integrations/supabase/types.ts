@@ -195,6 +195,44 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_items: {
+        Row: {
+          actual_cents: number
+          budget_id: string
+          category: string
+          created_at: string | null
+          id: string
+          planned_cents: number
+          updated_at: string | null
+        }
+        Insert: {
+          actual_cents?: number
+          budget_id: string
+          category: string
+          created_at?: string | null
+          id?: string
+          planned_cents: number
+          updated_at?: string | null
+        }
+        Update: {
+          actual_cents?: number
+          budget_id?: string
+          category?: string
+          created_at?: string | null
+          id?: string
+          planned_cents?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_templates: {
         Row: {
           category: string
@@ -254,6 +292,33 @@ export type Database = {
           id?: string
           status?: string
           upload_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      budgets: {
+        Row: {
+          created_at: string | null
+          id: string
+          month: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          month: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          month?: string
+          title?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

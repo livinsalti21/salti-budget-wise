@@ -1,27 +1,36 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import StackletManager from "@/components/StackletManager";
-import SaveToStacklet from "@/components/SaveToStacklet";
-import PaydayRules from "@/components/PaydayRules";
-import StreaksAndBadges from "@/components/StreaksAndBadges";
-import GroupChallenges from "@/components/GroupChallenges";
-import MatchASave from "@/components/MatchASave";
-import UserOnboarding from "@/components/UserOnboarding";
-import SaveHistory from "@/components/SaveHistory";
-import GameDashboard from "@/components/GameDashboard";
-import BudgetTracker from "@/components/BudgetTracker";
-import MySaves from "@/components/MySaves";
-import HabitTracker from "@/components/HabitTracker";
-import GroupPods from "@/components/GroupPods";
-import TemplateStore from "@/components/TemplateStore";
-import NotificationCenter from "@/components/NotificationCenter";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users, Bell, Store } from 'lucide-react';
+import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Onboarding from '@/components/core/Onboarding';
+import Dashboard from '@/components/core/Dashboard';
+import BudgetInput from '@/components/core/BudgetInput';
+import SaveStack from '@/components/core/SaveStack';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const completedOnboarding = localStorage.getItem(`onboarding_completed_${user?.id}`);
+    setHasCompletedOnboarding(!!completedOnboarding);
+    
+    if (user && !completedOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
+      setHasCompletedOnboarding(true);
+      setShowOnboarding(false);
+    }
+  };
 
   // Redirect to auth if not logged in
   if (loading) {
@@ -39,6 +48,11 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  // Show onboarding for new users
+  if (showOnboarding && !hasCompletedOnboarding) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <div className="container mx-auto px-4 md:px-6 py-6 space-y-8">
@@ -46,13 +60,14 @@ const Index = () => {
         <div className="text-center space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center justify-center sm:justify-start gap-2">
-              <PiggyBank className="h-8 w-8 text-primary" />
+              <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center">
+                <span className="text-lg">✌🏽</span>
+              </div>
               <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-tight">
                 Livin Salti
               </h1>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-2">
-              <NotificationCenter />
               <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 <Users className="h-4 w-4 mr-2" />
                 Invite Friends
@@ -68,72 +83,34 @@ const Index = () => {
           </p>
         </div>
 
-      {/* User Onboarding */}
-      <UserOnboarding />
-
-      <Tabs defaultValue="stacklets" className="space-y-6">
+      <Tabs defaultValue="dashboard" className="space-y-6">
         <div className="relative">
           <TabsList className="flex gap-3 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
-            <TabsTrigger value="stacklets" className="scroll-snap-child shrink-0">Stacklets</TabsTrigger>
-            <TabsTrigger value="save" className="scroll-snap-child shrink-0">Save</TabsTrigger>
-            <TabsTrigger value="rules" className="scroll-snap-child shrink-0">Rules</TabsTrigger>
-            <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">Streaks</TabsTrigger>
-            <TabsTrigger value="challenges" className="scroll-snap-child shrink-0">Challenges</TabsTrigger>
-            <TabsTrigger value="match" className="scroll-snap-child shrink-0">Match</TabsTrigger>
-            <TabsTrigger value="habits" className="scroll-snap-child shrink-0">Habits</TabsTrigger>
-            <TabsTrigger value="budget" className="scroll-snap-child shrink-0">Budget</TabsTrigger>
-            <TabsTrigger value="templates" className="scroll-snap-child shrink-0">Templates</TabsTrigger>
-            <TabsTrigger value="games" className="scroll-snap-child shrink-0">Games</TabsTrigger>
-            <TabsTrigger value="history" className="scroll-snap-child shrink-0">History</TabsTrigger>
+            <TabsTrigger value="dashboard" className="scroll-snap-child shrink-0">
+              <Target className="h-4 w-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="save" className="scroll-snap-child shrink-0">
+              <PiggyBank className="h-4 w-4 mr-2" />
+              Save & Stack
+            </TabsTrigger>
+            <TabsTrigger value="budget" className="scroll-snap-child shrink-0">
+              <DollarSign className="h-4 w-4 mr-2" />
+              Budget
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="stacklets">
-          <StackletManager />
+        <TabsContent value="dashboard">
+          <Dashboard />
         </TabsContent>
 
         <TabsContent value="save">
-          <SaveToStacklet />
-        </TabsContent>
-
-        <TabsContent value="rules">
-          <PaydayRules />
-        </TabsContent>
-
-        <TabsContent value="streaks">
-          <StreaksAndBadges />
-        </TabsContent>
-
-        <TabsContent value="challenges">
-          <GroupChallenges />
-        </TabsContent>
-
-        <TabsContent value="match">
-          <MatchASave />
-        </TabsContent>
-
-        <TabsContent value="pods">
-          <GroupPods />
-        </TabsContent>
-
-        <TabsContent value="habits">
-          <HabitTracker />
+          <SaveStack />
         </TabsContent>
 
         <TabsContent value="budget">
-          <BudgetTracker />
-        </TabsContent>
-
-        <TabsContent value="templates">
-          <TemplateStore />
-        </TabsContent>
-
-        <TabsContent value="games">
-          <GameDashboard />
-        </TabsContent>
-
-        <TabsContent value="history">
-          <SaveHistory />
+          <BudgetInput />
         </TabsContent>
       </Tabs>
       </div>

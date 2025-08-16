@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { PiggyBank, Zap, TrendingUp, Target, Plus } from 'lucide-react';
+import { PiggyBank, Zap, TrendingUp, Target, Plus, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import ShareCard from '@/components/ShareCard';
 
 interface Stacklet {
   id: string;
@@ -34,6 +35,9 @@ const SaveToStacklet = () => {
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [shareData, setShareData] = useState<any>(null);
+  const [userStats, setUserStats] = useState({ totalSaved: 0, streakDays: 0 });
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -59,6 +63,23 @@ const SaveToStacklet = () => {
         setSelectedStackletId(data[0].id);
       }
     }
+
+    // Load user stats for share card
+    const { data: saveEvents } = await supabase
+      .from('save_events')
+      .select('amount_cents')
+      .eq('user_id', user.id);
+
+    const { data: streakData } = await supabase
+      .from('user_streaks')
+      .select('consecutive_days')
+      .eq('user_id', user.id)
+      .single();
+
+    setUserStats({
+      totalSaved: (saveEvents || []).reduce((sum, save) => sum + save.amount_cents, 0),
+      streakDays: streakData?.consecutive_days || 0
+    });
   };
 
   useEffect(() => {
@@ -110,9 +131,22 @@ const SaveToStacklet = () => {
         title: `${selectedStacklet?.emoji} Stacked $${amount}! 🎉`,
         description: `Worth $${projection.twentyYears.toFixed(2)} in 20 years at 8% returns!`,
       });
+
+      // Prepare share card data
+      setShareData({
+        amount: amount,
+        goalEmoji: selectedStacklet?.emoji || '🎯',
+        goalTitle: selectedStacklet?.title || 'Goal',
+        streakDays: userStats.streakDays,
+        futureValue: projection.twentyYears.toFixed(2),
+        totalSaved: ((userStats.totalSaved + amountCents) / 100).toFixed(2)
+      });
       
       setAmount('');
       setNote('');
+      
+      // Show share card
+      setShowShareCard(true);
       
       // Reload stacklets to show updated progress
       loadStacklets();
@@ -303,17 +337,25 @@ const SaveToStacklet = () => {
               </div>
             </div>
             
-            <div className="mt-4 flex justify-center">
-              <Badge variant="secondary">
-                <Target className="mr-1 h-3 w-3" />
-                8% Annual Return Assumption
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+              <div className="mt-4 flex justify-center">
+                <Badge variant="secondary">
+                  <Target className="mr-1 h-3 w-3" />
+                  8% Annual Return Assumption
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Share Card Modal */}
+        {showShareCard && shareData && (
+          <ShareCard 
+            data={shareData} 
+            onClose={() => setShowShareCard(false)} 
+          />
+        )}
+      </div>
+    );
 };
 
 export default SaveToStacklet;

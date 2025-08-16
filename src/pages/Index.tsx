@@ -7,6 +7,7 @@ import PaydayRules from "@/components/PaydayRules";
 import StreaksAndBadges from "@/components/StreaksAndBadges";
 import GroupChallenges from "@/components/GroupChallenges";
 import MatchASave from "@/components/MatchASave";
+import UserOnboarding from "@/components/UserOnboarding";
 import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
@@ -66,6 +67,9 @@ const Index = () => {
             Save smarter, stack faster, live your way. Turn small saves into future wealth — celebrate every step.
           </p>
         </div>
+
+      {/* User Onboarding */}
+      <UserOnboarding />
 
       <Tabs defaultValue="stacklets" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-11">

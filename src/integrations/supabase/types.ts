@@ -94,6 +94,42 @@ export type Database = {
           },
         ]
       }
+      ai_suggestions: {
+        Row: {
+          category: string
+          created_at: string
+          expires_at: string | null
+          future_value_projection: Json | null
+          id: string
+          is_applied: boolean
+          potential_savings_cents: number | null
+          suggestion_text: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          expires_at?: string | null
+          future_value_projection?: Json | null
+          id?: string
+          is_applied?: boolean
+          potential_savings_cents?: number | null
+          suggestion_text: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expires_at?: string | null
+          future_value_projection?: Json | null
+          id?: string
+          is_applied?: boolean
+          potential_savings_cents?: number | null
+          suggestion_text?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -156,6 +192,69 @@ export type Database = {
           name?: string
           requirement_type?: string
           requirement_value?: number
+        }
+        Relationships: []
+      }
+      budget_templates: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          price_cents?: number
+          template_data: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          template_data?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      budget_uploads: {
+        Row: {
+          file_data: Json
+          filename: string
+          id: string
+          status: string
+          upload_date: string
+          user_id: string
+        }
+        Insert: {
+          file_data: Json
+          filename: string
+          id?: string
+          status?: string
+          upload_date?: string
+          user_id: string
+        }
+        Update: {
+          file_data?: Json
+          filename?: string
+          id?: string
+          status?: string
+          upload_date?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -540,6 +639,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      linked_accounts: {
+        Row: {
+          access_token: string
+          account_id: string
+          account_name: string
+          account_type: string
+          balance_cents: number | null
+          created_at: string
+          id: string
+          institution_name: string
+          is_active: boolean
+          last_sync: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          account_id: string
+          account_name: string
+          account_type: string
+          balance_cents?: number | null
+          created_at?: string
+          id?: string
+          institution_name: string
+          is_active?: boolean
+          last_sync?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          account_id?: string
+          account_name?: string
+          account_type?: string
+          balance_cents?: number | null
+          created_at?: string
+          id?: string
+          institution_name?: string
+          is_active?: boolean
+          last_sync?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       match_events: {
         Row: {
@@ -1104,6 +1248,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      template_purchases: {
+        Row: {
+          amount_cents: number
+          id: string
+          purchase_date: string
+          status: string
+          stripe_payment_intent_id: string | null
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          id?: string
+          purchase_date?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          id?: string
+          purchase_date?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_purchases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "budget_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transactions: {
         Row: {

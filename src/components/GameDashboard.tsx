@@ -118,7 +118,7 @@ export default function GameDashboard() {
   };
 
   const loadChallenges = async () => {
-    // Mock challenge data
+    // Enhanced challenge data with more variety
     const mockChallenges: Challenge[] = [
       {
         id: "weekly-saver",
@@ -131,14 +131,44 @@ export default function GameDashboard() {
         reward: "Saver Badge + 100 XP"
       },
       {
-        id: "group-challenge",
-        title: "Team Stack Challenge",
-        description: "Your group saves $500 together",
-        target: 50000,
-        progress: 32000,
-        type: "group",
+        id: "streak-warrior",
+        title: "Streak Warrior",
+        description: "Maintain a 7-day saving streak",
+        target: 7,
+        progress: userStats.streak,
+        type: "individual",
         endDate: "2024-01-28",
-        reward: "Group Champion Badge"
+        reward: "Streak Master Badge + 200 XP"
+      },
+      {
+        id: "match-master",
+        title: "Match Master",
+        description: "Get 3 friends to match your saves",
+        target: 3,
+        progress: 1,
+        type: "individual",
+        endDate: "2024-02-01",
+        reward: "Social Saver Badge + 150 XP"
+      },
+      {
+        id: "group-challenge",
+        title: "Community Stack Challenge",
+        description: "Your community saves $1000 together",
+        target: 100000,
+        progress: 65000,
+        type: "group",
+        endDate: "2024-01-31",
+        reward: "Community Champion Badge"
+      },
+      {
+        id: "referral-challenge",
+        title: "Invite & Earn",
+        description: "Invite 2 friends to join Livin Salti",
+        target: 2,
+        progress: 0,
+        type: "individual",
+        endDate: "2024-02-15",
+        reward: "Ambassador Badge + $10 Bonus"
       }
     ];
     setChallenges(mockChallenges);

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import EnhancedSaveStack from "@/components/EnhancedSaveStack";
+import StackletManager from "@/components/StackletManager";
+import SaveToStacklet from "@/components/SaveToStacklet";
+import PaydayRules from "@/components/PaydayRules";
 import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
@@ -62,10 +64,11 @@ const Index = () => {
           </p>
         </div>
 
-      <Tabs defaultValue="mysaves" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
-          <TabsTrigger value="mysaves">My Saves</TabsTrigger>
-          <TabsTrigger value="save">Save & Stack</TabsTrigger>
+      <Tabs defaultValue="stacklets" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-9">
+          <TabsTrigger value="stacklets">Stacklets</TabsTrigger>
+          <TabsTrigger value="save">Save</TabsTrigger>
+          <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="pods">Pods</TabsTrigger>
           <TabsTrigger value="habits">Habits</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
@@ -74,12 +77,16 @@ const Index = () => {
           <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="mysaves">
-          <MySaves />
+        <TabsContent value="stacklets">
+          <StackletManager />
         </TabsContent>
 
         <TabsContent value="save">
-          <EnhancedSaveStack />
+          <SaveToStacklet />
+        </TabsContent>
+
+        <TabsContent value="rules">
+          <PaydayRules />
         </TabsContent>
 
         <TabsContent value="pods">

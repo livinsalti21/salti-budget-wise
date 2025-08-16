@@ -209,6 +209,30 @@ export type Database = {
           },
         ]
       }
+      daily_actions: {
+        Row: {
+          action_date: string
+          action_type: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_date?: string
+          action_type: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_date?: string
+          action_type?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -425,6 +449,50 @@ export type Database = {
           },
         ]
       }
+      payday_rules: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          is_active: boolean
+          next_run_at: string
+          stacklet_id: string
+          trigger_cadence: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          next_run_at: string
+          stacklet_id: string
+          trigger_cadence: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          next_run_at?: string
+          stacklet_id?: string
+          trigger_cadence?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payday_rules_stacklet_id_fkey"
+            columns: ["stacklet_id"]
+            isOneToOne: false
+            referencedRelation: "stacklets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -561,6 +629,44 @@ export type Database = {
           },
         ]
       }
+      save_events: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          note: string | null
+          source: string
+          stacklet_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          source?: string
+          stacklet_id: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          source?: string
+          stacklet_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "save_events_stacklet_id_fkey"
+            columns: ["stacklet_id"]
+            isOneToOne: false
+            referencedRelation: "stacklets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       save_likes: {
         Row: {
           created_at: string
@@ -664,6 +770,48 @@ export type Database = {
         }
         Relationships: []
       }
+      stacklets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          deadline_date: string | null
+          emoji: string
+          id: string
+          is_archived: boolean
+          progress_cents: number
+          target_cents: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          deadline_date?: string | null
+          emoji?: string
+          id?: string
+          is_archived?: boolean
+          progress_cents?: number
+          target_cents?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          deadline_date?: string | null
+          emoji?: string
+          id?: string
+          is_archived?: boolean
+          progress_cents?: number
+          target_cents?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       table_name: {
         Row: {
           data: Json | null
@@ -747,6 +895,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_streaks: {
+        Row: {
+          consecutive_days: number
+          id: string
+          is_active: boolean
+          last_action_date: string | null
+          longest_streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_days?: number
+          id?: string
+          is_active?: boolean
+          last_action_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          consecutive_days?: number
+          id?: string
+          is_active?: boolean
+          last_action_date?: string | null
+          longest_streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -758,6 +936,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      update_user_streak: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp } from 'lucide-react';
+import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Onboarding from '@/components/core/Onboarding';
 import Dashboard from '@/components/core/Dashboard';
 import BudgetInput from '@/components/core/BudgetInput';
 import SaveStack from '@/components/core/SaveStack';
+import MatchASave from '@/components/MatchASave';
+import { BudgetUpload } from '@/components/BudgetUpload';
+import TemplateStore from '@/components/TemplateStore';
+import SettingsPanel from '@/components/SettingsPanel';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -85,7 +89,7 @@ const Index = () => {
 
       <Tabs defaultValue="dashboard" className="space-y-6">
         <div className="relative">
-          <TabsList className="flex gap-3 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
+          <TabsList className="flex gap-2 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
             <TabsTrigger value="dashboard" className="scroll-snap-child shrink-0">
               <Target className="h-4 w-4 mr-2" />
               Dashboard
@@ -97,6 +101,22 @@ const Index = () => {
             <TabsTrigger value="budget" className="scroll-snap-child shrink-0">
               <DollarSign className="h-4 w-4 mr-2" />
               Budget
+            </TabsTrigger>
+            <TabsTrigger value="sponsors" className="scroll-snap-child shrink-0">
+              <Heart className="h-4 w-4 mr-2" />
+              Sponsors
+            </TabsTrigger>
+            <TabsTrigger value="upload" className="scroll-snap-child shrink-0">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload
+            </TabsTrigger>
+            <TabsTrigger value="store" className="scroll-snap-child shrink-0">
+              <Store className="h-4 w-4 mr-2" />
+              Templates
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="scroll-snap-child shrink-0">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
             </TabsTrigger>
           </TabsList>
         </div>
@@ -111,6 +131,22 @@ const Index = () => {
 
         <TabsContent value="budget">
           <BudgetInput />
+        </TabsContent>
+
+        <TabsContent value="sponsors">
+          <MatchASave />
+        </TabsContent>
+
+        <TabsContent value="upload">
+          <BudgetUpload />
+        </TabsContent>
+
+        <TabsContent value="store">
+          <TemplateStore />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <SettingsPanel />
         </TabsContent>
       </Tabs>
       </div>

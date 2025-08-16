@@ -6,6 +6,7 @@ import SaveToStacklet from "@/components/SaveToStacklet";
 import PaydayRules from "@/components/PaydayRules";
 import StreaksAndBadges from "@/components/StreaksAndBadges";
 import GroupChallenges from "@/components/GroupChallenges";
+import MatchASave from "@/components/MatchASave";
 import SaveHistory from "@/components/SaveHistory";
 import GameDashboard from "@/components/GameDashboard";
 import BudgetTracker from "@/components/BudgetTracker";
@@ -67,12 +68,13 @@ const Index = () => {
         </div>
 
       <Tabs defaultValue="stacklets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-10">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 lg:grid-cols-11">
           <TabsTrigger value="stacklets">Stacklets</TabsTrigger>
           <TabsTrigger value="save">Save</TabsTrigger>
           <TabsTrigger value="rules">Rules</TabsTrigger>
           <TabsTrigger value="streaks">Streaks</TabsTrigger>
           <TabsTrigger value="challenges">Challenges</TabsTrigger>
+          <TabsTrigger value="match">Match</TabsTrigger>
           <TabsTrigger value="habits">Habits</TabsTrigger>
           <TabsTrigger value="budget">Budget</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
@@ -98,6 +100,10 @@ const Index = () => {
 
         <TabsContent value="challenges">
           <GroupChallenges />
+        </TabsContent>
+
+        <TabsContent value="match">
+          <MatchASave />
         </TabsContent>
 
         <TabsContent value="pods">

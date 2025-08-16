@@ -541,6 +541,162 @@ export type Database = {
           },
         ]
       }
+      match_events: {
+        Row: {
+          btc_price_usd: number | null
+          btc_quantity: number | null
+          btc_trade_id: string | null
+          charge_status: string
+          created_at: string
+          id: string
+          match_amount_cents: number
+          match_rule_id: string
+          original_amount_cents: number
+          recipient_user_id: string
+          save_event_id: string
+          sponsor_id: string
+          stripe_payment_intent_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          btc_price_usd?: number | null
+          btc_quantity?: number | null
+          btc_trade_id?: string | null
+          charge_status?: string
+          created_at?: string
+          id?: string
+          match_amount_cents: number
+          match_rule_id: string
+          original_amount_cents: number
+          recipient_user_id: string
+          save_event_id: string
+          sponsor_id: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          btc_price_usd?: number | null
+          btc_quantity?: number | null
+          btc_trade_id?: string | null
+          charge_status?: string
+          created_at?: string
+          id?: string
+          match_amount_cents?: number
+          match_rule_id?: string
+          original_amount_cents?: number
+          recipient_user_id?: string
+          save_event_id?: string
+          sponsor_id?: string
+          stripe_payment_intent_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_events_match_rule_id_fkey"
+            columns: ["match_rule_id"]
+            isOneToOne: false
+            referencedRelation: "match_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_save_event_id_fkey"
+            columns: ["save_event_id"]
+            isOneToOne: false
+            referencedRelation: "save_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_events_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_rules: {
+        Row: {
+          asset_type: string
+          cap_cents_weekly: number
+          created_at: string
+          id: string
+          percent: number
+          recipient_user_id: string
+          sponsor_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          asset_type?: string
+          cap_cents_weekly?: number
+          created_at?: string
+          id?: string
+          percent: number
+          recipient_user_id: string
+          sponsor_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          cap_cents_weekly?: number
+          created_at?: string
+          id?: string
+          percent?: number
+          recipient_user_id?: string
+          sponsor_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_rules_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_suggestions: {
+        Row: {
+          amount_cents: number | null
+          cadence: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          is_applied: boolean
+          suggestion_type: string
+          target_cents: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          cadence?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_applied?: boolean
+          suggestion_type: string
+          target_cents?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number | null
+          cadence?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_applied?: boolean
+          suggestion_type?: string
+          target_cents?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payday_rules: {
         Row: {
           amount_cents: number
@@ -862,6 +1018,27 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsors: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+        }
+        Relationships: []
+      }
       stacklets: {
         Row: {
           asset_type: string
@@ -1055,9 +1232,17 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      create_onboarding_suggestions: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       generate_group_code: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_weekly_match_spend: {
+        Args: { rule_id: string; week_start: string }
+        Returns: number
       }
       has_role: {
         Args: {

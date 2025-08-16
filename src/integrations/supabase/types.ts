@@ -344,6 +344,21 @@ export type Database = {
           },
         ]
       }
+      kv_store_ee841bb1: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           created_at: string

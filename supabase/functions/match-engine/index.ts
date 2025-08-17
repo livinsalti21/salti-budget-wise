@@ -31,7 +31,41 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
-    const { save_event_id, user_id, amount_cents } = await req.json();
+    const body = await req.json();
+    
+    // Enhanced input validation with sanitization
+    const { save_event_id, user_id, amount_cents } = body;
+    
+    if (!save_event_id || typeof save_event_id !== 'string') {
+      throw new Error('Invalid save_event_id');
+    }
+    
+    if (!user_id || typeof user_id !== 'string') {
+      throw new Error('Invalid user_id');
+    }
+    
+    if (!amount_cents || typeof amount_cents !== 'number' || amount_cents <= 0) {
+      throw new Error('Invalid amount_cents');
+    }
+
+    // Validate UUIDs format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(save_event_id) || !uuidRegex.test(user_id)) {
+      throw new Error('Invalid UUID format');
+    }
+
+    // Rate limiting check
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const { count: recentMatches } = await supabaseServiceClient
+      .from('match_events')
+      .select('*', { count: 'exact', head: true })
+      .eq('recipient_user_id', user_id)
+      .gte('created_at', oneMinuteAgo);
+
+    if (recentMatches && recentMatches > 10) {
+      throw new Error('Rate limit exceeded for match events');
+    }
+
     logStep("Processing save event", { save_event_id, user_id, amount_cents });
 
     // Get active match rules for this user
@@ -63,16 +97,21 @@ serve(async (req) => {
         // Calculate match amount
         const matchAmount = Math.round((amount_cents * rule.percent) / 100);
         
-        // Check weekly cap
+        // Check weekly cap using secure RPC function with validated parameters
         const weekStart = new Date();
         weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
         weekStart.setHours(0, 0, 0, 0);
 
-        const { data: weeklySpend } = await supabaseServiceClient
+        const { data: weeklySpend, error: capError } = await supabaseServiceClient
           .rpc('get_weekly_match_spend', {
             rule_id: rule.id,
             week_start: weekStart.toISOString().split('T')[0]
           });
+
+        if (capError) {
+          logStep('Error checking weekly cap', capError);
+          continue;
+        }
 
         const remainingCap = rule.cap_cents_weekly - (weeklySpend || 0);
         const finalMatchAmount = Math.min(matchAmount, Math.max(0, remainingCap));
@@ -137,6 +176,19 @@ serve(async (req) => {
 
             if (paymentIntent.status === 'succeeded') {
               logStep("Payment succeeded immediately");
+              
+              // Log security event
+              await supabaseServiceClient.from('security_audit_log').insert({
+                user_id,
+                event_type: 'match_processed',
+                event_details: {
+                  match_event_id: matchEvent.id,
+                  amount_cents: finalMatchAmount,
+                  rule_id: rule.id,
+                  payment_intent_id: paymentIntent.id
+                },
+                user_agent: req.headers.get('User-Agent')
+              });
               
               // If CASH match, transfer to recipient (would need Stripe Connect setup)
               if (rule.asset_type === 'CASH') {

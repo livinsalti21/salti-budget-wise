@@ -427,6 +427,30 @@ export type Database = {
         }
         Relationships: []
       }
+      encryption_keys: {
+        Row: {
+          created_at: string | null
+          encrypted_key: string
+          id: string
+          key_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_key: string
+          id?: string
+          key_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_key?: string
+          id?: string
+          key_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -713,10 +737,12 @@ export type Database = {
           account_type: string
           balance_cents: number | null
           created_at: string
+          encrypted_access_token: string | null
           id: string
           institution_name: string
           is_active: boolean
           last_sync: string | null
+          token_iv: string | null
           updated_at: string
           user_id: string
         }
@@ -727,10 +753,12 @@ export type Database = {
           account_type: string
           balance_cents?: number | null
           created_at?: string
+          encrypted_access_token?: string | null
           id?: string
           institution_name: string
           is_active?: boolean
           last_sync?: string | null
+          token_iv?: string | null
           updated_at?: string
           user_id: string
         }
@@ -741,10 +769,12 @@ export type Database = {
           account_type?: string
           balance_cents?: number | null
           created_at?: string
+          encrypted_access_token?: string | null
           id?: string
           institution_name?: string
           is_active?: boolean
           last_sync?: string | null
+          token_iv?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1442,6 +1472,36 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          created_at: string | null
+          event_details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sponsors: {
         Row: {
           created_at: string
@@ -1698,6 +1758,14 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      decrypt_sensitive_data: {
+        Args: { encrypted_obj: Json; key_name: string }
+        Returns: string
+      }
+      encrypt_sensitive_data: {
+        Args: { key_name: string; plain_text: string }
+        Returns: Json
+      }
       generate_group_code: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1716,6 +1784,16 @@ export type Database = {
       update_user_streak: {
         Args: { target_user_id: string }
         Returns: undefined
+      }
+      verify_deep_link_signature: {
+        Args: {
+          amount_cents: number
+          expires_at: string
+          provided_sig: string
+          push_id: string
+          source: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

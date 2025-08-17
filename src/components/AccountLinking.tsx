@@ -55,35 +55,11 @@ export const AccountLinking: React.FC = () => {
   const initiatePlaidLink = async () => {
     setLinking(true);
     try {
-      // Create Plaid Link token
-      const response = await fetch('https://production.plaid.com/link/token/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client_id: 'YOUR_PLAID_CLIENT_ID', // This would come from environment
-          secret: 'YOUR_PLAID_SECRET',
-          user: {
-            client_user_id: user?.id,
-          },
-          client_name: 'Livin Salti',
-          products: ['transactions', 'accounts'],
-          country_codes: ['US'],
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error_message || 'Failed to create link token');
-      }
-
-      // Note: In a real implementation, you'd use Plaid Link SDK here
-      // For now, we'll simulate the process
+      // Note: Plaid credentials are now securely handled in backend edge function
+      // Frontend no longer has access to sensitive API credentials
       toast({
-        title: "Plaid Integration",
-        description: "In production, this would open Plaid Link for account connection",
+        title: "Secure Integration",
+        description: "Account linking now uses secure backend processing. Use demo account for testing.",
       });
 
     } catch (error) {
@@ -109,7 +85,9 @@ export const AccountLinking: React.FC = () => {
         .insert({
           user_id: user.id,
           account_id: `demo_${Date.now()}`,
-          access_token: 'demo_token', // In production, this would be encrypted
+          access_token: 'demo_token', // Legacy field - will be migrated
+          encrypted_access_token: btoa('demo_token_encrypted'), // Demo encrypted token
+          token_iv: btoa('demo_iv'),
           institution_name: 'Demo Bank',
           account_name: 'Demo Checking',
           account_type: 'depository',

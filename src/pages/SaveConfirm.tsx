@@ -28,42 +28,78 @@ export default function SaveConfirm() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    // Parse URL parameters
-    const amountCents = parseInt(searchParams.get('amount_cents') || '0');
-    const sourceParam = searchParams.get('source') || 'manual';
-    const pushIdParam = searchParams.get('push_id');
-    const sig = searchParams.get('sig');
-    const expiresAt = searchParams.get('expires_at');
+    const verifyAndSetParams = async () => {
+      // Parse URL parameters
+      const amountCents = parseInt(searchParams.get('amount_cents') || '0');
+      const sourceParam = searchParams.get('source') || 'manual';
+      const pushIdParam = searchParams.get('push_id');
+      const sig = searchParams.get('sig');
+      const expiresAt = searchParams.get('expires_at');
 
-    // Verify signature and expiry for deep links
-    if (pushIdParam && (!sig || !expiresAt)) {
-      toast({
-        title: "Invalid Link",
-        description: "This link appears to be tampered with. Please try again.",
-        variant: "destructive"
-      });
-      navigate('/app');
-      return;
-    }
+      // Verify signature and expiry for deep links
+      if (pushIdParam && (!sig || !expiresAt)) {
+        toast({
+          title: "Invalid Link",
+          description: "This link appears to be tampered with. Please try again.",
+          variant: "destructive"
+        });
+        navigate('/app');
+        return;
+      }
 
-    if (expiresAt && new Date(expiresAt) < new Date()) {
-      toast({
-        title: "Link Expired",
-        description: "This link has expired. Please generate a new one.",
-        variant: "destructive"
-      });
-      navigate('/app');
-      return;
-    }
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        toast({
+          title: "Link Expired",
+          description: "This link has expired. Please generate a new one.",
+          variant: "destructive"
+        });
+        navigate('/app');
+        return;
+      }
 
-    setAmount(amountCents);
-    setSource(sourceParam);
-    setPushId(pushIdParam);
+      // Verify HMAC signature for security
+      if (sig && expiresAt) {
+        try {
+          const { data: isValid } = await supabase.rpc('verify_deep_link_signature', {
+            amount_cents: amountCents,
+            source: sourceParam,
+            push_id: pushIdParam,
+            expires_at: expiresAt,
+            provided_sig: sig
+          });
 
-    // Log that the push was opened
-    if (pushIdParam) {
-      logPushEvent(pushIdParam, 'opened');
-    }
+          if (!isValid) {
+            toast({
+              title: "Security Verification Failed",
+              description: "This link has been tampered with. Access denied.",
+              variant: "destructive"
+            });
+            navigate('/app');
+            return;
+          }
+        } catch (error) {
+          console.error('Signature verification failed:', error);
+          toast({
+            title: "Security Error",
+            description: "Could not verify link authenticity. Please try again.",
+            variant: "destructive"
+          });
+          navigate('/app');
+          return;
+        }
+      }
+
+      setAmount(amountCents);
+      setSource(sourceParam);
+      setPushId(pushIdParam);
+
+      // Log that the push was opened
+      if (pushIdParam) {
+        logPushEvent(pushIdParam, 'opened');
+      }
+    };
+
+    verifyAndSetParams();
   }, [searchParams, navigate, toast]);
 
   const logPushEvent = async (pushId: string, event: string) => {

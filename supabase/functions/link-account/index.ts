@@ -6,6 +6,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// AES-256-GCM encryption utilities
+const encrypt = async (plaintext: string, key: CryptoKey): Promise<{encrypted: string, iv: string}> => {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encoded = new TextEncoder().encode(plaintext);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoded
+  );
+  
+  return {
+    encrypted: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+    iv: btoa(String.fromCharCode(...iv))
+  };
+};
+
+const getEncryptionKey = async (): Promise<CryptoKey> => {
+  // In production, retrieve from secure vault
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode("secure_key_32_chars_long_12345"),
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"]
+  );
+  return keyMaterial;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -27,6 +55,11 @@ serve(async (req) => {
     }
 
     const { public_token } = await req.json();
+
+    // Validate input
+    if (!public_token || typeof public_token !== 'string') {
+      throw new Error('Invalid public token provided');
+    }
 
     // Exchange public token for access token with Plaid
     const plaidResponse = await fetch('https://production.plaid.com/link/token/exchange', {
@@ -87,12 +120,18 @@ serve(async (req) => {
     const institutionData = await institutionResponse.json();
     const institutionName = institutionData.institution?.name || 'Unknown Institution';
 
-    // Store accounts in database
+    // Encrypt the access token
+    const encryptionKey = await getEncryptionKey();
+    const { encrypted, iv } = await encrypt(access_token, encryptionKey);
+
+    // Store accounts in database with encrypted tokens
     const accountPromises = accountsData.accounts.map((account: any) => 
       supabaseClient.from('linked_accounts').insert({
         user_id: user.id,
         account_id: account.account_id,
-        access_token: access_token, // Note: In production, encrypt this
+        encrypted_access_token: encrypted,
+        token_iv: iv,
+        // Remove plaintext access_token field
         institution_name: institutionName,
         account_name: account.name,
         account_type: account.type,
@@ -102,6 +141,18 @@ serve(async (req) => {
     );
 
     await Promise.all(accountPromises);
+
+    // Log security event
+    await supabaseClient.from('security_audit_log').insert({
+      user_id: user.id,
+      event_type: 'account_linked',
+      event_details: {
+        institution: institutionName,
+        accounts_count: accountsData.accounts.length,
+        ip_address: req.headers.get('CF-Connecting-IP') || req.headers.get('X-Forwarded-For')
+      },
+      user_agent: req.headers.get('User-Agent')
+    });
 
     return new Response(JSON.stringify({ 
       success: true,

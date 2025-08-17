@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell } from 'lucide-react';
+import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Onboarding from '@/components/core/Onboarding';
 import Dashboard from '@/components/core/Dashboard';
@@ -14,6 +14,7 @@ import TemplateStore from '@/components/TemplateStore';
 import SettingsPanel from '@/components/SettingsPanel';
 import { ProjectionSettings } from '@/components/ProjectionSettings';
 import NotificationCenter from '@/components/NotificationCenter';
+import { SecurityDashboard } from '@/components/SecurityDashboard';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -125,6 +126,10 @@ const Index = () => {
               <Bell className="h-4 w-4 mr-2" />
               Notifications
             </TabsTrigger>
+            <TabsTrigger value="security" className="scroll-snap-child shrink-0">
+              <Shield className="h-4 w-4 mr-2" />
+              Security
+            </TabsTrigger>
             <TabsTrigger value="settings" className="scroll-snap-child shrink-0">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -162,6 +167,10 @@ const Index = () => {
 
         <TabsContent value="notifications">
           <NotificationCenter />
+        </TabsContent>
+
+        <TabsContent value="security">
+          <SecurityDashboard />
         </TabsContent>
 
         <TabsContent value="settings">

@@ -1,197 +1,427 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Bell, Check, X, Users, Award, Flame, PiggyBank } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Clock, DollarSign, Users, Zap } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  payload: any;
-  read: boolean;
-  created_at: string;
+// Capacitor imports for mobile push notifications
+import { PushNotifications } from '@capacitor/push-notifications';
+import { Capacitor } from '@capacitor/core';
+
+interface NotificationSettings {
+  push_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  timezone: string;
+  payday_enabled: boolean;
+  roundup_enabled: boolean;
+  streak_enabled: boolean;
+  match_enabled: boolean;
+  max_daily_pushes: number;
+  max_weekly_pushes: number;
 }
 
-const NotificationCenter = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+export default function NotificationCenter() {
   const { user } = useAuth();
   const { toast } = useToast();
-
-  const loadNotifications = async () => {
-    if (!user) return;
-
-    // TODO: Remove mock data once notifications table is created
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'save_recorded',
-        title: 'Save recorded!',
-        message: 'You saved $20 today - that\'s worth $201 in 20 years',
-        payload: {},
-        read: false,
-        created_at: new Date().toISOString()
-      },
-      {
-        id: '2', 
-        type: 'match_invite',
-        title: 'Match invitation',
-        message: 'Alex invited you to match their $15 save',
-        payload: {},
-        read: true,
-        created_at: new Date(Date.now() - 86400000).toISOString()
-      }
-    ];
-    
-    setNotifications(mockNotifications);
-    setUnreadCount(mockNotifications.filter(n => !n.read).length);
-  };
+  
+  const [settings, setSettings] = useState<NotificationSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [permissionStatus, setPermissionStatus] = useState<string>('prompt');
+  const [pushToken, setPushToken] = useState<string | null>(null);
 
   useEffect(() => {
-    loadNotifications();
+    if (user) {
+      loadSettings();
+      checkPushPermissions();
+    }
   }, [user]);
 
-  const markAsRead = async (notificationId: string) => {
-    // TODO: Implement once notifications table is created
-    setNotifications(prev => prev.map(n => 
-      n.id === notificationId ? { ...n, read: true } : n
-    ));
-    setUnreadCount(prev => Math.max(0, prev - 1));
-  };
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notification_settings')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
 
-  const markAllAsRead = async () => {
-    // TODO: Implement once notifications table is created
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
-    toast({
-      title: "All notifications marked as read",
-    });
-  };
+      if (error && error.code !== 'PGRST116') { // Not found error
+        throw error;
+      }
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'save_recorded':
-        return <PiggyBank className="h-4 w-4 text-primary" />;
-      case 'match_invite':
-        return <Users className="h-4 w-4 text-accent" />;
-      case 'badge_earned':
-        return <Award className="h-4 w-4 text-warning" />;
-      case 'streak_milestone':
-        return <Flame className="h-4 w-4 text-destructive" />;
-      default:
-        return <Bell className="h-4 w-4" />;
+      if (data) {
+        setSettings(data);
+      } else {
+        // Create default settings
+        const defaultSettings = {
+          user_id: user?.id,
+          push_enabled: true,
+          quiet_hours_start: '21:00:00',
+          quiet_hours_end: '08:00:00',
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          payday_enabled: true,
+          roundup_enabled: true,
+          streak_enabled: true,
+          match_enabled: true,
+          max_daily_pushes: 1,
+          max_weekly_pushes: 4
+        };
+
+        const { data: newSettings, error: insertError } = await supabase
+          .from('notification_settings')
+          .insert(defaultSettings)
+          .select()
+          .single();
+
+        if (insertError) throw insertError;
+        setSettings(newSettings);
+      }
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+      toast({
+        title: "Failed to Load Settings",
+        description: "Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'save_recorded':
-        return 'border-l-primary';
-      case 'match_invite':
-        return 'border-l-accent';
-      case 'badge_earned':
-        return 'border-l-warning';
-      case 'streak_milestone':
-        return 'border-l-destructive';
-      default:
-        return 'border-l-muted';
+  const checkPushPermissions = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      // Web notifications
+      if ('Notification' in window) {
+        setPermissionStatus(Notification.permission);
+      }
+      return;
+    }
+
+    try {
+      // Check current permission status
+      const permission = await PushNotifications.checkPermissions();
+      setPermissionStatus(permission.receive);
+
+      if (permission.receive === 'granted') {
+        // Get the push token
+        const result = await PushNotifications.register();
+        console.log('Push registration result:', result);
+      }
+    } catch (error) {
+      console.error('Error checking push permissions:', error);
     }
   };
+
+  const requestPushPermissions = async () => {
+    if (!Capacitor.isNativePlatform()) {
+      // Web notifications
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        setPermissionStatus(permission);
+        
+        if (permission === 'granted') {
+          toast({
+            title: "Notifications Enabled! 🎉",
+            description: "You'll now receive helpful saving reminders."
+          });
+        }
+      }
+      return;
+    }
+
+    try {
+      const permission = await PushNotifications.requestPermissions();
+      setPermissionStatus(permission.receive);
+
+      if (permission.receive === 'granted') {
+        await PushNotifications.register();
+        
+        toast({
+          title: "Notifications Enabled! 🎉",
+          description: "You'll now receive helpful saving reminders."
+        });
+      } else {
+        toast({
+          title: "Notifications Disabled",
+          description: "You can enable them later in your device settings.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error requesting push permissions:', error);
+      toast({
+        title: "Permission Error",
+        description: "Failed to request notification permissions.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateSetting = async (key: keyof NotificationSettings, value: any) => {
+    if (!settings || !user) return;
+
+    try {
+      const updatedSettings = { ...settings, [key]: value };
+      setSettings(updatedSettings);
+
+      const { error } = await supabase
+        .from('notification_settings')
+        .update({ [key]: value })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Settings Updated",
+        description: "Your notification preferences have been saved."
+      });
+    } catch (error) {
+      console.error('Error updating setting:', error);
+      toast({
+        title: "Update Failed",
+        description: "Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Loading notification settings...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p>Failed to load notification settings.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="relative">
-          <Bell className="h-4 w-4" />
-          {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-            >
-              {unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md max-h-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notifications
-            </span>
-            {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-                Mark all read
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            Notification Settings
+          </CardTitle>
+          <CardDescription>
+            Control when and how you receive saving reminders
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Permission Status */}
+          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+            <div>
+              <h3 className="font-medium">Push Notifications</h3>
+              <p className="text-sm text-muted-foreground">
+                Status: <Badge variant={permissionStatus === 'granted' ? 'default' : 'secondary'}>
+                  {permissionStatus === 'granted' ? 'Enabled' : 
+                   permissionStatus === 'denied' ? 'Disabled' : 'Not Set'}
+                </Badge>
+              </p>
+            </div>
+            {permissionStatus !== 'granted' && (
+              <Button onClick={requestPushPermissions}>
+                Enable Notifications
               </Button>
             )}
-          </DialogTitle>
-          <DialogDescription>
-            Stay updated with your saves, streaks, and social activities
-          </DialogDescription>
-        </DialogHeader>
-        
-        <div className="space-y-3 max-h-[400px] overflow-y-auto">
-          {notifications.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No notifications yet</p>
-              <p className="text-sm">Save your first amount to get started!</p>
+          </div>
+
+          {/* Master Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="push-enabled">Push Notifications</Label>
+              <p className="text-sm text-muted-foreground">
+                Receive helpful saving reminders
+              </p>
             </div>
-          ) : (
-            notifications.map((notification) => (
-              <Card 
-                key={notification.id} 
-                className={`border-l-4 ${getNotificationColor(notification.type)} ${
-                  !notification.read ? 'bg-primary/5' : ''
-                }`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1">
-                      {getNotificationIcon(notification.type)}
-                      <div className="flex-1">
-                        <h4 className="font-medium text-sm">{notification.title}</h4>
-                        {notification.message && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {notification.message}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(notification.created_at).toLocaleDateString()} at{' '}
-                          {new Date(notification.created_at).toLocaleTimeString([], { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
-                          })}
-                        </p>
+            <Switch
+              id="push-enabled"
+              checked={settings.push_enabled}
+              onCheckedChange={(checked) => updateSetting('push_enabled', checked)}
+            />
+          </div>
+
+          {settings.push_enabled && (
+            <>
+              {/* Notification Types */}
+              <div className="space-y-4">
+                <h3 className="font-medium">Notification Types</h3>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-primary" />
+                      <div>
+                        <Label>Payday Reminders</Label>
+                        <p className="text-xs text-muted-foreground">Get nudged to save when you get paid</p>
                       </div>
                     </div>
-                    {!notification.read && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => markAsRead(notification.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        <Check className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <Switch
+                      checked={settings.payday_enabled}
+                      onCheckedChange={(checked) => updateSetting('payday_enabled', checked)}
+                    />
                   </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
-export default NotificationCenter;
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <div>
+                        <Label>Round-up Alerts</Label>
+                        <p className="text-xs text-muted-foreground">Convert spare change to savings</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.roundup_enabled}
+                      onCheckedChange={(checked) => updateSetting('roundup_enabled', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🔥</span>
+                      <div>
+                        <Label>Streak Protection</Label>
+                        <p className="text-xs text-muted-foreground">Don't break your saving streak</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.streak_enabled}
+                      onCheckedChange={(checked) => updateSetting('streak_enabled', checked)}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <div>
+                        <Label>Match Invites</Label>
+                        <p className="text-xs text-muted-foreground">Friends and family match notifications</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={settings.match_enabled}
+                      onCheckedChange={(checked) => updateSetting('match_enabled', checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Quiet Hours */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <h3 className="font-medium">Quiet Hours</h3>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Start (Do Not Disturb)</Label>
+                    <Select
+                      value={settings.quiet_hours_start}
+                      onValueChange={(value) => updateSetting('quiet_hours_start', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hour} value={`${hour}:00:00`}>
+                              {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i-12}:00 PM`}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label>End (Resume)</Label>
+                    <Select
+                      value={settings.quiet_hours_end}
+                      onValueChange={(value) => updateSetting('quiet_hours_end', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const hour = i.toString().padStart(2, '0');
+                          return (
+                            <SelectItem key={hour} value={`${hour}:00:00`}>
+                              {i === 0 ? '12:00 AM' : i < 12 ? `${i}:00 AM` : i === 12 ? '12:00 PM' : `${i-12}:00 PM`}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Frequency Limits */}
+              <div className="space-y-4">
+                <h3 className="font-medium">Frequency Limits</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Max per Day</Label>
+                    <Select
+                      value={settings.max_daily_pushes.toString()}
+                      onValueChange={(value) => updateSetting('max_daily_pushes', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 notification</SelectItem>
+                        <SelectItem value="2">2 notifications</SelectItem>
+                        <SelectItem value="3">3 notifications</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label>Max per Week</Label>
+                    <Select
+                      value={settings.max_weekly_pushes.toString()}
+                      onValueChange={(value) => updateSetting('max_weekly_pushes', parseInt(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3 notifications</SelectItem>
+                        <SelectItem value="4">4 notifications</SelectItem>
+                        <SelectItem value="5">5 notifications</SelectItem>
+                        <SelectItem value="7">7 notifications</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

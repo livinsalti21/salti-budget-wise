@@ -823,6 +823,42 @@ export type Database = {
           },
         ]
       }
+      match_invites: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          expires_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          message: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       match_rules: {
         Row: {
           asset_type: string
@@ -866,6 +902,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_settings: {
+        Row: {
+          created_at: string
+          id: string
+          match_enabled: boolean
+          max_daily_pushes: number
+          max_weekly_pushes: number
+          payday_enabled: boolean
+          push_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          roundup_enabled: boolean
+          streak_enabled: boolean
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_enabled?: boolean
+          max_daily_pushes?: number
+          max_weekly_pushes?: number
+          payday_enabled?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          roundup_enabled?: boolean
+          streak_enabled?: boolean
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_enabled?: boolean
+          max_daily_pushes?: number
+          max_weekly_pushes?: number
+          payday_enabled?: boolean
+          push_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          roundup_enabled?: boolean
+          streak_enabled?: boolean
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       onboarding_suggestions: {
         Row: {
@@ -980,6 +1067,104 @@ export type Database = {
         }
         Relationships: []
       }
+      push_action_logs: {
+        Row: {
+          action: string
+          action_data: Json | null
+          created_at: string
+          id: string
+          push_event_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          action_data?: Json | null
+          created_at?: string
+          id?: string
+          push_event_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          action_data?: Json | null
+          created_at?: string
+          id?: string
+          push_event_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_action_logs_push_event_id_fkey"
+            columns: ["push_event_id"]
+            isOneToOne: false
+            referencedRelation: "push_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      push_events: {
+        Row: {
+          acted_at: string | null
+          created_at: string
+          id: string
+          payload: Json
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acted_at?: string | null
+          created_at?: string
+          id?: string
+          payload: Json
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acted_at?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      push_metrics: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          profile_id: string
+          push_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          profile_id: string
+          push_id: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          profile_id?: string
+          push_id?: string
+        }
+        Relationships: []
+      }
       referral_events: {
         Row: {
           event_type: string
@@ -1050,6 +1235,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      roundup_accumulator: {
+        Row: {
+          accumulated_cents: number
+          auto_convert_enabled: boolean
+          created_at: string
+          id: string
+          last_transaction_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          accumulated_cents?: number
+          auto_convert_enabled?: boolean
+          created_at?: string
+          id?: string
+          last_transaction_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          accumulated_cents?: number
+          auto_convert_enabled?: boolean
+          created_at?: string
+          id?: string
+          last_transaction_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       save_comments: {
         Row: {

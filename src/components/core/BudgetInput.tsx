@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Plus, DollarSign, ArrowRight } from "lucide-react";
+import { Trash2, Plus, DollarSign, ArrowRight, Edit3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface BudgetItem {
@@ -45,6 +45,8 @@ export default function BudgetInput() {
     category: '',
     planned_cents: 0
   });
+  const [customCategory, setCustomCategory] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   const saveBudget = async () => {
     if (!user || budget.items.length === 0) return;
@@ -67,6 +69,14 @@ export default function BudgetInput() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const addCustomCategory = () => {
+    if (!customCategory.trim()) return;
+    
+    setNewItem(prev => ({ ...prev, category: customCategory.trim() }));
+    setCustomCategory('');
+    setShowCustomInput(false);
   };
 
   const addItem = () => {
@@ -153,18 +163,56 @@ export default function BudgetInput() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg">
             <div>
               <Label htmlFor="category">Category</Label>
-              <Select value={newItem.category} onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map(category => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {showCustomInput ? (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter custom category"
+                    value={customCategory}
+                    onChange={(e) => setCustomCategory(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addCustomCategory()}
+                  />
+                  <Button onClick={addCustomCategory} size="sm">
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      setShowCustomInput(false);
+                      setCustomCategory('');
+                    }} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Select value={newItem.category} onValueChange={(value) => {
+                    if (value === 'custom') {
+                      setShowCustomInput(true);
+                    } else {
+                      setNewItem(prev => ({ ...prev, category: value }));
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">
+                        <div className="flex items-center gap-2">
+                          <Edit3 className="h-4 w-4" />
+                          Create Custom Category
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
             <div>
               <Label htmlFor="amount">Amount ($)</Label>

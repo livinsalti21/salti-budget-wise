@@ -12,11 +12,13 @@ import MatchASave from '@/components/MatchASave';
 import { BudgetUpload } from '@/components/BudgetUpload';
 import TemplateStore from '@/components/TemplateStore';
 import SettingsPanel from '@/components/SettingsPanel';
+import { ProjectionSettings } from '@/components/ProjectionSettings';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
 
   useEffect(() => {
     // Check if user has completed onboarding
@@ -114,6 +116,10 @@ const Index = () => {
               <Store className="h-4 w-4 mr-2" />
               Templates
             </TabsTrigger>
+            <TabsTrigger value="projections" className="scroll-snap-child shrink-0">
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Wealth Growth
+            </TabsTrigger>
             <TabsTrigger value="settings" className="scroll-snap-child shrink-0">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -143,6 +149,10 @@ const Index = () => {
 
         <TabsContent value="store">
           <TemplateStore />
+        </TabsContent>
+
+        <TabsContent value="projections">
+          <ProjectionSettings currentSavings={currentSavings} />
         </TabsContent>
 
         <TabsContent value="settings">

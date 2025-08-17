@@ -17,12 +17,12 @@ class CapacitorDeepLinkHandler implements DeepLinkHandler {
     }
 
     // Listen for app URL opens
-    const appUrlListener = App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
+    App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
       console.log('App opened via deep link:', event.url);
       this.handleDeepLink(event.url);
+    }).then(listener => {
+      this.listeners.push(() => listener.remove());
     });
-
-    this.listeners.push(() => appUrlListener.remove());
 
     // Handle the case where app was opened from a cold start with a URL
     App.getLaunchUrl().then((result) => {

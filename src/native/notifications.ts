@@ -65,8 +65,7 @@ class CapacitorNotificationService implements NotificationService {
     try {
       await PushNotifications.register();
       return new Promise((resolve) => {
-        const tokenListener = PushNotifications.addListener('registration', (token: Token) => {
-          tokenListener.remove();
+        PushNotifications.addListener('registration', (token: Token) => {
           resolve(token.value);
         });
       });
@@ -81,8 +80,9 @@ class CapacitorNotificationService implements NotificationService {
       return;
     }
 
-    const listener = PushNotifications.addListener('pushNotificationReceived', callback);
-    this.listeners.push(() => listener.remove());
+    PushNotifications.addListener('pushNotificationReceived', callback).then(listener => {
+      this.listeners.push(() => listener.remove());
+    });
   }
 
   async scheduleLocal(options: LocalNotificationOptions): Promise<void> {
@@ -140,16 +140,20 @@ class CapacitorNotificationService implements NotificationService {
       
       if (user) {
         const platform = Capacitor.getPlatform();
-        await supabase
-          .from('device_tokens')
-          .upsert({
-            user_id: user.id,
-            platform,
-            token,
-            created_at: new Date().toISOString()
-          }, {
-            onConflict: 'user_id,platform'
-          });
+        // Note: device_tokens table will be available after migration is applied
+        console.log('Would save device token:', { user_id: user.id, platform, token });
+        
+        // TODO: Uncomment once device_tokens table exists
+        // await supabase
+        //   .from('device_tokens')
+        //   .upsert({
+        //     user_id: user.id,
+        //     platform,
+        //     token,
+        //     created_at: new Date().toISOString()
+        //   }, {
+        //     onConflict: 'user_id,platform'
+        //   });
       }
     } catch (error) {
       console.error('Failed to save token to database:', error);

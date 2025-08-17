@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings } from 'lucide-react';
+import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Onboarding from '@/components/core/Onboarding';
 import Dashboard from '@/components/core/Dashboard';
@@ -13,6 +13,7 @@ import { BudgetUpload } from '@/components/BudgetUpload';
 import TemplateStore from '@/components/TemplateStore';
 import SettingsPanel from '@/components/SettingsPanel';
 import { ProjectionSettings } from '@/components/ProjectionSettings';
+import NotificationCenter from '@/components/NotificationCenter';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -120,6 +121,10 @@ const Index = () => {
               <TrendingUp className="h-4 w-4 mr-2" />
               Wealth Growth
             </TabsTrigger>
+            <TabsTrigger value="notifications" className="scroll-snap-child shrink-0">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </TabsTrigger>
             <TabsTrigger value="settings" className="scroll-snap-child shrink-0">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -153,6 +158,10 @@ const Index = () => {
 
         <TabsContent value="projections">
           <ProjectionSettings currentSavings={currentSavings} />
+        </TabsContent>
+
+        <TabsContent value="notifications">
+          <NotificationCenter />
         </TabsContent>
 
         <TabsContent value="settings">

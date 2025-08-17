@@ -140,20 +140,16 @@ class CapacitorNotificationService implements NotificationService {
       
       if (user) {
         const platform = Capacitor.getPlatform();
-        // Note: device_tokens table will be available after migration is applied
-        console.log('Would save device token:', { user_id: user.id, platform, token });
-        
-        // TODO: Uncomment once device_tokens table exists
-        // await supabase
-        //   .from('device_tokens')
-        //   .upsert({
-        //     user_id: user.id,
-        //     platform,
-        //     token,
-        //     created_at: new Date().toISOString()
-        //   }, {
-        //     onConflict: 'user_id,platform'
-        //   });
+        await supabase
+          .from('device_tokens')
+          .upsert({
+            user_id: user.id,
+            platform,
+            token,
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'user_id,platform'
+          });
       }
     } catch (error) {
       console.error('Failed to save token to database:', error);

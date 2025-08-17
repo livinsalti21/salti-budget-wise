@@ -1,0 +1,16 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": ["app.lovable.a665e8b19f80459bbacecd4049038f69"],
+        "paths": [
+          "/app/save/confirm",
+          "/app/save/choose", 
+          "/app/notify/snooze",
+          "/app/match/accept"
+        ]
+      }
+    ]
+  }
+}

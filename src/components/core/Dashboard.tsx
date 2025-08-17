@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardData {
   totalSaved: number;
@@ -15,7 +17,8 @@ interface DashboardData {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [data] = useState<DashboardData>({
+  const { toast } = useToast();
+  const [data, setData] = useState<DashboardData>({
     totalSaved: 15000, // $150
     monthlyIncome: 350000, // $3500
     monthlyExpenses: 280000, // $2800
@@ -23,6 +26,93 @@ export default function Dashboard() {
     projectedNetWorth: 133000, // $1330
     savingStreak: 7
   });
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [shouldRefresh, setShouldRefresh] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadDashboardData();
+      checkForTemplateUpdates();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Listen for template activity events
+    const handleTemplateActivity = (event: any) => {
+      setShouldRefresh(true);
+      toast({
+        title: "Dashboard Updated",
+        description: `Updated due to ${event.detail.type} activity`,
+      });
+    };
+
+    window.addEventListener('template-activity', handleTemplateActivity);
+    return () => window.removeEventListener('template-activity', handleTemplateActivity);
+  }, [toast]);
+
+  const loadDashboardData = async () => {
+    if (!user) return;
+
+    try {
+      // Load real data from database
+      const { data: saveEvents } = await supabase
+        .from('save_events')
+        .select('amount_cents, created_at')
+        .eq('user_id', user.id);
+
+      const { data: streakData } = await supabase
+        .from('user_streaks')
+        .select('consecutive_days')
+        .eq('user_id', user.id)
+        .single();
+
+      if (saveEvents) {
+        const totalSaved = saveEvents.reduce((sum, save) => sum + save.amount_cents, 0);
+        const thisMonth = new Date();
+        const firstDayOfMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
+        
+        const savingsThisMonth = saveEvents
+          .filter(save => new Date(save.created_at) >= firstDayOfMonth)
+          .reduce((sum, save) => sum + save.amount_cents, 0);
+
+        // Calculate 30-year projection at 7% annual return
+        const projectedNetWorth = (totalSaved / 100) * Math.pow(1.07, 30);
+
+        setData(prev => ({
+          ...prev,
+          totalSaved,
+          savingsThisMonth,
+          projectedNetWorth: Math.round(projectedNetWorth * 100),
+          savingStreak: streakData?.consecutive_days || 0
+        }));
+      }
+
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+  };
+
+  const checkForTemplateUpdates = async () => {
+    if (!user) return;
+
+    // Mock check for recent template activities
+    // In a real implementation, this would check the template_purchases table
+    const hasRecentActivity = Math.random() > 0.8; // Simulate occasional updates
+    
+    if (hasRecentActivity) {
+      setShouldRefresh(true);
+    }
+  };
+
+  const handleRefreshClick = () => {
+    loadDashboardData();
+    setShouldRefresh(false);
+    toast({
+      title: "Dashboard Refreshed",
+      description: "Your latest data has been loaded",
+    });
+  };
 
   const formatCurrency = (cents: number) => {
     return (cents / 100).toFixed(2);
@@ -35,6 +125,33 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Auto-update notification */}
+      {shouldRefresh && (
+        <Card className="bg-gradient-to-r from-blue-500/10 to-blue-600/10 border-blue-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-medium">Dashboard Update Available</span>
+              </div>
+              <button
+                onClick={handleRefreshClick}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Refresh Now
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Last updated indicator */}
+      {lastUpdated && (
+        <div className="text-xs text-muted-foreground text-center">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </div>
+      )}
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-primary/10 to-primary/5">

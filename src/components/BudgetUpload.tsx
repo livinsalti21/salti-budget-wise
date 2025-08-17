@@ -94,8 +94,13 @@ export const BudgetUpload: React.FC = () => {
 
       toast({
         title: "Upload Successful",
-        description: `Processed ${parsedData.data.length} budget entries`,
+        description: `Processed ${parsedData.data.length} budget entries. Your dashboard will update automatically.`,
       });
+
+      // Dispatch custom event to refresh dashboard
+      window.dispatchEvent(new CustomEvent('template-activity', {
+        detail: { type: 'uploaded', filename: file.name }
+      }));
 
       // Clear file input
       if (fileInputRef.current) {

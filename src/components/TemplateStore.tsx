@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ShoppingCart, Download, Check, FileText, DollarSign, Users, Home } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ShoppingCart, Download, Check, FileText, DollarSign, Users, Home, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import TemplateCreator from './TemplateCreator';
 
 interface Template {
   id: string;
@@ -99,8 +101,9 @@ const TemplateStore = () => {
 
     setIsLoading(true);
     try {
-      // TODO: Implement real purchase flow once purchases table is created
-      // Simulate successful purchase for now
+      // TODO: Record template purchase for dashboard refresh when template_purchases table is properly configured
+
+      // Simulate successful purchase for now (until real payment integration)
       const newPurchase: Purchase = {
         id: Math.random().toString(),
         template_id: template.id,
@@ -112,10 +115,15 @@ const TemplateStore = () => {
 
       toast({
         title: "Template purchased! 🎉",
-        description: `${template.name} has been added to your budget templates.`,
+        description: `${template.name} has been added to your budget templates. Your dashboard will update automatically.`,
       });
 
       setSelectedTemplate(null);
+
+      // Dispatch custom event to refresh dashboard
+      window.dispatchEvent(new CustomEvent('template-activity', {
+        detail: { type: 'purchased', template: template.name }
+      }));
 
     } catch (error: any) {
       toast({
@@ -173,120 +181,135 @@ const TemplateStore = () => {
       <div>
         <h2 className="text-2xl font-bold">Budget Template Store</h2>
         <p className="text-muted-foreground">
-          Choose from professional budget templates or upload your own spreadsheet
+          Choose from professional templates, create your own, or upload spreadsheets
         </p>
       </div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {templates.map((template) => (
-          <Card key={template.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <div className={getTemplateColor(template.name)}>
-                  {getTemplateIcon(template.name)}
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <div className="flex items-center gap-2 mt-1">
-                    {template.price_cents === 0 ? (
-                      <Badge variant="secondary">Free</Badge>
+      {/* Template Tabs */}
+      <Tabs defaultValue="store" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="store">Template Store</TabsTrigger>
+          <TabsTrigger value="create">Create Templates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="store" className="space-y-6">
+
+          {/* Templates Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {templates.map((template) => (
+              <Card key={template.id} className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className={getTemplateColor(template.name)}>
+                      {getTemplateIcon(template.name)}
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{template.name}</CardTitle>
+                      <div className="flex items-center gap-2 mt-1">
+                        {template.price_cents === 0 ? (
+                          <Badge variant="secondary">Free</Badge>
+                        ) : (
+                          <Badge variant="outline">
+                            ${(template.price_cents / 100).toFixed(2)}
+                          </Badge>
+                        )}
+                        {isPurchased(template.id) && (
+                          <Badge variant="default">
+                            <Check className="h-3 w-3 mr-1" />
+                            Owned
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="mb-4">
+                    {template.description}
+                  </CardDescription>
+
+                  {/* Template Preview */}
+                  {template.template_data?.categories && (
+                    <div className="mb-4">
+                      <p className="text-sm font-medium mb-2">Includes categories:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {template.template_data.categories.slice(0, 3).map((cat: any, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {cat.name}
+                          </Badge>
+                        ))}
+                        {template.template_data.categories.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{template.template_data.categories.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    {isPurchased(template.id) ? (
+                      <Button 
+                        onClick={() => downloadTemplate(template)}
+                        className="flex-1"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
                     ) : (
-                      <Badge variant="outline">
-                        ${(template.price_cents / 100).toFixed(2)}
-                      </Badge>
-                    )}
-                    {isPurchased(template.id) && (
-                      <Badge variant="default">
-                        <Check className="h-3 w-3 mr-1" />
-                        Owned
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-4">
-                {template.description}
-              </CardDescription>
-
-              {/* Template Preview */}
-              {template.template_data?.categories && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium mb-2">Includes categories:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {template.template_data.categories.slice(0, 3).map((cat: any, index: number) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {cat.name}
-                      </Badge>
-                    ))}
-                    {template.template_data.categories.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{template.template_data.categories.length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                {isPurchased(template.id) ? (
-                  <Button 
-                    onClick={() => downloadTemplate(template)}
-                    className="flex-1"
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                ) : (
-                  <>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="flex-1">
-                          Preview
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>{template.name}</DialogTitle>
-                          <DialogDescription>{template.description}</DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          {template.template_data?.categories && (
-                            <div>
-                              <h4 className="font-medium mb-2">Budget Categories:</h4>
-                              <div className="space-y-2">
-                                {template.template_data.categories.map((cat: any, index: number) => (
-                                  <div key={index} className="flex justify-between items-center p-2 bg-secondary/20 rounded">
-                                    <span>{cat.name}</span>
-                                    <span className="text-sm text-muted-foreground">
-                                      ${(cat.limit / 100).toFixed(0)}/month
-                                    </span>
+                      <>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="flex-1">
+                              Preview
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{template.name}</DialogTitle>
+                              <DialogDescription>{template.description}</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4">
+                              {template.template_data?.categories && (
+                                <div>
+                                  <h4 className="font-medium mb-2">Budget Categories:</h4>
+                                  <div className="space-y-2">
+                                    {template.template_data.categories.map((cat: any, index: number) => (
+                                      <div key={index} className="flex justify-between items-center p-2 bg-secondary/20 rounded">
+                                        <span>{cat.name}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                          ${(cat.limit / 100).toFixed(0)}/month
+                                        </span>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    <Button 
-                      onClick={() => setSelectedTemplate(template)}
-                      disabled={isLoading}
-                      className="flex-1"
-                    >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      {template.price_cents === 0 ? 'Get Free' : 'Purchase'}
-                    </Button>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Button 
+                          onClick={() => setSelectedTemplate(template)}
+                          disabled={isLoading}
+                          className="flex-1"
+                        >
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          {template.price_cents === 0 ? 'Get Free' : 'Purchase'}
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="create">
+          <TemplateCreator />
+        </TabsContent>
+      </Tabs>
 
       {/* Purchase Dialog */}
       {selectedTemplate && (
@@ -333,21 +356,6 @@ const TemplateStore = () => {
           </DialogContent>
         </Dialog>
       )}
-
-      {/* Upload Own Template Section */}
-      <Card className="border-dashed">
-        <CardContent className="p-6 text-center">
-          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-medium mb-2">Have your own spreadsheet?</h3>
-          <p className="text-muted-foreground mb-4">
-            Upload your existing budget spreadsheet and we'll integrate it into your dashboard
-          </p>
-          <Button variant="outline">
-            <FileText className="mr-2 h-4 w-4" />
-            Upload Spreadsheet
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 };

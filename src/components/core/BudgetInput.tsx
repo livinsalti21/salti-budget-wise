@@ -219,7 +219,9 @@ export default function BudgetInput() {
               <Input
                 id="amount"
                 type="number"
-                placeholder="0.00"
+                step="0.01"
+                min="0"
+                placeholder="Enter any amount"
                 value={newItem.planned_cents > 0 ? formatCurrency(newItem.planned_cents) : ''}
                 onChange={(e) => {
                   const value = parseFloat(e.target.value) || 0;

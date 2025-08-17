@@ -6,7 +6,7 @@ import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload
 import { useAuth } from '@/contexts/AuthContext';
 import Onboarding from '@/components/core/Onboarding';
 import Dashboard from '@/components/core/Dashboard';
-import BudgetInput from '@/components/core/BudgetInput';
+import EnhancedBudgetInput from '@/components/EnhancedBudgetInput';
 import SaveStack from '@/components/core/SaveStack';
 import MatchASave from '@/components/MatchASave';
 import { BudgetUpload } from '@/components/BudgetUpload';
@@ -15,6 +15,8 @@ import SettingsPanel from '@/components/SettingsPanel';
 import { ProjectionSettings } from '@/components/ProjectionSettings';
 import NotificationCenter from '@/components/NotificationCenter';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
+import SaveHistory from '@/components/SaveHistory';
+import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -118,6 +120,14 @@ const Index = () => {
               <Store className="h-4 w-4 mr-2" />
               Templates
             </TabsTrigger>
+            <TabsTrigger value="history" className="scroll-snap-child shrink-0">
+              <PiggyBank className="h-4 w-4 mr-2" />
+              Save History
+            </TabsTrigger>
+            <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">
+              <Users className="h-4 w-4 mr-2" />
+              Streaks
+            </TabsTrigger>
             <TabsTrigger value="projections" className="scroll-snap-child shrink-0">
               <TrendingUp className="h-4 w-4 mr-2" />
               Wealth Growth
@@ -146,7 +156,7 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="budget">
-          <BudgetInput />
+          <EnhancedBudgetInput />
         </TabsContent>
 
         <TabsContent value="sponsors">
@@ -159,6 +169,14 @@ const Index = () => {
 
         <TabsContent value="store">
           <TemplateStore />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <SaveHistory />
+        </TabsContent>
+
+        <TabsContent value="streaks">
+          <EnhancedStreaksDashboard />
         </TabsContent>
 
         <TabsContent value="projections">

@@ -1335,8 +1335,10 @@ export type Database = {
         Row: {
           amount_cents: number
           created_at: string
+          future_value_cents: number | null
           id: string
           note: string | null
+          reason: string | null
           source: string
           stacklet_id: string
           user_id: string
@@ -1344,8 +1346,10 @@ export type Database = {
         Insert: {
           amount_cents: number
           created_at?: string
+          future_value_cents?: number | null
           id?: string
           note?: string | null
+          reason?: string | null
           source?: string
           stacklet_id: string
           user_id: string
@@ -1353,8 +1357,10 @@ export type Database = {
         Update: {
           amount_cents?: number
           created_at?: string
+          future_value_cents?: number | null
           id?: string
           note?: string | null
+          reason?: string | null
           source?: string
           stacklet_id?: string
           user_id?: string
@@ -1565,6 +1571,42 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_types: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          is_active: boolean
+          last_activity_date: string | null
+          longest_streak: number
+          streak_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          is_active?: boolean
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          is_active?: boolean
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       table_name: {
         Row: {
           data: Json | null
@@ -1710,6 +1752,30 @@ export type Database = {
         Update: {
           created_at?: string
           role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: string
+          projection_rate_percent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          projection_rate_percent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          projection_rate_percent?: number
           updated_at?: string
           user_id?: string
         }

@@ -3,15 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Bell, Fingerprint, Shield, Smartphone, CheckCircle, XCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Bell, Fingerprint, Shield, Smartphone, CheckCircle, XCircle, TrendingUp, Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SettingsPanel = () => {
   const [pushNotifications, setPushNotifications] = useState(false);
   const [faceIdEnabled, setFaceIdEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [faceIdSupported, setFaceIdSupported] = useState(false);
+  const [projectionRate, setProjectionRate] = useState(7);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -26,7 +32,34 @@ const SettingsPanel = () => {
     
     setPushNotifications(savedPushPref === 'true');
     setFaceIdEnabled(savedFaceIdPref === 'true');
-  }, []);
+
+    // Load user settings
+    if (user) {
+      loadUserSettings();
+    }
+  }, [user]);
+
+  const loadUserSettings = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('projection_rate_percent')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      setProjectionRate(Number(data.projection_rate_percent));
+    } else if (error && error.code === 'PGRST116') {
+      // Create default settings if none exist
+      await supabase
+        .from('user_settings')
+        .insert({
+          user_id: user.id,
+          projection_rate_percent: 7
+        });
+    }
+  };
 
   const handlePushNotificationToggle = async (enabled: boolean) => {
     if (!pushSupported) {
@@ -132,6 +165,39 @@ const SettingsPanel = () => {
     }
   };
 
+  const handleProjectionRateChange = async (value: string) => {
+    const rate = parseFloat(value);
+    if (isNaN(rate) || rate < 0 || rate > 50) return;
+
+    setProjectionRate(rate);
+    
+    if (!user) return;
+
+    setIsLoading(true);
+
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: user.id,
+        projection_rate_percent: rate
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save projection rate",
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Settings Updated",
+        description: `Projection rate set to ${rate}% annually`
+      });
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
@@ -177,6 +243,44 @@ const SettingsPanel = () => {
                 onCheckedChange={handleFaceIdToggle}
                 disabled={!faceIdSupported}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Projection Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Projection Settings
+            </CardTitle>
+            <CardDescription>
+              Customize your future value calculations
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Percent className="h-4 w-4" />
+                Annual Return Rate
+              </Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.1"
+                  value={projectionRate}
+                  onChange={(e) => handleProjectionRateChange(e.target.value)}
+                  className="w-24"
+                  disabled={isLoading}
+                />
+                <span className="text-sm text-muted-foreground">% per year</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This rate is used to calculate future value projections for all your saves. 
+                Typical ranges: Conservative (3-5%), Moderate (6-8%), Aggressive (9-12%)
+              </p>
             </div>
           </CardContent>
         </Card>

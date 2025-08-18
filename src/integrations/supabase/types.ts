@@ -427,6 +427,67 @@ export type Database = {
         }
         Relationships: []
       }
+      demo_transactions: {
+        Row: {
+          amount_cents: number
+          created_at: string | null
+          id: string
+          note: string | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demo_wallets: {
+        Row: {
+          balance_cents: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_cents?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_cents?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demo_wallets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_tokens: {
         Row: {
           created_at: string
@@ -456,6 +517,58 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      encouragements: {
+        Row: {
+          created_at: string | null
+          emoji: string | null
+          from_user_id: string | null
+          group_id: string | null
+          id: string
+          note: string | null
+          to_user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          emoji?: string | null
+          from_user_id?: string | null
+          group_id?: string | null
+          id?: string
+          note?: string | null
+          to_user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          emoji?: string | null
+          from_user_id?: string | null
+          group_id?: string | null
+          id?: string
+          note?: string | null
+          to_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encouragements_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encouragements_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encouragements_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       encryption_keys: {
         Row: {
@@ -522,6 +635,109 @@ export type Database = {
           {
             foreignKeyName: "events_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_group_invites: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          group_id: string | null
+          id: string
+          invitee_email: string
+          role: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          group_id?: string | null
+          id?: string
+          invitee_email: string
+          role: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          group_id?: string | null
+          id?: string
+          invitee_email?: string
+          role?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_group_invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_group_members: {
+        Row: {
+          group_id: string
+          joined_at: string | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          joined_at?: string | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          joined_at?: string | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_groups: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          owner_user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          owner_user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          owner_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_groups_owner_user_id_fkey"
+            columns: ["owner_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1100,28 +1316,37 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          birth_year: number | null
           created_at: string
           display_name: string | null
           id: string
           lightning_address: string | null
+          mode: string | null
+          parent_email: string | null
           timezone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          birth_year?: number | null
           created_at?: string
           display_name?: string | null
           id: string
           lightning_address?: string | null
+          mode?: string | null
+          parent_email?: string | null
           timezone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          birth_year?: number | null
           created_at?: string
           display_name?: string | null
           id?: string
           lightning_address?: string | null
+          mode?: string | null
+          parent_email?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -1471,6 +1696,35 @@ export type Database = {
             columns: ["save_id"]
             isOneToOne: false
             referencedRelation: "saves"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      save_streaks: {
+        Row: {
+          current_streak: number | null
+          last_save_date: string | null
+          longest_streak: number | null
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number | null
+          last_save_date?: string | null
+          longest_streak?: number | null
+          user_id: string
+        }
+        Update: {
+          current_streak?: number | null
+          last_save_date?: string | null
+          longest_streak?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "save_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1854,6 +2108,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       decrypt_sensitive_data: {
         Args: { encrypted_obj: Json; key_name: string }
         Returns: string
@@ -1875,6 +2133,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_parent_of: {
+        Args: { child: string }
         Returns: boolean
       }
       update_user_streak: {

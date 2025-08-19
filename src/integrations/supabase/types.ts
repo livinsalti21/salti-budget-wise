@@ -1230,6 +1230,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          scheduled_for: string | null
+          sent_at: string | null
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       onboarding_suggestions: {
         Row: {
           amount_cents: number | null
@@ -1317,36 +1353,48 @@ export type Database = {
         Row: {
           avatar_url: string | null
           birth_year: number | null
+          bonus_access_until: string | null
           created_at: string
           display_name: string | null
           id: string
           lightning_address: string | null
           mode: string | null
           parent_email: string | null
+          plan: string | null
+          pro_access_until: string | null
+          stripe_customer_id: string | null
           timezone: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           birth_year?: number | null
+          bonus_access_until?: string | null
           created_at?: string
           display_name?: string | null
           id: string
           lightning_address?: string | null
           mode?: string | null
           parent_email?: string | null
+          plan?: string | null
+          pro_access_until?: string | null
+          stripe_customer_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           birth_year?: number | null
+          bonus_access_until?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           lightning_address?: string | null
           mode?: string | null
           parent_email?: string | null
+          plan?: string | null
+          pro_access_until?: string | null
+          stripe_customer_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -1497,19 +1545,28 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          referred_user_id: string | null
           referrer_id: string
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           code: string
           created_at?: string
           id?: string
+          referred_user_id?: string | null
           referrer_id: string
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           code?: string
           created_at?: string
           id?: string
+          referred_user_id?: string | null
           referrer_id?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -1520,6 +1577,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rewards: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          granted_at: string | null
+          id: string
+          is_applied: boolean | null
+          months_granted: number | null
+          reward_reason: string | null
+          reward_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          months_granted?: number | null
+          reward_reason?: string | null
+          reward_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          is_applied?: boolean | null
+          months_granted?: number | null
+          reward_reason?: string | null
+          reward_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       roundup_accumulator: {
         Row: {
@@ -1891,6 +1984,63 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_windows: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          partner_user_id: string | null
+          start_date: string
+          streak_length: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          partner_user_id?: string | null
+          start_date: string
+          streak_length?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          partner_user_id?: string | null
+          start_date?: string
+          streak_length?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      streaks_daily: {
+        Row: {
+          created_at: string | null
+          id: string
+          save_count: number | null
+          streak_date: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          save_count?: number | null
+          streak_date: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          save_count?: number | null
+          streak_date?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       table_name: {
         Row: {
           data: Json | null
@@ -2095,9 +2245,39 @@ export type Database = {
         }
         Relationships: []
       }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_weekly: {
+        Row: {
+          current_streak: number | null
+          display_name: string | null
+          saves_count: number | null
+          total_saved_cents: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_and_award_badges: {

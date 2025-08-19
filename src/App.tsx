@@ -4,10 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useNativeFeatures } from "@/hooks/useNativeFeatures";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+import AuthPage from "./components/auth/AuthPage";
 import SponsorAuth from "./pages/SponsorAuth";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import SaveConfirm from "./pages/SaveConfirm";
@@ -21,11 +21,17 @@ import SavePage from "./pages/SavePage";
 import BudgetPage from "./pages/BudgetPage";
 import ProfilePage from "./pages/ProfilePage";
 import BottomNav from "./components/ui/BottomNav";
+import OnboardingFlow from "./components/onboarding/OnboardingFlow";
+import CommunityFeed from "./components/community/CommunityFeed";
+import Leaderboard from "./components/leaderboard/Leaderboard";
+import ReferralSystem from "./components/referrals/ReferralSystem";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const { trackAnalyticsEvent } = useNativeFeatures();
+  const { user, loading } = useAuth();
+  const [showOnboarding, setShowOnboarding] = React.useState(false);
 
   // Track page views
   React.useEffect(() => {
@@ -33,6 +39,31 @@ const AppContent = () => {
       timestamp: Date.now(),
     });
   }, [trackAnalyticsEvent]);
+
+  // Check if user needs onboarding
+  React.useEffect(() => {
+    if (user && !loading) {
+      // Check if user has completed onboarding (has any saves)
+      // For now, we'll skip automatic onboarding - user can access it manually
+      setShowOnboarding(false);
+    }
+  }, [user, loading]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
+  }
 
   return (
     <>
@@ -46,8 +77,14 @@ const AppContent = () => {
         <Route path="/budget" element={<><BudgetPage /><BottomNav /></>} />
         <Route path="/profile" element={<><ProfilePage /><BottomNav /></>} />
         
+        {/* Community routes with bottom nav */}
+        <Route path="/community" element={<><CommunityFeed /><BottomNav /></>} />
+        <Route path="/leaderboard" element={<><Leaderboard /><BottomNav /></>} />
+        <Route path="/referrals" element={<><ReferralSystem /><BottomNav /></>} />
+        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => window.location.href = '/'} />} />
+        
         {/* Auth and utility routes (no bottom nav) */}
-        <Route path="/auth" element={<Auth />} />
+        <Route path="/auth" element={<AuthPage />} />
         <Route path="/sponsor-auth" element={<SponsorAuth />} />
         <Route path="/sponsor-dashboard" element={<SponsorDashboard />} />
         <Route path="/app/save/confirm" element={<SaveConfirm />} />

@@ -16,6 +16,7 @@ interface ImpactProjection {
   tenYears: number;
   twentyYears: number;
   thirtyYears: number;
+  fortyYears: number;
 }
 
 const SaveStack = () => {
@@ -27,7 +28,7 @@ const SaveStack = () => {
 
   const calculateImpactProjection = (amountCents: number): ImpactProjection => {
     const principal = amountCents / 100; // Convert to dollars
-    const annualRate = 0.07; // 7% annual return
+    const annualRate = 0.08; // 8% annual return
     
     return {
       oneYear: principal * Math.pow(1 + annualRate, 1),
@@ -35,6 +36,7 @@ const SaveStack = () => {
       tenYears: principal * Math.pow(1 + annualRate, 10),
       twentyYears: principal * Math.pow(1 + annualRate, 20),
       thirtyYears: principal * Math.pow(1 + annualRate, 30),
+      fortyYears: principal * Math.pow(1 + annualRate, 40),
     };
   };
 
@@ -150,7 +152,7 @@ const SaveStack = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">1 Year</p>
                 <p className="text-lg font-semibold text-accent">${projection.oneYear.toFixed(2)}</p>
@@ -173,6 +175,12 @@ const SaveStack = () => {
                   ${projection.thirtyYears.toFixed(2)}
                 </p>
               </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">40 Years</p>
+                <p className="text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+                  ${projection.fortyYears.toFixed(2)}
+                </p>
+              </div>
             </div>
             
             <div className="mt-4 flex gap-2">
@@ -182,7 +190,7 @@ const SaveStack = () => {
               </Button>
               <Badge variant="secondary" className="ml-auto">
                 <Target className="mr-1 h-3 w-3" />
-                7% Annual Return
+                8% Annual Return
               </Badge>
             </div>
           </CardContent>

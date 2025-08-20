@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Contact, UserPlus, Flame, Heart } from 'lucide-react';
+import { Users, UserPlus, Flame, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Contact {
@@ -95,7 +95,7 @@ export default function ContactSync() {
       <Card>
         <CardHeader className="text-center">
         <div className="mx-auto p-3 bg-primary/10 rounded-full w-fit mb-4">
-          <Contact className="h-8 w-8 text-primary" />
+          <Users className="h-8 w-8 text-primary" />
         </div>
           <CardTitle>Sync Your Contacts</CardTitle>
           <p className="text-muted-foreground">

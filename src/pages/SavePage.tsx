@@ -129,7 +129,7 @@ export default function SavePage() {
                 <CardContent className="text-center py-4">
                   <purchase.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
                   <p className="font-medium">{purchase.name}</p>
-                  <p className="text-sm text-muted-foreground">${purchase.amount}</p>
+                  <p className="text-sm text-muted-foreground">${purchase.amount.toFixed(2)}</p>
                 </CardContent>
               </Card>
             ))}
@@ -165,7 +165,7 @@ export default function SavePage() {
             <p className="text-sm text-muted-foreground mb-2">
               Saving <span className="font-semibold text-success">${displayAmount.toFixed(2)}</span> today becomes:
             </p>
-            <p className="text-2xl font-bold text-accent">
+            <p className="text-xl sm:text-2xl font-bold text-accent">
               ${futureValue.toLocaleString()}
             </p>
             <p className="text-sm text-muted-foreground">

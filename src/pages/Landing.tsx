@@ -28,7 +28,7 @@ export default function Landing() {
   };
   const handleGetStarted = () => {
     if (user) {
-      navigate("/");
+      navigate("/onboarding");
     } else {
       navigate("/auth");
     }

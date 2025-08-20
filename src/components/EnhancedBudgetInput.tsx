@@ -111,7 +111,8 @@ const EnhancedBudgetInput = () => {
         description: "Your monthly budget has been updated successfully"
       });
 
-      // Budget saved successfully
+      // Trigger a refresh of parent components by dispatching a custom event
+      window.dispatchEvent(new CustomEvent('budget-updated'));
 
     } catch (error: any) {
       toast({

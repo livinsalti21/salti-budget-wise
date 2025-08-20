@@ -86,7 +86,7 @@ const AppContent = () => {
         
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />
-        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => window.location.href = '/app'} />} />
+        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => {}} />} />
         
         {/* Auth and admin routes (no bottom nav) */}
         <Route path="/auth" element={<AuthPage />} />

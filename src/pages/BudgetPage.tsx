@@ -101,8 +101,8 @@ export default function BudgetPage() {
                         <CardTitle className="text-lg">{template.name}</CardTitle>
                         <CardDescription>{template.description}</CardDescription>
                       </div>
-                      <Badge variant="secondary" className="text-primary font-bold">
-                        ${template.price}
+                      <Badge variant="secondary" className="text-primary font-bold text-sm sm:text-base">
+                        ${template.price.toFixed(2)}
                       </Badge>
                     </div>
                   </CardHeader>

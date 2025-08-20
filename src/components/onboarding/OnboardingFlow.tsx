@@ -8,6 +8,7 @@ import { PiggyBank, Target, Zap, Users, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface OnboardingStep {
   title: string;
@@ -51,6 +52,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const progress = ((currentStep + 1) / steps.length) * 100;
 
@@ -63,7 +65,8 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       await createFirstSave();
     } else if (currentStep === 3) {
       // Complete onboarding
-      onComplete();
+        // Navigate to app after onboarding
+        navigate('/app');
       return;
     }
     

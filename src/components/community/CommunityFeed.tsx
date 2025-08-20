@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, MessageCircle, TrendingUp } from 'lucide-react';
+import { Heart, MessageCircle, Flame, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistance } from 'date-fns';
@@ -19,6 +19,7 @@ interface SavePost {
   };
   likes_count?: number;
   user_has_liked?: boolean;
+  streak_days?: number;
 }
 
 export default function CommunityFeed() {
@@ -47,7 +48,7 @@ export default function CommunityFeed() {
 
       if (error) throw error;
 
-      // Get like counts, user's likes, and profiles for each post
+      // Get like counts, user's likes, profiles and streak data for each post
       const postsWithLikes = await Promise.all(
         (saves || []).map(async (save) => {
           // Get profile for this user
@@ -55,6 +56,13 @@ export default function CommunityFeed() {
             .from('profiles')
             .select('display_name')
             .eq('id', save.user_id)
+            .single();
+
+          // Get current streak for this user
+          const { data: streakData } = await supabase
+            .from('user_streaks')
+            .select('consecutive_days')
+            .eq('user_id', save.user_id)
             .single();
 
           const { count: likesCount } = await supabase
@@ -77,7 +85,8 @@ export default function CommunityFeed() {
             ...save,
             user_profile: { display_name: profile?.display_name || null },
             likes_count: likesCount || 0,
-            user_has_liked: userHasLiked
+            user_has_liked: userHasLiked,
+            streak_days: streakData?.consecutive_days || 0
           };
         })
       );
@@ -183,10 +192,15 @@ export default function CommunityFeed() {
                     </p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-green-50 text-green-700">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  {formatCurrency(post.amount_cents)}
-                </Badge>
+                <div className="flex gap-2">
+                  <Badge variant="secondary" className="bg-orange-50 text-orange-700">
+                    <Flame className="h-3 w-3 mr-1" />
+                    {post.streak_days} day{post.streak_days !== 1 ? 's' : ''}
+                  </Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {formatCurrency(post.amount_cents)}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">

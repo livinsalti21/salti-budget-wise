@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import SocialAuth from './SocialAuth';
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -16,6 +18,7 @@ export default function AuthPage() {
     password: '',
     name: ''
   });
+  const [rememberMe, setRememberMe] = useState(false);
   
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -127,10 +130,25 @@ export default function AuthPage() {
               </div>
             </div>
 
+            {!isSignUp && (
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked === true)}
+                />
+                <Label htmlFor="remember" className="text-sm">
+                  Remember me
+                </Label>
+              </div>
+            )}
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
             </Button>
           </form>
+
+          <SocialAuth />
 
           <div className="mt-6 text-center">
             <Button

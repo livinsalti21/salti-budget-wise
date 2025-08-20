@@ -28,9 +28,14 @@ const steps: OnboardingStep[] = [
     icon: <Target className="h-8 w-8" />
   },
   {
-    title: "Make Your First Save",
-    description: "Let's stack your first save",
+    title: "Choose Your Save Amount",
+    description: "How much are you willing to save today?",
     icon: <Zap className="h-8 w-8" />
+  },
+  {
+    title: "See Your Future",
+    description: "Watch your money grow over time",
+    icon: <TrendingUp className="h-8 w-8" />
   },
   {
     title: "Join the Community",
@@ -56,14 +61,24 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const progress = ((currentStep + 1) / steps.length) * 100;
 
+  const calculateFutureValue = (dailyAmount: number, years: number) => {
+    const annualRate = 0.08;
+    const dailyRate = annualRate / 365;
+    const days = years * 365;
+    const futureValue = dailyAmount * (((1 + dailyRate) ** days - 1) / dailyRate);
+    return futureValue;
+  };
+
   const handleNext = async () => {
     if (currentStep === 1) {
       // Create first goal
       await createFirstGoal();
     } else if (currentStep === 2) {
+      // Just continue to show future value
+    } else if (currentStep === 3) {
       // Create first save
       await createFirstSave();
-    } else if (currentStep === 3) {
+    } else if (currentStep === 4) {
       // Complete onboarding
         // Navigate to app after onboarding
         navigate('/app');
@@ -216,7 +231,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           {currentStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="saveAmount">Amount Saved</Label>
+                <Label htmlFor="saveAmount">How much will you save today?</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
                   <Input
@@ -231,7 +246,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="saveReason">What did you skip?</Label>
+                <Label htmlFor="saveReason">What are you skipping?</Label>
                 <Input
                   id="saveReason"
                   value={saveReason}
@@ -239,15 +254,46 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                   placeholder="Coffee, lunch out, impulse buy..."
                 />
               </div>
-              <div className="bg-green-50 p-3 rounded-lg">
-                <p className="text-sm text-green-700">
-                  🎉 This will start your Day 1 streak!
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <p className="text-sm">
+                  💡 Choose any amount - every save counts toward your future!
                 </p>
               </div>
             </div>
           )}
 
           {currentStep === 3 && (
+            <div className="text-center space-y-6">
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-lg">
+                <h3 className="text-lg font-bold mb-4">Your Future Impact</h3>
+                <div className="text-3xl font-bold text-primary mb-2">
+                  ${calculateFutureValue(parseFloat(saveAmount) || 5, 40).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  If you save ${saveAmount} daily at 8% growth for 40 years
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-accent/10 p-4 rounded-lg">
+                  <div className="text-lg font-bold text-accent">
+                    ${calculateFutureValue(parseFloat(saveAmount) || 5, 10).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">10 years</div>
+                </div>
+                <div className="bg-success/10 p-4 rounded-lg">
+                  <div className="text-lg font-bold text-success">
+                    ${calculateFutureValue(parseFloat(saveAmount) || 5, 20).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">20 years</div>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Ready to make your first save and start building your future?
+              </p>
+            </div>
+          )}
+
+          {currentStep === 4 && (
             <div className="text-center space-y-4">
               <p>Ready to save with friends and family?</p>
               <div className="space-y-3">
@@ -270,7 +316,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             className="w-full" 
             disabled={loading}
           >
-            {loading ? 'Creating...' : (currentStep === 3 ? 'Start Stacking!' : 'Continue')}
+            {loading ? 'Creating...' : (currentStep === 4 ? 'Start Stacking!' : 'Continue')}
           </Button>
         </CardContent>
       </Card>

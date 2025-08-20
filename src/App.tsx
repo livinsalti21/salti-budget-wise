@@ -21,6 +21,7 @@ import SavePage from "./pages/SavePage";
 import BudgetPage from "./pages/BudgetPage";
 import ProfilePage from "./pages/ProfilePage";
 import RewardsPage from "./pages/RewardsPage";
+import SponsorDashboardApp from "./components/sponsor/SponsorDashboardApp";
 import BottomNav from "./components/ui/BottomNav";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import CommunityFeed from "./components/community/CommunityFeed";
@@ -83,6 +84,7 @@ const AppContent = () => {
         <Route path="/leaderboard" element={<><Leaderboard /><BottomNav /></>} />
         <Route path="/referrals" element={<><ReferralSystem /><BottomNav /></>} />
         <Route path="/rewards" element={<><RewardsPage /><BottomNav /></>} />
+        <Route path="/sponsor-dashboard-app" element={<><SponsorDashboardApp /><BottomNav /></>} />
         
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />

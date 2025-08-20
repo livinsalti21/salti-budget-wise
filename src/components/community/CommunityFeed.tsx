@@ -3,10 +3,12 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Flame, Calendar } from 'lucide-react';
+import { Heart, MessageCircle, Flame, Calendar, Trophy, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDistance } from 'date-fns';
+import LeaderboardPage from '../leaderboard/LeaderboardPage';
+import ContactSync from './ContactSync';
 
 interface SavePost {
   id: string;
@@ -23,6 +25,7 @@ interface SavePost {
 }
 
 export default function CommunityFeed() {
+  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'contacts'>('feed');
   const [posts, setPosts] = useState<SavePost[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -158,12 +161,19 @@ export default function CommunityFeed() {
     );
   }
 
-  return (
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'leaderboard':
+        return <LeaderboardPage />;
+      case 'contacts':
+        return <ContactSync />;
+      default:
+        return renderFeed();
+    }
+  };
+
+  const renderFeed = () => (
     <div className="space-y-4">
-      <div className="text-center py-4">
-        <h2 className="text-xl font-bold">Community Feed</h2>
-        <p className="text-muted-foreground">Celebrate saves together</p>
-      </div>
 
       {posts.length === 0 ? (
         <Card>
@@ -231,6 +241,50 @@ export default function CommunityFeed() {
           </Card>
         ))
       )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="text-center py-4">
+        <h2 className="text-xl font-bold">Community</h2>
+        <p className="text-muted-foreground">Connect, compete, and celebrate together</p>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex justify-center mb-6">
+        <div className="flex bg-muted p-1 rounded-lg">
+          <Button
+            variant={activeTab === 'feed' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('feed')}
+            className="flex items-center gap-2"
+          >
+            <Heart className="h-4 w-4" />
+            Feed
+          </Button>
+          <Button
+            variant={activeTab === 'leaderboard' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('leaderboard')}
+            className="flex items-center gap-2"
+          >
+            <Trophy className="h-4 w-4" />
+            Leaderboard
+          </Button>
+          <Button
+            variant={activeTab === 'contacts' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('contacts')}
+            className="flex items-center gap-2"
+          >
+            <Users className="h-4 w-4" />
+            Friends
+          </Button>
+        </div>
+      </div>
+
+      {renderTabContent()}
     </div>
   );
 }

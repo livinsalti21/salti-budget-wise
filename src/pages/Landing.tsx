@@ -219,7 +219,7 @@ export default function Landing() {
             </div>
 
             <div className="text-center">
-              <Button size="lg" className="mr-4">
+              <Button size="lg" className="mr-4" onClick={handleGetStarted}>
                 Start Saving Now
               </Button>
               <Button size="lg" variant="outline">

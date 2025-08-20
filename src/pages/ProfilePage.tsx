@@ -1,29 +1,47 @@
-import { ArrowLeft, User, Settings, HelpCircle, LogOut } from "lucide-react";
+import { ArrowLeft, User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { hasProAccess } from "@/lib/permissions/hasProAccess";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user?.id)
+        .single();
+      setProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
   };
 
+  const hasPro = hasProAccess(profile);
+
   return (
     <div className="pb-20 safe-area-top">
       <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <div className="flex items-center gap-3 max-w-md mx-auto">
-          <Link to="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-primary">Profile</h1>
-            <p className="text-sm text-muted-foreground">Account & settings</p>
-          </div>
+        <div className="max-w-md mx-auto">
+          <h1 className="text-xl font-bold text-primary">Profile</h1>
+          <p className="text-sm text-muted-foreground">Account & settings</p>
         </div>
       </header>
 
@@ -35,23 +53,64 @@ export default function ProfilePage() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <User className="h-6 w-6 text-primary" />
               </div>
-              <div>
-                <CardTitle className="text-lg">{user?.email || 'User'}</CardTitle>
-                <CardDescription>Livin Salti Member</CardDescription>
+              <div className="flex-1">
+                <CardTitle className="text-lg">{profile?.display_name || user?.email || 'User'}</CardTitle>
+                <CardDescription>
+                  {hasPro ? `${profile?.plan} Plan` : 'Free Plan'} • Livin Salti Member
+                </CardDescription>
               </div>
+              <Button variant="ghost" size="sm">
+                <Edit3 className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
         </Card>
 
         {/* Quick Actions */}
         <div className="space-y-3">
+          <Link to="/referrals">
+            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+              <CardContent className="flex items-center gap-3 py-4">
+                <UserPlus className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="font-medium">Invite Friends</p>
+                  <p className="text-sm text-muted-foreground">Share your referral link and earn rewards</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {!hasPro ? (
+            <Link to="/upgrade">
+              <Card className="hover:bg-primary/10 transition-colors cursor-pointer border-primary/20">
+                <CardContent className="flex items-center gap-3 py-4">
+                  <Crown className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="font-medium text-primary">Upgrade to Pro</p>
+                    <p className="text-sm text-muted-foreground">Unlock unlimited goals and features</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ) : (
+            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+              <CardContent className="flex items-center gap-3 py-4">
+                <CreditCard className="h-5 w-5 text-muted-foreground" />
+                <div className="flex-1">
+                  <p className="font-medium">Manage Billing</p>
+                  <p className="text-sm text-muted-foreground">View plans and payment methods</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Link to="/settings">
             <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-3 py-4">
                 <Settings className="h-5 w-5 text-muted-foreground" />
                 <div className="flex-1">
                   <p className="font-medium">Settings</p>
-                  <p className="text-sm text-muted-foreground">Notifications, privacy, and more</p>
+                  <p className="text-sm text-muted-foreground">Notifications, privacy, and preferences</p>
                 </div>
               </CardContent>
             </Card>
@@ -81,6 +140,11 @@ export default function ProfilePage() {
               </Button>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Version info */}
+        <div className="text-center pt-4">
+          <p className="text-xs text-muted-foreground">Livin Salti v1.0.0</p>
         </div>
       </main>
     </div>

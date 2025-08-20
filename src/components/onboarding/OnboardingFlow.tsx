@@ -33,7 +33,7 @@ const steps: OnboardingStep[] = [
   },
   {
     title: "Join the Community",
-    description: "See how others are stacking",
+    description: "Invite friends or join a group",
     icon: <Users className="h-8 w-8" />
   }
 ];
@@ -246,19 +246,18 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
           {currentStep === 3 && (
             <div className="text-center space-y-4">
-              <p>Here's how others are stacking their saves:</p>
-              <div className="space-y-2">
-                <div className="bg-accent/10 p-3 rounded-lg text-left">
-                  <p className="font-semibold">Sarah M.</p>
-                  <p className="text-sm text-muted-foreground">Saved $12 • 5-day streak 🔥</p>
-                </div>
-                <div className="bg-primary/10 p-3 rounded-lg text-left">
-                  <p className="font-semibold">Mike R.</p>
-                  <p className="text-sm text-muted-foreground">Saved $8 • 12-day streak 🔥</p>
-                </div>
+              <p>Ready to save with friends and family?</p>
+              <div className="space-y-3">
+                <Button variant="outline" className="w-full">
+                  <Users className="mr-2 h-4 w-4" />
+                  Join a Group
+                </Button>
+                <Button variant="outline" className="w-full">
+                  Invite Friends
+                </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Save again tomorrow to appear in the community feed!
+                Or skip for now - you can always join later in the Community tab
               </p>
             </div>
           )}

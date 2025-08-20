@@ -16,10 +16,11 @@ import SnoozeConfirm from "./pages/SnoozeConfirm";
 import MatchAccept from "./pages/MatchAccept";
 import Landing from "./pages/Landing";
 import NotFound from "./pages/NotFound";
-import HomeHub from "./pages/HomeHub";
+import Dashboard from "./pages/Dashboard";
 import SavePage from "./pages/SavePage";
 import BudgetPage from "./pages/BudgetPage";
 import ProfilePage from "./pages/ProfilePage";
+import RewardsPage from "./pages/RewardsPage";
 import BottomNav from "./components/ui/BottomNav";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import CommunityFeed from "./components/community/CommunityFeed";
@@ -71,23 +72,26 @@ const AppContent = () => {
       <Sonner />
       <Routes>
         {/* Main app routes with bottom navigation */}
-        <Route path="/app" element={<><Index /><BottomNav /></>} />
-        <Route path="/" element={<><HomeHub /><BottomNav /></>} />
+        <Route path="/app" element={<><Dashboard /><BottomNav /></>} />
+        <Route path="/" element={<><Landing /></>} />
         <Route path="/save" element={<><SavePage /><BottomNav /></>} />
         <Route path="/budget" element={<><BudgetPage /><BottomNav /></>} />
+        <Route path="/community" element={<><CommunityFeed /><BottomNav /></>} />
         <Route path="/profile" element={<><ProfilePage /><BottomNav /></>} />
         
-        {/* Community routes with bottom nav */}
-        <Route path="/community" element={<><CommunityFeed /><BottomNav /></>} />
+        {/* Secondary routes with bottom nav */}
         <Route path="/leaderboard" element={<><Leaderboard /><BottomNav /></>} />
         <Route path="/referrals" element={<><ReferralSystem /><BottomNav /></>} />
-        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => window.location.href = '/'} />} />
+        <Route path="/rewards" element={<><RewardsPage /><BottomNav /></>} />
         
-        {/* Auth and utility routes (no bottom nav) */}
+        {/* Utility routes (no bottom nav) */}
+        <Route path="/save/confirm" element={<SaveConfirm />} />
+        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => window.location.href = '/app'} />} />
+        
+        {/* Auth and admin routes (no bottom nav) */}
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/sponsor-auth" element={<SponsorAuth />} />
         <Route path="/sponsor-dashboard" element={<SponsorDashboard />} />
-        <Route path="/app/save/confirm" element={<SaveConfirm />} />
         <Route path="/app/save/choose" element={<SaveChoose />} />
         <Route path="/app/notify/snooze" element={<SnoozeConfirm />} />
         <Route path="/app/match/accept" element={<MatchAccept />} />

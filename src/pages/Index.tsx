@@ -93,18 +93,15 @@ const Index = () => {
           </p>
         </div>
 
-      {/* Main Dashboard - Always Visible */}
+      {/* Main Dashboard & Save Stack - Always Visible */}
       <div className="space-y-6">
         <Dashboard />
+        <SaveStack />
       </div>
 
-      <Tabs defaultValue="save" className="space-y-6">
+      <Tabs defaultValue="budget" className="space-y-6">
         <div className="relative">
           <TabsList className="flex gap-2 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
-            <TabsTrigger value="save" className="scroll-snap-child shrink-0">
-              <PiggyBank className="h-4 w-4 mr-2" />
-              Save & Stack
-            </TabsTrigger>
             <TabsTrigger value="budget" className="scroll-snap-child shrink-0">
               <DollarSign className="h-4 w-4 mr-2" />
               Weekly Budget
@@ -147,10 +144,6 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
         </div>
-
-        <TabsContent value="save">
-          <SaveStack />
-        </TabsContent>
 
         <TabsContent value="budget">
           <EnhancedBudgetInput />

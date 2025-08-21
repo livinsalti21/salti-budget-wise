@@ -9,8 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const EnhancedBudgetInput = () => {
-  const [monthlyIncome, setMonthlyIncome] = useState<string>('');
-  const [monthlyGoal, setMonthlyGoal] = useState<string>('');
+  const [weeklyIncome, setWeeklyIncome] = useState<string>('');
+  const [weeklyGoal, setWeeklyGoal] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -24,14 +24,17 @@ const EnhancedBudgetInput = () => {
   const loadBudgetData = async () => {
     if (!user) return;
 
-    // Load existing budget for current month
-    const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
+    // Get start of current week (Monday)
+    const today = new Date();
+    const currentWeekStart = new Date(today);
+    currentWeekStart.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1);
+    const weekStartDate = currentWeekStart.toISOString().split('T')[0];
     
     const { data } = await supabase
       .from('budgets')
       .select('*')
       .eq('user_id', user.id)
-      .eq('month', currentMonth)
+      .eq('week_start_date', weekStartDate)
       .single();
 
     if (data) {
@@ -45,17 +48,17 @@ const EnhancedBudgetInput = () => {
         const income = items.find(item => item.category === 'Income');
         const savingsGoal = items.find(item => item.category === 'Savings Goal');
         
-        if (income) setMonthlyIncome((income.planned_cents / 100).toString());
-        if (savingsGoal) setMonthlyGoal((savingsGoal.planned_cents / 100).toString());
+        if (income) setWeeklyIncome((income.planned_cents / 100).toString());
+        if (savingsGoal) setWeeklyGoal((savingsGoal.planned_cents / 100).toString());
       }
     }
   };
 
   const handleSaveBudget = async () => {
-    if (!user || !monthlyIncome) {
+    if (!user || !weeklyIncome) {
       toast({
         title: "Missing Information",
-        description: "Please enter your monthly income",
+        description: "Please enter your weekly income",
         variant: "destructive"
       });
       return;
@@ -64,17 +67,22 @@ const EnhancedBudgetInput = () => {
     setIsLoading(true);
 
     try {
-      const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
-      const incomeCents = Math.round(parseFloat(monthlyIncome) * 100);
-      const goalCents = monthlyGoal ? Math.round(parseFloat(monthlyGoal) * 100) : 0;
+      // Get start of current week (Monday)
+      const today = new Date();
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1);
+      const weekStartDate = currentWeekStart.toISOString().split('T')[0];
+      
+      const incomeCents = Math.round(parseFloat(weeklyIncome) * 100);
+      const goalCents = weeklyGoal ? Math.round(parseFloat(weeklyGoal) * 100) : 0;
 
       // Create or update budget
       const { data: budget, error: budgetError } = await supabase
         .from('budgets')
         .upsert({
           user_id: user.id,
-          month: currentMonth,
-          title: `Budget for ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+          week_start_date: weekStartDate,
+          title: `Weekly Budget - ${currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
         })
         .select()
         .single();
@@ -108,7 +116,7 @@ const EnhancedBudgetInput = () => {
 
       toast({
         title: "Budget Saved",
-        description: "Your monthly budget has been updated successfully"
+        description: "Your weekly budget has been updated successfully"
       });
 
       // Trigger a refresh of parent components by dispatching a custom event
@@ -126,8 +134,8 @@ const EnhancedBudgetInput = () => {
   };
 
   const calculateSavingsRate = () => {
-    const income = parseFloat(monthlyIncome || '0');
-    const goal = parseFloat(monthlyGoal || '0');
+    const income = parseFloat(weeklyIncome || '0');
+    const goal = parseFloat(weeklyGoal || '0');
     
     if (income > 0 && goal > 0) {
       return ((goal / income) * 100).toFixed(1);
@@ -136,7 +144,7 @@ const EnhancedBudgetInput = () => {
   };
 
   const getRecommendedSavings = () => {
-    const income = parseFloat(monthlyIncome || '0');
+    const income = parseFloat(weeklyIncome || '0');
     return {
       conservative: (income * 0.10).toFixed(2),
       moderate: (income * 0.20).toFixed(2),
@@ -149,8 +157,8 @@ const EnhancedBudgetInput = () => {
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">Monthly Budget Setup</h2>
-        <p className="text-muted-foreground">Set your income and savings goals to track your progress</p>
+        <h2 className="text-2xl font-bold">Weekly Budget Setup</h2>
+        <p className="text-muted-foreground">Set your weekly income and savings goals to track your progress</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -159,15 +167,15 @@ const EnhancedBudgetInput = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
-              Monthly Budget
+              Weekly Budget
             </CardTitle>
             <CardDescription>
-              Enter your monthly financial information
+              Enter your weekly financial information
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="income">Monthly Income</Label>
+              <Label htmlFor="income">Weekly Income</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -175,19 +183,19 @@ const EnhancedBudgetInput = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={monthlyIncome}
-                  onChange={(e) => setMonthlyIncome(e.target.value)}
+                  value={weeklyIncome}
+                  onChange={(e) => setWeeklyIncome(e.target.value)}
                   placeholder="Enter any amount"
                   className="pl-10"
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                Enter your total monthly take-home income
+                Enter your total weekly take-home income
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="goal">Monthly Savings Goal (Optional)</Label>
+              <Label htmlFor="goal">Weekly Savings Goal (Optional)</Label>
               <div className="relative">
                 <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -195,13 +203,13 @@ const EnhancedBudgetInput = () => {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={monthlyGoal}
-                  onChange={(e) => setMonthlyGoal(e.target.value)}
+                  value={weeklyGoal}
+                  onChange={(e) => setWeeklyGoal(e.target.value)}
                   placeholder="Set your savings target"
                   className="pl-10"
                 />
               </div>
-              {monthlyIncome && monthlyGoal && (
+              {weeklyIncome && weeklyGoal && (
                 <p className="text-xs text-success">
                   Savings rate: {calculateSavingsRate()}% of income
                 </p>
@@ -226,7 +234,7 @@ const EnhancedBudgetInput = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {parseFloat(monthlyIncome || '0') > 0 ? (
+            {parseFloat(weeklyIncome || '0') > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                   <div>
@@ -238,7 +246,7 @@ const EnhancedBudgetInput = () => {
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      onClick={() => setMonthlyGoal(recommendations.conservative)}
+                      onClick={() => setWeeklyGoal(recommendations.conservative)}
                       className="text-xs mt-1"
                     >
                       Use This
@@ -256,7 +264,7 @@ const EnhancedBudgetInput = () => {
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      onClick={() => setMonthlyGoal(recommendations.moderate)}
+                      onClick={() => setWeeklyGoal(recommendations.moderate)}
                       className="text-xs mt-1"
                     >
                       Use This
@@ -274,7 +282,7 @@ const EnhancedBudgetInput = () => {
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      onClick={() => setMonthlyGoal(recommendations.aggressive)}
+                      onClick={() => setWeeklyGoal(recommendations.aggressive)}
                       className="text-xs mt-1"
                     >
                       Use This
@@ -285,7 +293,7 @@ const EnhancedBudgetInput = () => {
             ) : (
               <div className="text-center py-8">
                 <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Enter your income to see personalized recommendations</p>
+                <p className="text-muted-foreground">Enter your weekly income to see personalized recommendations</p>
               </div>
             )}
           </CardContent>

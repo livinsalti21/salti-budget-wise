@@ -42,14 +42,14 @@ export default function BudgetPage() {
     <div className="pb-20 safe-area-top">
       <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
         <div className="flex items-center gap-3 max-w-md mx-auto">
-          <Link to="/">
+          <Link to="/app">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-primary">Budget</h1>
-            <p className="text-sm text-muted-foreground">Plan your finances</p>
+            <h1 className="text-xl font-bold text-primary">Weekly Budget</h1>
+            <p className="text-sm text-muted-foreground">Plan your weekly finances</p>
           </div>
         </div>
       </header>
@@ -66,7 +66,7 @@ export default function BudgetPage() {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              Create Budget
+              Create Weekly Budget
             </button>
             <button
               onClick={() => setActiveTab('templates')}
@@ -88,8 +88,8 @@ export default function BudgetPage() {
         {activeTab === 'templates' && (
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold">Budget Templates</h2>
-              <p className="text-muted-foreground">Pre-built budgets to get you started quickly</p>
+              <h2 className="text-2xl font-bold">Weekly Budget Templates</h2>
+              <p className="text-muted-foreground">Pre-built weekly budgets to get you started quickly</p>
             </div>
 
             <div className="space-y-4">
@@ -132,7 +132,7 @@ export default function BudgetPage() {
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
-              Templates automatically set up categories and suggested amounts based on your income
+              Templates automatically set up categories and suggested amounts based on your weekly income
             </div>
           </div>
         )}

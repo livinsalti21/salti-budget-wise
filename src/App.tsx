@@ -73,7 +73,7 @@ const AppContent = () => {
       <Sonner />
       <Routes>
         {/* Main app routes with bottom navigation */}
-        <Route path="/app" element={<><Dashboard /><BottomNav /></>} />
+        <Route path="/app" element={<><Index /><BottomNav /></>} />
         <Route path="/" element={<><Landing /></>} />
         <Route path="/save" element={<><SavePage /><BottomNav /></>} />
         <Route path="/budget" element={<><BudgetPage /><BottomNav /></>} />

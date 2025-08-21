@@ -11,13 +11,14 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState({
     currentStreak: 0,
-    monthlyTotal: 0,
+    weeklyTotal: 0,
+    totalSaved: 0,
     futureValue: 0
   });
 
   const [budgetData, setBudgetData] = useState({
     hasBudget: false,
-    monthlyIncome: 0,
+    weeklyIncome: 0,
     totalBudgeted: 0,
     totalSpent: 0,
     remaining: 0
@@ -51,28 +52,41 @@ export default function Dashboard() {
         .eq('user_id', user?.id)
         .single();
 
-      // Get monthly total (current month saves)
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+      // Get total saved (all time)
+      const { data: totalSaveData } = await supabase
+        .from('save_events')
+        .select('amount_cents')
+        .eq('user_id', user?.id);
 
-      const { data: saveData } = await supabase
+      const totalSaved = totalSaveData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
+
+      // Get weekly total (current week saves)
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const { data: weeklyData } = await supabase
         .from('save_events')
         .select('amount_cents')
         .eq('user_id', user?.id)
-        .gte('created_at', startOfMonth.toISOString());
+        .gte('created_at', startOfWeek.toISOString());
 
-      const monthlyTotal = saveData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
+      const weeklyTotal = weeklyData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
 
-      // Simple future value calculation (8% annual return over 30 years)
-      const monthlyAmount = monthlyTotal;
+      // Future value calculation (8% annual return over 30 years, assuming weekly savings continue)
+      const weeklyAmount = weeklyTotal || 0;
       const annualRate = 0.08;
       const years = 30;
-      const futureValue = monthlyAmount * ((Math.pow(1 + annualRate, years) - 1) / annualRate) * 12;
+      const weeksPerYear = 52;
+      
+      // Future value of annuity formula adjusted for weekly payments
+      const futureValue = weeklyAmount * weeksPerYear * ((Math.pow(1 + annualRate, years) - 1) / annualRate);
 
       setStats({
         currentStreak: streakData?.consecutive_days || 0,
-        monthlyTotal: monthlyTotal / 100,
+        weeklyTotal: weeklyTotal / 100,
+        totalSaved: totalSaved / 100,
         futureValue: futureValue / 100
       });
     } catch (error) {
@@ -82,12 +96,18 @@ export default function Dashboard() {
 
   const loadBudgetData = async () => {
     try {
-      // Check if user has any budget data
+      // Get start of current week (Monday)
+      const today = new Date();
+      const currentWeekStart = new Date(today);
+      currentWeekStart.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1);
+      const weekStartDate = currentWeekStart.toISOString().split('T')[0];
+
+      // Check if user has current week's budget
       const { data: budgets } = await supabase
         .from('budgets')
         .select('*')
         .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
+        .eq('week_start_date', weekStartDate)
         .limit(1);
 
       if (budgets && budgets.length > 0) {
@@ -104,7 +124,7 @@ export default function Dashboard() {
 
         setBudgetData({
           hasBudget: true,
-          monthlyIncome: totalBudgeted / 100, // Convert from cents
+          weeklyIncome: totalBudgeted / 100, // Convert from cents
           totalBudgeted: totalBudgeted / 100,
           totalSpent: totalSpent / 100,
           remaining: (totalBudgeted - totalSpent) / 100
@@ -112,7 +132,7 @@ export default function Dashboard() {
       } else {
         setBudgetData({
           hasBudget: false,
-          monthlyIncome: 0,
+          weeklyIncome: 0,
           totalBudgeted: 0,
           totalSpent: 0,
           remaining: 0
@@ -152,14 +172,14 @@ export default function Dashboard() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-success" />
-                <CardTitle className="text-lg">Monthly Savings</CardTitle>
+                <CardTitle className="text-lg">Total Saved</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-success">
-                ${stats.monthlyTotal.toFixed(2)}
+                ${stats.totalSaved.toLocaleString()}
               </div>
-              <CardDescription>This month's total</CardDescription>
+              <CardDescription>All time total</CardDescription>
             </CardContent>
           </Card>
 
@@ -167,14 +187,35 @@ export default function Dashboard() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-accent" />
-                <CardTitle className="text-lg">Future Net Worth</CardTitle>
+                <CardTitle className="text-lg">30Y Projection</CardTitle>
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-accent">
                 ${stats.futureValue.toLocaleString()}
               </div>
-              <CardDescription>30-year projection (8% return)</CardDescription>
+              <CardDescription>At 8% annual return</CardDescription>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Quick Stats for This Week */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold">This Week</h2>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <span className="font-medium">Weekly Goal Progress</span>
+                </div>
+                <div className="text-xl font-bold text-primary">
+                  ${stats.weeklyTotal.toFixed(2)}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Saved this week
+              </p>
             </CardContent>
           </Card>
         </section>
@@ -183,7 +224,7 @@ export default function Dashboard() {
         {budgetData.hasBudget ? (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Monthly Budget</h2>
+              <h2 className="text-lg font-semibold">Weekly Budget</h2>
               <Link to="/budget">
                 <Button variant="ghost" size="sm">View Details</Button>
               </Link>
@@ -221,15 +262,15 @@ export default function Dashboard() {
             </div>
           </section>
         ) : (
-          <Card className="border-muted bg-muted/10">
+            <Card className="border-muted bg-muted/10">
             <CardContent className="p-6 text-center">
               <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-semibold mb-2">No Budget Set</h3>
+              <h3 className="font-semibold mb-2">No Weekly Budget Set</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Create a budget to track your spending and see insights here
+                Create a weekly budget to track your spending and see insights here
               </p>
               <Link to="/budget">
-                <Button variant="outline" size="sm">Create Budget</Button>
+                <Button variant="outline" size="sm">Create Weekly Budget</Button>
               </Link>
             </CardContent>
           </Card>
@@ -237,15 +278,10 @@ export default function Dashboard() {
 
         {/* Quick actions */}
         <section className="space-y-3">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Link to="/save">
               <Button className="w-full h-12" size="lg">
                 Quick Save
-              </Button>
-            </Link>
-            <Link to="/budget">
-              <Button variant="outline" className="w-full h-12" size="lg">
-                Budget
               </Button>
             </Link>
             <Link to="/rewards">

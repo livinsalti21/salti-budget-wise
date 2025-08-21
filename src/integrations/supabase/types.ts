@@ -300,26 +300,26 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          month: string
           title: string | null
           updated_at: string | null
           user_id: string
+          week_start_date: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          month: string
           title?: string | null
           updated_at?: string | null
           user_id: string
+          week_start_date: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          month?: string
           title?: string | null
           updated_at?: string | null
           user_id?: string
+          week_start_date?: string
         }
         Relationships: []
       }
@@ -1354,9 +1354,15 @@ export type Database = {
           avatar_url: string | null
           birth_year: number | null
           bonus_access_until: string | null
+          completed_onboarding: boolean | null
           created_at: string
           display_name: string | null
+          has_budget: boolean | null
+          has_contacts: boolean | null
+          has_linked_account: boolean | null
           id: string
+          in_group: boolean | null
+          last_route: string | null
           lightning_address: string | null
           mode: string | null
           parent_email: string | null
@@ -1370,9 +1376,15 @@ export type Database = {
           avatar_url?: string | null
           birth_year?: number | null
           bonus_access_until?: string | null
+          completed_onboarding?: boolean | null
           created_at?: string
           display_name?: string | null
+          has_budget?: boolean | null
+          has_contacts?: boolean | null
+          has_linked_account?: boolean | null
           id: string
+          in_group?: boolean | null
+          last_route?: string | null
           lightning_address?: string | null
           mode?: string | null
           parent_email?: string | null
@@ -1386,9 +1398,15 @@ export type Database = {
           avatar_url?: string | null
           birth_year?: number | null
           bonus_access_until?: string | null
+          completed_onboarding?: boolean | null
           created_at?: string
           display_name?: string | null
+          has_budget?: boolean | null
+          has_contacts?: boolean | null
+          has_linked_account?: boolean | null
           id?: string
+          in_group?: boolean | null
+          last_route?: string | null
           lightning_address?: string | null
           mode?: string | null
           parent_email?: string | null
@@ -2041,6 +2059,39 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: Database["public"]["Enums"]["plan_tier"]
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       table_name: {
         Row: {
           data: Json | null
@@ -2304,6 +2355,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_week_start: {
+        Args: { input_date?: string }
+        Returns: string
+      }
       get_weekly_match_spend: {
         Args: { rule_id: string; week_start: string }
         Returns: number
@@ -2341,6 +2396,7 @@ export type Database = {
       goal_status: "active" | "completed" | "archived"
       invoice_status: "draft" | "open" | "paid" | "void" | "uncollectible"
       match_status: "pledged" | "sent" | "canceled"
+      plan_tier: "free" | "pro" | "family"
       post_visibility: "public" | "private"
       transaction_type: "debit" | "credit"
     }
@@ -2476,6 +2532,7 @@ export const Constants = {
       goal_status: ["active", "completed", "archived"],
       invoice_status: ["draft", "open", "paid", "void", "uncollectible"],
       match_status: ["pledged", "sent", "canceled"],
+      plan_tier: ["free", "pro", "family"],
       post_visibility: ["public", "private"],
       transaction_type: ["debit", "credit"],
     },

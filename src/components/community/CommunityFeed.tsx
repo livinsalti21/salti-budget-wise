@@ -25,13 +25,15 @@ interface SavePost {
 }
 
 export default function CommunityFeed() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'contacts'>('feed');
+  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'contacts' | 'streaks'>('feed');
   const [posts, setPosts] = useState<SavePost[]>([]);
+  const [friendStreaks, setFriendStreaks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     loadCommunityFeed();
+    loadFriendStreaks();
   }, []);
 
   const loadCommunityFeed = async () => {
@@ -102,6 +104,37 @@ export default function CommunityFeed() {
     }
   };
 
+  const loadFriendStreaks = async () => {
+    if (!user) return;
+
+    try {
+      // Get all friend streaks - in a real app this would filter by actual friends
+      const { data: streaks } = await supabase
+        .from('user_streaks')
+        .select(`
+          user_id,
+          consecutive_days,
+          profiles!user_streaks_user_id_fkey (display_name)
+        `)
+        .neq('user_id', user.id)
+        .gt('consecutive_days', 0)
+        .order('consecutive_days', { ascending: false });
+
+      if (streaks) {
+        const formattedStreaks = streaks.map((streak, index) => ({
+          user_id: streak.user_id,
+          consecutive_days: streak.consecutive_days,
+          rank: index + 1,
+          display_name: (streak.profiles as any)?.display_name || 'Friend',
+          created_at: new Date().toISOString() // Mock date for "started" time
+        }));
+        setFriendStreaks(formattedStreaks);
+      }
+    } catch (error) {
+      console.error('Error loading friend streaks:', error);
+    }
+  };
+
   const handleLike = async (postId: string) => {
     if (!user) return;
 
@@ -167,10 +200,65 @@ export default function CommunityFeed() {
         return <LeaderboardPage />;
       case 'contacts':
         return <ContactSync />;
+      case 'streaks':
+        return renderFriendStreaks();
       default:
         return renderFeed();
     }
   };
+
+  const renderFriendStreaks = () => (
+    <div className="space-y-4">
+      <div className="text-center py-4">
+        <h3 className="text-lg font-bold">Friend Streaks 🔥</h3>
+        <p className="text-sm text-muted-foreground">See how your friends are doing!</p>
+      </div>
+
+      {friendStreaks.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Flame className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-2">No friend streaks yet</p>
+            <p className="text-sm text-muted-foreground">Connect with friends to see their progress!</p>
+          </CardContent>
+        </Card>
+      ) : (
+        friendStreaks.map((friend) => (
+          <Card key={friend.user_id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      #{friend.rank}
+                    </Badge>
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {friend.display_name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{friend.display_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Started {formatDistance(new Date(friend.created_at), new Date(), { addSuffix: true })}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span className="text-xl font-bold text-orange-600">{friend.consecutive_days}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">days</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
 
   const renderFeed = () => (
     <div className="space-y-4">
@@ -280,6 +368,15 @@ export default function CommunityFeed() {
           >
             <Users className="h-4 w-4" />
             Friends
+          </Button>
+          <Button
+            variant={activeTab === 'streaks' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('streaks')}
+            className="flex items-center gap-2"
+          >
+            <Flame className="h-4 w-4" />
+            Streaks
           </Button>
         </div>
       </div>

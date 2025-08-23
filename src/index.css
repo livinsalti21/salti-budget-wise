@@ -147,6 +147,72 @@
   resize: none;
 }
 
+/* Mobile-first utilities and optimizations */
+@layer utilities {
+  /* Touch-friendly targets */
+  .min-h-touch {
+    min-height: 44px;
+  }
+  
+  .min-w-touch {
+    min-width: 44px;
+  }
+
+  /* Mobile spacing */
+  .mobile-container {
+    @apply max-w-md mx-auto px-4;
+  }
+
+  /* Safe area support */
+  .safe-area-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .safe-area-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  /* Mobile cards */
+  .mobile-card {
+    @apply rounded-xl border bg-card text-card-foreground shadow-sm;
+  }
+  
+  /* Touch feedback */
+  .touch-feedback {
+    @apply transition-all duration-150 active:scale-95 active:opacity-80;
+  }
+  
+  /* Mobile gradients */
+  .mobile-gradient-primary {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.05));
+  }
+  
+  /* Scrollable tabs */
+  .scroll-tabs {
+    @apply overflow-x-auto overflow-y-hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .scroll-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Mobile typography */
+  .mobile-text-lg {
+    @apply text-lg font-semibold leading-tight;
+  }
+  
+  .mobile-text-sm {
+    @apply text-sm font-medium;
+  }
+
+  /* Quick action buttons */
+  .quick-action-btn {
+    @apply min-h-touch bg-background/50 hover:bg-primary/10 border-primary/20 transition-colors duration-200;
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

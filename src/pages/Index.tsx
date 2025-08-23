@@ -4,8 +4,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import Onboarding from '@/components/core/Onboarding';
 import Dashboard from '@/components/core/Dashboard';
+import MobileDashboard from '@/components/mobile/MobileDashboard';
+import MobileSaveStack from '@/components/mobile/MobileSaveStack';
+import MobileLayout from '@/components/mobile/MobileLayout';
 import EnhancedBudgetInput from '@/components/EnhancedBudgetInput';
 import SaveStack from '@/components/core/SaveStack';
 import MatchASave from '@/components/MatchASave';
@@ -20,6 +24,7 @@ import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
+  const isMobile = useIsMobile();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
@@ -63,6 +68,54 @@ const Index = () => {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
+  // Mobile-optimized layout
+  if (isMobile) {
+    return (
+      <MobileLayout>
+        <div className="space-y-6">
+          <MobileDashboard />
+          <MobileSaveStack />
+          
+          {/* Mobile tabs - simplified */}
+          <Tabs defaultValue="budget" className="space-y-4">
+            <TabsList className="grid grid-cols-4 w-full h-12">
+              <TabsTrigger value="budget" className="text-xs">
+                <DollarSign className="h-4 w-4 mb-1" />
+                Budget
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-xs">
+                <PiggyBank className="h-4 w-4 mb-1" />
+                History
+              </TabsTrigger>
+              <TabsTrigger value="projections" className="text-xs">
+                <TrendingUp className="h-4 w-4 mb-1" />
+                Growth
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs">
+                <Settings className="h-4 w-4 mb-1" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="budget">
+              <EnhancedBudgetInput />
+            </TabsContent>
+            <TabsContent value="history">
+              <SaveHistory />
+            </TabsContent>
+            <TabsContent value="projections">
+              <ProjectionSettings currentSavings={currentSavings} />
+            </TabsContent>
+            <TabsContent value="settings">
+              <SettingsPanel />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </MobileLayout>
+    );
+  }
+
+  // Desktop layout (existing)
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
       <div className="container mx-auto px-4 md:px-6 py-6 space-y-8">

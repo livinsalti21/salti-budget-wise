@@ -57,6 +57,12 @@ export default function MobileSaveStack() {
     };
   };
 
+  const calculate35YearProjection = (amountCents: number): number => {
+    const principal = amountCents / 100;
+    const annualRate = 0.08;
+    return principal * Math.pow(1 + annualRate, 35);
+  };
+
   const handleQuickAmount = (quickAmount: string, quickReason: string) => {
     setAmount(quickAmount);
     setReason(quickReason);
@@ -86,12 +92,13 @@ export default function MobileSaveStack() {
         variant: "destructive",
       });
     } else {
-      const projection = calculateImpactProjection(amountCents);
+      const projection35Year = calculate35YearProjection(amountCents);
       
       toast({
-        title: "Save Stacked! 🎉",
-        description: `$${amount} saved! In 10 years: $${projection.tenYears.toFixed(2)}`,
-        duration: 5000,
+        title: "🚀 SAVE STACKED! 🚀",
+        description: `💰 $${amount} saved today → $${projection35Year.toFixed(2)} in 35 years at 8% return! 📈`,
+        duration: 8000,
+        className: "border-2 border-success bg-gradient-to-r from-success/20 to-primary/20 text-lg font-semibold shadow-2xl",
       });
       
       setAmount('');

@@ -37,6 +37,12 @@ export default function SaveStack() {
     };
   };
 
+  const calculate35YearProjection = (amountCents: number): number => {
+    const amount = amountCents / 100;
+    const annualRate = 0.08;
+    return amount * Math.pow(1 + annualRate, 35);
+  };
+
   const handleSaveStack = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -48,14 +54,14 @@ export default function SaveStack() {
     setLoading(true);
     try {
       const amountCents = Math.round(parseFloat(amount) * 100);
-      const projection = calculateImpactProjection(amountCents);
+      const projection35Year = calculate35YearProjection(amountCents);
       
       // Store locally for demo
       const newTotal = totalSaved + amountCents;
       setTotalSaved(newTotal);
       setSaveCount(saveCount + 1);
       
-      alert(`🎉 Save & Stack Success! $${amount} saved! In 30 years, this could be worth $${projection.thirtyYears.toFixed(2)}`);
+      alert(`🚀 SAVE STACKED! 🚀\n💰 $${amount} saved today → $${projection35Year.toFixed(2)} in 35 years at 8% return! 📈`);
 
       // Reset form
       setAmount('');

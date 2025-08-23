@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EnhancedBudgetInput from "@/components/EnhancedBudgetInput";
+import BudgetViewer from "@/components/BudgetViewer";
 import { useState } from "react";
 
 const templates = [
@@ -31,7 +32,7 @@ const templates = [
 ];
 
 export default function BudgetPage() {
-  const [activeTab, setActiveTab] = useState<'create' | 'templates'>('create');
+  const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'view'>('view');
 
   const handlePurchaseTemplate = (templateId: number) => {
     // TODO: Integrate with payment system
@@ -57,7 +58,17 @@ export default function BudgetPage() {
       {/* Tab Navigation */}
       <div className="border-b bg-background">
         <div className="max-w-md mx-auto px-4">
-          <div className="flex gap-8">
+          <div className="flex gap-6">
+            <button
+              onClick={() => setActiveTab('view')}
+              className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'view' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              My Weekly Budget
+            </button>
             <button
               onClick={() => setActiveTab('create')}
               className={`py-3 text-sm font-medium border-b-2 transition-colors ${
@@ -66,7 +77,7 @@ export default function BudgetPage() {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              Create Weekly Budget
+              Create Budget
             </button>
             <button
               onClick={() => setActiveTab('templates')}
@@ -76,13 +87,14 @@ export default function BudgetPage() {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              Templates Store
+              Templates
             </button>
           </div>
         </div>
       </div>
 
       <main className="p-4 max-w-md mx-auto">
+        {activeTab === 'view' && <BudgetViewer />}
         {activeTab === 'create' && <EnhancedBudgetInput />}
         
         {activeTab === 'templates' && (

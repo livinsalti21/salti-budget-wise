@@ -256,71 +256,102 @@ export default function MobileDashboard() {
         </Card>
       </div>
 
-      {/* Top 3 Friends Streaks */}
-      {topFriends.length > 0 && (
-        <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-300">Top Friend Streaks</h3>
+      {/* Enhanced Top 3 Friends Streaks - Prominent Section */}
+      {topFriends.length > 0 ? (
+        <Card className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10 border-purple-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-purple-500" />
+                <h3 className="text-base font-bold text-purple-700 dark:text-purple-300">Friend Streak Leaders</h3>
+              </div>
               <TouchTarget asChild>
-                <button className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                <button className="text-sm text-purple-600 dark:text-purple-400 font-medium hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
                   View All →
                 </button>
               </TouchTarget>
             </div>
-            <div className="space-y-2">
-              {topFriends.map((friend, index) => (
-                <div key={friend.user_id} className="flex items-center gap-2">
-                  <div className="text-xs font-bold text-blue-600 dark:text-blue-400">#{index + 1}</div>
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-xs">
-                      {friend.display_name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{friend.display_name}</p>
+            
+            <div className="space-y-4">
+              {topFriends.map((friend, index) => {
+                const isAhead = friend.consecutive_days > data.savingStreak;
+                const streakDiff = Math.abs(friend.consecutive_days - data.savingStreak);
+                
+                return (
+                  <div key={friend.user_id} className="bg-white/50 dark:bg-black/20 rounded-lg p-3 border border-white/30 dark:border-white/10">
+                    <div className="flex items-center gap-3">
+                      {/* Rank Badge */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        index === 0 ? 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30' :
+                        index === 1 ? 'bg-gray-400/20 text-gray-700 border border-gray-400/30' :
+                        'bg-orange-500/20 text-orange-700 border border-orange-500/30'
+                      }`}>
+                        #{index + 1}
+                      </div>
+                      
+                      {/* Avatar */}
+                      <Avatar className="h-12 w-12 border-2 border-white/50">
+                        <AvatarFallback className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-700 dark:text-purple-300 text-sm font-bold">
+                          {friend.display_name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      
+                      {/* Name and Streak */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{friend.display_name}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Flame className="h-4 w-4 text-orange-500" />
+                            <span className="text-lg font-bold text-orange-600">{friend.consecutive_days} days</span>
+                          </div>
+                          {streakDiff > 0 && (
+                            <Badge variant="outline" className={`text-xs ${
+                              isAhead ? 'bg-red-500/10 text-red-700 border-red-500/30' : 'bg-green-500/10 text-green-700 border-green-500/30'
+                            }`}>
+                              {isAhead ? `+${streakDiff} ahead` : `-${streakDiff} behind`}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Cheer Button */}
+                      <TouchTarget asChild>
+                        <button className="px-3 py-1.5 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-full text-xs font-medium text-pink-700 dark:text-pink-300 hover:from-pink-500/30 hover:to-purple-500/30 transition-all">
+                          🎉 Cheer
+                        </button>
+                      </TouchTarget>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Flame className="h-3 w-3 text-orange-500" />
-                    <span className="text-xs font-bold text-orange-600">{friend.consecutive_days}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
+            
+            {/* Motivational Footer */}
+            <div className="mt-4 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
+              <p className="text-center text-sm text-muted-foreground">
+                💪 Keep saving to climb the leaderboard!
+              </p>
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
+          <CardContent className="p-6 text-center">
+            <div className="mb-3">
+              <Crown className="h-8 w-8 text-blue-500 mx-auto" />
+            </div>
+            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">No Friend Streaks Yet</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Invite friends to start competing and motivating each other!
+            </p>
+            <TouchTarget asChild>
+              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-600 transition-all">
+                Invite Friends
+              </button>
+            </TouchTarget>
+          </CardContent>
+        </Card>
       )}
-
-      {/* Weekly Breakdown - Compact */}
-      <Card className="bg-gradient-to-r from-muted/30 to-muted/10">
-        <CardContent className="p-3">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <DollarSign className="h-4 w-4 text-success mx-auto mb-1" />
-              <p className="text-sm font-semibold text-success">
-                ${formatCurrency(data.weeklyIncome)}
-              </p>
-              <p className="text-xs text-muted-foreground">Income</p>
-            </div>
-            
-            <div>
-              <TrendingDown className="h-4 w-4 text-destructive mx-auto mb-1" />
-              <p className="text-sm font-semibold text-destructive">
-                ${formatCurrency(data.weeklyExpenses)}
-              </p>
-              <p className="text-xs text-muted-foreground">Expenses</p>
-            </div>
-            
-            <div>
-              <Target className="h-4 w-4 text-primary mx-auto mb-1" />
-              <p className="text-sm font-semibold text-primary">
-                ${formatCurrency(data.savingsThisWeek)}
-              </p>
-              <p className="text-xs text-muted-foreground">Saved</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -74,42 +74,6 @@ const Index = () => {
       <MobileLayout>
         <div className="space-y-6">
           <MobileDashboard />
-          <MobileSaveStack />
-          
-          {/* Mobile tabs - simplified */}
-          <Tabs defaultValue="budget" className="space-y-4">
-            <TabsList className="grid grid-cols-4 w-full h-12">
-              <TabsTrigger value="budget" className="text-xs">
-                <DollarSign className="h-4 w-4 mb-1" />
-                Budget
-              </TabsTrigger>
-              <TabsTrigger value="history" className="text-xs">
-                <PiggyBank className="h-4 w-4 mb-1" />
-                History
-              </TabsTrigger>
-              <TabsTrigger value="projections" className="text-xs">
-                <TrendingUp className="h-4 w-4 mb-1" />
-                Growth
-              </TabsTrigger>
-              <TabsTrigger value="settings" className="text-xs">
-                <Settings className="h-4 w-4 mb-1" />
-                Settings
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="budget">
-              <EnhancedBudgetInput />
-            </TabsContent>
-            <TabsContent value="history">
-              <SaveHistory />
-            </TabsContent>
-            <TabsContent value="projections">
-              <ProjectionSettings currentSavings={currentSavings} />
-            </TabsContent>
-            <TabsContent value="settings">
-              <SettingsPanel />
-            </TabsContent>
-          </Tabs>
         </div>
       </MobileLayout>
     );
@@ -146,19 +110,14 @@ const Index = () => {
           </p>
         </div>
 
-      {/* Main Dashboard & Save Stack - Always Visible */}
-      <div className="space-y-6">
-        <Dashboard />
-        <SaveStack />
-      </div>
+        {/* Main Dashboard - Always Visible */}
+        <div className="space-y-6">
+          <Dashboard />
+        </div>
 
-      <Tabs defaultValue="budget" className="space-y-6">
+      <Tabs defaultValue="sponsors" className="space-y-6">
         <div className="relative">
           <TabsList className="flex gap-2 overflow-x-auto whitespace-nowrap [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:hidden scroll-snap-x pb-1 w-max min-w-full bg-transparent">
-            <TabsTrigger value="budget" className="scroll-snap-child shrink-0">
-              <DollarSign className="h-4 w-4 mr-2" />
-              Weekly Budget
-            </TabsTrigger>
             <TabsTrigger value="sponsors" className="scroll-snap-child shrink-0">
               <Heart className="h-4 w-4 mr-2" />
               Sponsors
@@ -171,17 +130,9 @@ const Index = () => {
               <Store className="h-4 w-4 mr-2" />
               Templates
             </TabsTrigger>
-            <TabsTrigger value="history" className="scroll-snap-child shrink-0">
-              <PiggyBank className="h-4 w-4 mr-2" />
-              Save History
-            </TabsTrigger>
             <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">
               <Users className="h-4 w-4 mr-2" />
               Streaks
-            </TabsTrigger>
-            <TabsTrigger value="projections" className="scroll-snap-child shrink-0">
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Wealth Growth
             </TabsTrigger>
             <TabsTrigger value="notifications" className="scroll-snap-child shrink-0">
               <Bell className="h-4 w-4 mr-2" />
@@ -191,16 +142,8 @@ const Index = () => {
               <Shield className="h-4 w-4 mr-2" />
               Security
             </TabsTrigger>
-            <TabsTrigger value="settings" className="scroll-snap-child shrink-0">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </TabsTrigger>
           </TabsList>
         </div>
-
-        <TabsContent value="budget">
-          <EnhancedBudgetInput />
-        </TabsContent>
 
         <TabsContent value="sponsors">
           <MatchASave />
@@ -214,16 +157,8 @@ const Index = () => {
           <TemplateStore />
         </TabsContent>
 
-        <TabsContent value="history">
-          <SaveHistory />
-        </TabsContent>
-
         <TabsContent value="streaks">
           <EnhancedStreaksDashboard />
-        </TabsContent>
-
-        <TabsContent value="projections">
-          <ProjectionSettings currentSavings={currentSavings} />
         </TabsContent>
 
         <TabsContent value="notifications">
@@ -232,10 +167,6 @@ const Index = () => {
 
         <TabsContent value="security">
           <SecurityDashboard />
-        </TabsContent>
-
-        <TabsContent value="settings">
-          <SettingsPanel />
         </TabsContent>
       </Tabs>
       </div>

@@ -8,9 +8,9 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DashboardData {
   totalSaved: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  savingsThisMonth: number;
+  weeklyIncome: number;
+  weeklyExpenses: number;
+  savingsThisWeek: number;
   projectedNetWorth: number;
   savingStreak: number;
 }
@@ -20,9 +20,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [data, setData] = useState<DashboardData>({
     totalSaved: 15000, // $150
-    monthlyIncome: 350000, // $3500
-    monthlyExpenses: 280000, // $2800
-    savingsThisMonth: 5000, // $50
+    weeklyIncome: 87500, // $875 (3500/4 weeks)
+    weeklyExpenses: 70000, // $700 (2800/4 weeks)
+    savingsThisWeek: 1250, // $12.50
     projectedNetWorth: 133000, // $1330
     savingStreak: 7
   });
@@ -68,11 +68,11 @@ export default function Dashboard() {
 
       if (saveEvents) {
         const totalSaved = saveEvents.reduce((sum, save) => sum + save.amount_cents, 0);
-        const thisMonth = new Date();
-        const firstDayOfMonth = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         
-        const savingsThisMonth = saveEvents
-          .filter(save => new Date(save.created_at) >= firstDayOfMonth)
+        const savingsThisWeek = saveEvents
+          .filter(save => new Date(save.created_at) >= weekAgo)
           .reduce((sum, save) => sum + save.amount_cents, 0);
 
         // Calculate 30-year projection at 7% annual return
@@ -81,7 +81,7 @@ export default function Dashboard() {
         setData(prev => ({
           ...prev,
           totalSaved,
-          savingsThisMonth,
+          savingsThisWeek,
           projectedNetWorth: Math.round(projectedNetWorth * 100),
           savingStreak: streakData?.consecutive_days || 0
         }));
@@ -119,7 +119,7 @@ export default function Dashboard() {
   };
 
   const getBalanceColor = () => {
-    const balance = data.monthlyIncome - data.monthlyExpenses;
+    const balance = data.weeklyIncome - data.weeklyExpenses;
     return balance >= 0 ? 'text-success' : 'text-destructive';
   };
 
@@ -172,12 +172,12 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Monthly Balance</p>
+                <p className="text-sm font-medium text-muted-foreground">Weekly Balance</p>
                 <p className={`text-2xl font-bold ${getBalanceColor()}`}>
-                  ${formatCurrency(data.monthlyIncome - data.monthlyExpenses)}
+                  ${formatCurrency(data.weeklyIncome - data.weeklyExpenses)}
                 </p>
               </div>
-              {data.monthlyIncome - data.monthlyExpenses >= 0 ? 
+              {data.weeklyIncome - data.weeklyExpenses >= 0 ? 
                 <TrendingUp className="h-8 w-8 text-success" /> :
                 <TrendingDown className="h-8 w-8 text-destructive" />
               }
@@ -189,9 +189,9 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">This Month</p>
+                <p className="text-sm font-medium text-muted-foreground">This Week</p>
                 <p className="text-2xl font-bold text-accent">
-                  ${formatCurrency(data.savingsThisMonth)}
+                  ${formatCurrency(data.savingsThisWeek)}
                 </p>
               </div>
               <Calendar className="h-8 w-8 text-accent" />
@@ -214,36 +214,36 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Monthly Summary */}
+      {/* Weekly Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Monthly Summary</CardTitle>
-          <CardDescription>Your financial overview for this month</CardDescription>
+          <CardTitle>Weekly Summary</CardTitle>
+          <CardDescription>Your financial overview for this week</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center p-4 bg-gradient-to-br from-success/10 to-success/5 rounded-lg">
               <DollarSign className="h-8 w-8 text-success mx-auto mb-2" />
               <div className="text-2xl font-bold text-success">
-                ${formatCurrency(data.monthlyIncome)}
+                ${formatCurrency(data.weeklyIncome)}
               </div>
-              <div className="text-sm text-muted-foreground">Monthly Income</div>
+              <div className="text-sm text-muted-foreground">Weekly Income</div>
             </div>
             
             <div className="text-center p-4 bg-gradient-to-br from-destructive/10 to-destructive/5 rounded-lg">
               <TrendingDown className="h-8 w-8 text-destructive mx-auto mb-2" />
               <div className="text-2xl font-bold text-destructive">
-                ${formatCurrency(data.monthlyExpenses)}
+                ${formatCurrency(data.weeklyExpenses)}
               </div>
-              <div className="text-sm text-muted-foreground">Monthly Expenses</div>
+              <div className="text-sm text-muted-foreground">Weekly Expenses</div>
             </div>
             
             <div className="text-center p-4 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg">
               <Target className="h-8 w-8 text-primary mx-auto mb-2" />
               <div className="text-2xl font-bold text-primary">
-                ${formatCurrency(data.savingsThisMonth)}
+                ${formatCurrency(data.savingsThisWeek)}
               </div>
-              <div className="text-sm text-muted-foreground">Saved This Month</div>
+              <div className="text-sm text-muted-foreground">Saved This Week</div>
             </div>
           </div>
           

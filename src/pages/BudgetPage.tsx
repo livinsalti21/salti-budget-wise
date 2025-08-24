@@ -1,11 +1,14 @@
-import { ArrowLeft, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Sparkles, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EnhancedBudgetInput from "@/components/EnhancedBudgetInput";
 import BudgetViewer from "@/components/BudgetViewer";
+import AiBudgetInput from "@/components/AiBudgetInput";
+import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
 import { useState } from "react";
+import type { BudgetInput } from "@/lib/budgetUtils";
 
 const templates = [
   {
@@ -32,11 +35,18 @@ const templates = [
 ];
 
 export default function BudgetPage() {
-  const [activeTab, setActiveTab] = useState<'create' | 'templates' | 'view'>('view');
+  const [activeTab, setActiveTab] = useState<'ai-create' | 'create' | 'templates' | 'view' | 'dashboard'>('ai-create');
+  const [aiBudgetData, setAiBudgetData] = useState<BudgetInput | null>(null);
 
   const handlePurchaseTemplate = (templateId: number) => {
     // TODO: Integrate with payment system
     console.log('Purchase template:', templateId);
+  };
+
+  const handleBudgetExtracted = (budgetData: BudgetInput) => {
+    setAiBudgetData(budgetData);
+    // Auto-switch to dashboard view when budget is created
+    setActiveTab('dashboard');
   };
 
   return (
@@ -49,8 +59,14 @@ export default function BudgetPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-primary">Weekly Budget</h1>
-            <p className="text-sm text-muted-foreground">Plan your weekly finances</p>
+            <h1 className="text-xl font-bold text-primary">
+              {activeTab === 'ai-create' || activeTab === 'dashboard' ? 'AI Weekly Budget' : 'Weekly Budget'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {activeTab === 'ai-create' ? 'Describe your finances, get instant budget' : 
+               activeTab === 'dashboard' ? 'Your personalized weekly budget plan' :
+               'Plan your weekly finances'}
+            </p>
           </div>
         </div>
       </header>
@@ -58,30 +74,58 @@ export default function BudgetPage() {
       {/* Tab Navigation */}
       <div className="border-b bg-background">
         <div className="max-w-md mx-auto px-4">
-          <div className="flex gap-6">
+          <div className="flex gap-4 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('ai-create')}
+              className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                activeTab === 'ai-create' 
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <div className="flex items-center gap-1">
+                <Sparkles className="h-4 w-4" />
+                AI Budget
+              </div>
+            </button>
+            {aiBudgetData && (
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === 'dashboard' 
+                    ? 'border-primary text-primary' 
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-1">
+                  <BarChart3 className="h-4 w-4" />
+                  Dashboard
+                </div>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('view')}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'view' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              My Weekly Budget
+              Legacy Budget
             </button>
             <button
               onClick={() => setActiveTab('create')}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'create' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              Create Budget
+              Manual Create
             </button>
             <button
               onClick={() => setActiveTab('templates')}
-              className={`py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`py-3 px-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'templates' 
                   ? 'border-primary text-primary' 
                   : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -94,6 +138,14 @@ export default function BudgetPage() {
       </div>
 
       <main className="p-4 max-w-md mx-auto">
+        {activeTab === 'ai-create' && (
+          <AiBudgetInput onBudgetExtracted={handleBudgetExtracted} />
+        )}
+        
+        {activeTab === 'dashboard' && aiBudgetData && (
+          <WeeklyBudgetDashboard budgetData={aiBudgetData} />
+        )}
+        
         {activeTab === 'view' && <BudgetViewer />}
         {activeTab === 'create' && <EnhancedBudgetInput />}
         

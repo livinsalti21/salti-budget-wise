@@ -25,7 +25,7 @@ import PricingPage from "./pages/PricingPage";
 import SponsorDashboardApp from "./components/sponsor/SponsorDashboardApp";
 import BottomNav from "./components/ui/BottomNav";
 import OnboardingFlow from "./components/onboarding/OnboardingFlow";
-import CommunityFeed from "./components/community/CommunityFeed";
+import MatchPage from "./components/community/MatchPage";
 import Leaderboard from "./components/leaderboard/Leaderboard";
 import ReferralSystem from "./components/referrals/ReferralSystem";
 
@@ -78,7 +78,7 @@ const AppContent = () => {
         <Route path="/" element={<><Landing /></>} />
         <Route path="/save" element={<><SavePage /><BottomNav /></>} />
         <Route path="/budget" element={<><BudgetPage /><BottomNav /></>} />
-        <Route path="/community" element={<><CommunityFeed /><BottomNav /></>} />
+        <Route path="/community" element={<><MatchPage /><BottomNav /></>} />
         <Route path="/profile" element={<><ProfilePage /><BottomNav /></>} />
         <Route path="/pricing" element={<><PricingPage /><BottomNav /></>} />
         

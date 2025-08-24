@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, MessageCircle, Flame, Calendar, Trophy, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Heart, MessageCircle, Flame, Trophy, Users, Plus, DollarSign, Pause, Play, CreditCard, Gift } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 import { formatDistance } from 'date-fns';
 import LeaderboardPage from '../leaderboard/LeaderboardPage';
 import ContactSync from './ContactSync';
@@ -24,16 +28,47 @@ interface SavePost {
   streak_days?: number;
 }
 
-export default function CommunityFeed() {
-  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'contacts' | 'streaks'>('feed');
+interface MatchRule {
+  id: string;
+  percent: number;
+  cap_cents_weekly: number;
+  asset_type: 'CASH' | 'BTC';
+  status: 'active' | 'paused';
+  created_at: string;
+  sponsors: {
+    email: string;
+    stripe_customer_id: string | null;
+  };
+}
+
+interface MatchEvent {
+  id: string;
+  original_amount_cents: number;
+  match_amount_cents: number;
+  charge_status: string;
+  created_at: string;
+  sponsors: {
+    email: string;
+  };
+}
+
+export default function MatchPage() {
+  const [activeTab, setActiveTab] = useState<'feed' | 'leaderboard' | 'friends' | 'streaks' | 'match'>('feed');
   const [posts, setPosts] = useState<SavePost[]>([]);
   const [friendStreaks, setFriendStreaks] = useState<any[]>([]);
+  const [matchRules, setMatchRules] = useState<MatchRule[]>([]);
+  const [recentMatches, setRecentMatches] = useState<MatchEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     loadCommunityFeed();
     loadFriendStreaks();
+    loadMatchData();
   }, []);
 
   const loadCommunityFeed = async () => {
@@ -135,6 +170,42 @@ export default function CommunityFeed() {
     }
   };
 
+  const loadMatchData = async () => {
+    if (!user) return;
+
+    // Load match rules for this user
+    const { data: rulesData, error: rulesError } = await supabase
+      .from('match_rules')
+      .select(`
+        *,
+        sponsors (email, stripe_customer_id)
+      `)
+      .eq('recipient_user_id', user.id);
+
+    if (rulesError) {
+      console.error('Error loading match rules:', rulesError);
+    } else {
+      setMatchRules((rulesData || []) as MatchRule[]);
+    }
+
+    // Load recent match events
+    const { data: eventsData, error: eventsError } = await supabase
+      .from('match_events')
+      .select(`
+        *,
+        sponsors (email)
+      `)
+      .eq('recipient_user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (eventsError) {
+      console.error('Error loading match events:', eventsError);
+    } else {
+      setRecentMatches((eventsData || []) as MatchEvent[]);
+    }
+  };
+
   const handleLike = async (postId: string) => {
     if (!user) return;
 
@@ -178,8 +249,39 @@ export default function CommunityFeed() {
     }
   };
 
+  const handleInviteSponsor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !inviteEmail.trim()) return;
+    
+    setIsLoading(true);
+
+    // For now, just show a success message
+    // In production, this would send an actual email invitation
+    toast({
+      title: "Invitation sent! 📧",
+      description: `We've sent an invitation to ${inviteEmail} to become your savings sponsor.`,
+    });
+    
+    setInviteEmail('');
+    setShowInviteDialog(false);
+    setIsLoading(false);
+  };
+
   const formatCurrency = (cents: number) => {
     return `$${(cents / 100).toFixed(2)}`;
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'succeeded':
+        return <Badge variant="default" className="bg-success">✅ Paid</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">⏳ Pending</Badge>;
+      case 'failed':
+        return <Badge variant="destructive">❌ Failed</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
   };
 
   if (loading) {
@@ -198,10 +300,12 @@ export default function CommunityFeed() {
     switch (activeTab) {
       case 'leaderboard':
         return <LeaderboardPage />;
-      case 'contacts':
+      case 'friends':
         return <ContactSync />;
       case 'streaks':
         return renderFriendStreaks();
+      case 'match':
+        return renderMatchTab();
       default:
         return renderFeed();
     }
@@ -262,7 +366,6 @@ export default function CommunityFeed() {
 
   const renderFeed = () => (
     <div className="space-y-4">
-
       {posts.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
@@ -332,21 +435,158 @@ export default function CommunityFeed() {
     </div>
   );
 
+  const renderMatchTab = () => (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-bold">Match-a-Save</h3>
+          <p className="text-sm text-muted-foreground">Family & friends can match your saves automatically</p>
+        </div>
+        
+        <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+          <DialogTrigger asChild>
+            <Button size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Invite
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Invite Family or Friends</DialogTitle>
+              <DialogDescription>
+                Invite someone to become your savings sponsor and automatically match your saves
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleInviteSponsor} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="grandma@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  required
+                />
+                <p className="text-sm text-muted-foreground">
+                  They'll receive an email with instructions to set up matching
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1" disabled={isLoading}>
+                  {isLoading ? 'Sending...' : 'Send Invitation'}
+                </Button>
+                <Button type="button" variant="outline" onClick={() => setShowInviteDialog(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Active Match Rules */}
+      {matchRules.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Heart className="h-4 w-4 text-red-500" />
+              Your Sponsors ({matchRules.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {matchRules.map((rule) => (
+                <div key={rule.id} className="flex items-center justify-between p-3 bg-gradient-to-r from-red-500/10 to-pink-500/10 rounded-lg border border-red-500/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {rule.sponsors.email.charAt(0).toUpperCase()}
+                    </div>
+                    
+                    <div>
+                      <h4 className="font-medium text-sm">{rule.sponsors.email}</h4>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{rule.percent}% match</span>
+                        <span>${(rule.cap_cents_weekly / 100).toFixed(0)}/week cap</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Badge variant={rule.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                    {rule.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Matches */}
+      {recentMatches.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Gift className="h-4 w-4 text-green-500" />
+              Recent Matches
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {recentMatches.map((match) => (
+                <div key={match.id} className="flex items-center justify-between p-3 rounded-lg bg-secondary/20">
+                  <div>
+                    <p className="font-medium text-sm">
+                      {formatCurrency(match.match_amount_cents)} matched
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      From {match.sponsors.email}
+                    </p>
+                  </div>
+                  
+                  <div className="text-right">
+                    {getStatusBadge(match.charge_status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {matchRules.length === 0 && (
+        <Card className="p-6 text-center">
+          <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="font-semibold mb-2">No sponsors yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Invite family or friends to automatically match your saves
+          </p>
+          <Button onClick={() => setShowInviteDialog(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Invite Your First Sponsor
+          </Button>
+        </Card>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       <div className="text-center py-4">
-        <h2 className="text-xl font-bold">Community</h2>
-        <p className="text-muted-foreground">Connect, compete, and celebrate together</p>
+        <h2 className="text-xl font-bold">Match</h2>
+        <p className="text-muted-foreground">Connect, compete, and get matched</p>
       </div>
 
       {/* Tab Navigation */}
       <div className="flex justify-center mb-6">
-        <div className="flex bg-muted p-1 rounded-lg">
+        <div className="flex bg-muted p-1 rounded-lg overflow-x-auto">
           <Button
             variant={activeTab === 'feed' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('feed')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 whitespace-nowrap"
           >
             <Heart className="h-4 w-4" />
             Feed
@@ -355,16 +595,16 @@ export default function CommunityFeed() {
             variant={activeTab === 'leaderboard' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('leaderboard')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 whitespace-nowrap"
           >
             <Trophy className="h-4 w-4" />
             Leaderboard
           </Button>
           <Button
-            variant={activeTab === 'contacts' ? 'default' : 'ghost'}
+            variant={activeTab === 'friends' ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActiveTab('contacts')}
-            className="flex items-center gap-2"
+            onClick={() => setActiveTab('friends')}
+            className="flex items-center gap-2 whitespace-nowrap"
           >
             <Users className="h-4 w-4" />
             Friends
@@ -373,10 +613,19 @@ export default function CommunityFeed() {
             variant={activeTab === 'streaks' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setActiveTab('streaks')}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 whitespace-nowrap"
           >
             <Flame className="h-4 w-4" />
             Streaks
+          </Button>
+          <Button
+            variant={activeTab === 'match' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setActiveTab('match')}
+            className="flex items-center gap-2 whitespace-nowrap"
+          >
+            <Gift className="h-4 w-4" />
+            Match
           </Button>
         </div>
       </div>

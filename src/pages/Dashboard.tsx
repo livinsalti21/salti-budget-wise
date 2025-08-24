@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
+import BudgetProgress from "@/components/BudgetProgress";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -198,6 +199,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </section>
+
+        {/* Budget Progress */}
+        <BudgetProgress />
 
         {/* Quick Stats for This Week */}
         <section className="space-y-4">

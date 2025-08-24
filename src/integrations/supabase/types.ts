@@ -195,6 +195,38 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_inputs: {
+        Row: {
+          created_at: string | null
+          id: string
+          input_method: string | null
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          input_method?: string | null
+          payload: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          input_method?: string | null
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_inputs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_items: {
         Row: {
           actual_cents: number
@@ -1356,6 +1388,7 @@ export type Database = {
           bonus_access_until: string | null
           completed_onboarding: boolean | null
           created_at: string
+          default_splits: Json | null
           display_name: string | null
           has_budget: boolean | null
           has_contacts: boolean | null
@@ -1378,6 +1411,7 @@ export type Database = {
           bonus_access_until?: string | null
           completed_onboarding?: boolean | null
           created_at?: string
+          default_splits?: Json | null
           display_name?: string | null
           has_budget?: boolean | null
           has_contacts?: boolean | null
@@ -1400,6 +1434,7 @@ export type Database = {
           bonus_access_until?: string | null
           completed_onboarding?: boolean | null
           created_at?: string
+          default_splits?: Json | null
           display_name?: string | null
           has_budget?: boolean | null
           has_contacts?: boolean | null
@@ -2316,6 +2351,91 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      weekly_budget_lines: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          type: string
+          weekly_amount: number
+          weekly_budget_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          type: string
+          weekly_amount: number
+          weekly_budget_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          type?: string
+          weekly_amount?: number
+          weekly_budget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_budget_lines_weekly_budget_id_fkey"
+            columns: ["weekly_budget_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_budgets: {
+        Row: {
+          created_at: string | null
+          fixed_weekly: number
+          id: string
+          income_weekly: number
+          save_n_stack: number
+          sinking_weekly: number
+          updated_at: string | null
+          user_id: string
+          variable_total: number
+          week_end_date: string
+          week_start_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          fixed_weekly?: number
+          id?: string
+          income_weekly?: number
+          save_n_stack?: number
+          sinking_weekly?: number
+          updated_at?: string | null
+          user_id: string
+          variable_total?: number
+          week_end_date: string
+          week_start_date: string
+        }
+        Update: {
+          created_at?: string | null
+          fixed_weekly?: number
+          id?: string
+          income_weekly?: number
+          save_n_stack?: number
+          sinking_weekly?: number
+          updated_at?: string | null
+          user_id?: string
+          variable_total?: number
+          week_end_date?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_budgets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

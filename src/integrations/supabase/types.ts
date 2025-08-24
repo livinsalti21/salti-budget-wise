@@ -1390,6 +1390,7 @@ export type Database = {
           created_at: string
           default_splits: Json | null
           display_name: string | null
+          email: string | null
           has_budget: boolean | null
           has_contacts: boolean | null
           has_linked_account: boolean | null
@@ -1398,7 +1399,9 @@ export type Database = {
           last_route: string | null
           lightning_address: string | null
           mode: string | null
+          onboarding_completed_at: string | null
           parent_email: string | null
+          phone: string | null
           plan: string | null
           pro_access_until: string | null
           stripe_customer_id: string | null
@@ -1413,6 +1416,7 @@ export type Database = {
           created_at?: string
           default_splits?: Json | null
           display_name?: string | null
+          email?: string | null
           has_budget?: boolean | null
           has_contacts?: boolean | null
           has_linked_account?: boolean | null
@@ -1421,7 +1425,9 @@ export type Database = {
           last_route?: string | null
           lightning_address?: string | null
           mode?: string | null
+          onboarding_completed_at?: string | null
           parent_email?: string | null
+          phone?: string | null
           plan?: string | null
           pro_access_until?: string | null
           stripe_customer_id?: string | null
@@ -1436,6 +1442,7 @@ export type Database = {
           created_at?: string
           default_splits?: Json | null
           display_name?: string | null
+          email?: string | null
           has_budget?: boolean | null
           has_contacts?: boolean | null
           has_linked_account?: boolean | null
@@ -1444,7 +1451,9 @@ export type Database = {
           last_route?: string | null
           lightning_address?: string | null
           mode?: string | null
+          onboarding_completed_at?: string | null
           parent_email?: string | null
+          phone?: string | null
           plan?: string | null
           pro_access_until?: string | null
           stripe_customer_id?: string | null

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { PiggyBank, Target, Zap, Users, TrendingUp } from 'lucide-react';
+import { PiggyBank, Target, Zap, Users, TrendingUp, Mail, Phone } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +38,11 @@ const steps: OnboardingStep[] = [
     icon: <TrendingUp className="h-8 w-8" />
   },
   {
+    title: "Stay Connected",
+    description: "How can we keep you motivated?",
+    icon: <Mail className="h-8 w-8" />
+  },
+  {
     title: "Join the Community",
     description: "Invite friends or join a group",
     icon: <Users className="h-8 w-8" />
@@ -54,6 +59,8 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [goalAmount, setGoalAmount] = useState('1000');
   const [saveAmount, setSaveAmount] = useState('5');
   const [saveReason, setSaveReason] = useState('Coffee');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -79,6 +86,9 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       // Create first save
       await createFirstSave();
     } else if (currentStep === 4) {
+      // Save contact info
+      await saveContactInfo();
+    } else if (currentStep === 5) {
       // Complete onboarding
       await completeOnboarding();
       return;
@@ -156,6 +166,37 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       toast({
         title: "Error",
         description: "Failed to create save",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveContactInfo = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          email: email || null,
+          phone: phone || null
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Contact Info Saved! 📱",
+        description: "We'll use this to keep you motivated and informed",
+      });
+    } catch (error) {
+      console.error('Error saving contact info:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save contact info",
         variant: "destructive",
       });
     } finally {
@@ -327,6 +368,51 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
           )}
 
           {currentStep === 4 && (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <p className="text-sm text-muted-foreground">
+                  Help us keep you motivated with reminders and updates (optional)
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 123-4567"
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-primary/5 p-3 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  💡 We'll send you friendly reminders to keep your streak going and celebrate your wins!
+                </p>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
             <div className="text-center space-y-4">
               <p>Ready to save with friends and family?</p>
               <div className="space-y-3">
@@ -349,7 +435,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             className="w-full" 
             disabled={loading}
           >
-            {loading ? 'Creating...' : (currentStep === 4 ? 'Start Stacking!' : 'Continue')}
+            {loading ? 'Saving...' : (currentStep === 5 ? 'Start Stacking!' : 'Continue')}
           </Button>
         </CardContent>
       </Card>

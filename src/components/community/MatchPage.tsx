@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { formatDistance } from 'date-fns';
 import LeaderboardPage from '../leaderboard/LeaderboardPage';
 import ContactSync from './ContactSync';
+import livinSaltiLogo from '@/assets/livin-salti-logo.png';
 
 interface SavePost {
   id: string;
@@ -688,16 +689,36 @@ export default function MatchPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-      {/* Enhanced Welcome Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm">
+      {/* Enhanced Welcome Banner with Logo */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-orange-500/20 via-orange-400/20 to-primary/20 backdrop-blur-sm">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
         <div className="relative container mx-auto px-4 py-6 sm:py-8">
           <div className="text-center space-y-3 sm:space-y-4">
-            <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
-              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                Community Hub
-              </h1>
+            <div className="flex flex-col items-center gap-3 mb-3 sm:mb-4">
+              {/* Logo Integration */}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full opacity-75 group-hover:opacity-100 transition duration-300 blur-sm"></div>
+                <div className="relative">
+                  <img 
+                    src={livinSaltiLogo} 
+                    alt="Livin Salti" 
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover ring-2 ring-orange-500/30 shadow-lg hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              </div>
+              
+              {/* Brand Header */}
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-600 to-orange-500 bg-clip-text text-transparent">
+                  Community Hub
+                </h1>
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
+              </div>
+              
+              {/* Brand Tagline */}
+              <div className="text-xs sm:text-sm text-orange-700/80 font-medium tracking-wide">
+                LIVIN, YOUR WAY • SAVE & STACK
+              </div>
             </div>
             
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto px-2">

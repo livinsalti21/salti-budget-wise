@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Heart, MessageCircle, Flame, Trophy, Users, Plus, DollarSign, Pause, Play, CreditCard, Gift, TrendingUp, Target, Sparkles, Star } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Heart, MessageCircle, Flame, Trophy, Users, Plus, DollarSign, Pause, Play, CreditCard, Gift, TrendingUp, Target, Sparkles, Star, MessageSquare, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -359,45 +360,76 @@ export default function MatchPage() {
   const renderFriendStreaks = () => (
     <div className="space-y-4">
       <div className="text-center py-4">
-        <h3 className="text-lg font-bold">Friend Streaks 🔥</h3>
+        <h3 className="text-lg sm:text-xl font-bold">Friend Streaks 🔥</h3>
         <p className="text-sm text-muted-foreground">See how your friends are doing!</p>
       </div>
 
       {friendStreaks.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <Flame className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-2">No friend streaks yet</p>
-            <p className="text-sm text-muted-foreground">Connect with friends to see their progress!</p>
+        <Card className="border-0 bg-gradient-to-br from-orange-50/50 to-red-50/50 backdrop-blur-sm">
+          <CardContent className="text-center py-8 sm:py-12">
+            <div className="relative mb-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto bg-gradient-to-br from-orange-500/20 to-red-500/20 rounded-full flex items-center justify-center">
+                <Flame className="h-8 w-8 sm:h-10 sm:w-10 text-orange-500" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                <Sparkles className="h-3 w-3 text-white" />
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No friend streaks yet</h3>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto px-4">
+              Connect with friends to see their saving streaks and get motivated together!
+            </p>
+            <div className="space-y-3 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2">
+                <Users className="h-4 w-4 text-blue-500" />
+                <span>Connect with friends</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                <span>Compete in streak challenges</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Trophy className="h-4 w-4 text-gold-500" />
+                <span>Celebrate achievements together</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       ) : (
-        friendStreaks.map((friend) => (
-          <Card key={friend.user_id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+        friendStreaks.map((friend, index) => (
+          <Card key={friend.user_id} className="hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-r from-card to-card/80 hover:scale-[1.02] min-h-touch">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-xs">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <Badge 
+                      variant={index < 3 ? "default" : "outline"} 
+                      className={`text-xs min-w-8 h-6 flex items-center justify-center ${
+                        index === 0 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' :
+                        index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800' :
+                        index === 2 ? 'bg-gradient-to-r from-amber-600 to-orange-700 text-white' :
+                        'bg-muted text-muted-foreground'
+                      }`}
+                    >
                       #{friend.rank}
                     </Badge>
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                    <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-orange-500/30">
+                      <AvatarFallback className="bg-gradient-to-br from-orange-100 to-red-100 text-orange-700 font-bold text-lg">
                         {friend.display_name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
-                  <div>
-                    <p className="font-semibold">{friend.display_name}</p>
+                  <div className="flex-1">
+                    <p className="font-semibold text-base sm:text-lg">{friend.display_name}</p>
                     <p className="text-sm text-muted-foreground">
                       Started {formatDistance(new Date(friend.created_at), new Date(), { addSuffix: true })}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center gap-1 mb-1">
-                    <Flame className="h-5 w-5 text-orange-500" />
-                    <span className="text-xl font-bold text-orange-600">{friend.consecutive_days}</span>
+                  <div className="flex items-center gap-1 sm:gap-2 mb-1">
+                    <Flame className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
+                    <span className="text-xl sm:text-2xl font-bold text-orange-600">{friend.consecutive_days}</span>
                   </div>
                   <p className="text-xs text-muted-foreground">days</p>
                 </div>
@@ -450,12 +482,12 @@ export default function MatchPage() {
         </Card>
       ) : (
         posts.map((post) => (
-          <Card key={post.id} className="hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-card to-card/50 hover:scale-[1.02]">
+          <Card key={post.id} className="hover:shadow-lg transition-all duration-300 border-0 bg-gradient-to-br from-card to-card/50 hover:scale-[1.02] min-h-touch">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                    <Avatar className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-primary/20">
                       <AvatarFallback className="bg-gradient-to-br from-primary/10 to-secondary/10 text-primary font-semibold">
                         {post.user_profile?.display_name?.charAt(0)?.toUpperCase() || 'U'}
                       </AvatarFallback>
@@ -466,8 +498,8 @@ export default function MatchPage() {
                       </div>
                     )}
                   </div>
-                  <div>
-                    <p className="font-semibold">
+                  <div className="flex-1">
+                    <p className="font-semibold text-base">
                       {post.user_profile?.display_name || 'Anonymous'}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -475,12 +507,12 @@ export default function MatchPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 border-0">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2">
+                  <Badge variant="secondary" className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-700 border-0 text-xs">
                     <Flame className="h-3 w-3 mr-1" />
                     {post.streak_days} day{post.streak_days !== 1 ? 's' : ''}
                   </Badge>
-                  <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200 text-xs">
                     {formatCurrency(post.amount_cents)}
                   </Badge>
                 </div>
@@ -496,7 +528,7 @@ export default function MatchPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleLike(post.id)}
-                  className={`gap-2 hover:scale-105 transition-transform ${post.user_has_liked ? 'text-red-500 bg-red-50' : 'hover:text-red-500'}`}
+                  className={`gap-2 hover:scale-105 transition-transform min-h-touch ${post.user_has_liked ? 'text-red-500 bg-red-50' : 'hover:text-red-500'}`}
                   disabled={!user}
                 >
                   <Heart 
@@ -505,7 +537,7 @@ export default function MatchPage() {
                   {post.likes_count || 0}
                 </Button>
                 
-                <Button variant="ghost" size="sm" className="gap-2 hover:scale-105 transition-transform">
+                <Button variant="ghost" size="sm" className="gap-2 hover:scale-105 transition-transform min-h-touch">
                   <MessageCircle className="h-4 w-4" />
                   0
                 </Button>
@@ -655,125 +687,119 @@ export default function MatchPage() {
   );
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Banner with Stats */}
-      <div className="text-center py-6 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 rounded-xl border border-primary/20">
-        <div className="mb-4">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-            Match Hub
-          </h2>
-          <p className="text-muted-foreground">Connect, compete, and get matched</p>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
-          <Card className="p-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 hover:shadow-md transition-shadow">
-            <div className="text-center">
-              <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-green-700">{posts.length}</div>
-              <div className="text-xs text-green-600">Community Saves</div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
+      {/* Enhanced Welcome Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 backdrop-blur-sm">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse"></div>
+        <div className="relative container mx-auto px-4 py-6 sm:py-8">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
+              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Community Hub
+              </h1>
             </div>
-          </Card>
-          
-          <Card className="p-3 bg-gradient-to-br from-orange-50 to-red-50 border-orange-200 hover:shadow-md transition-shadow">
-            <div className="text-center">
-              <Flame className="h-6 w-6 text-orange-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-orange-700">{friendStreaks.length}</div>
-              <div className="text-xs text-orange-600">Active Streaks</div>
+            
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto px-2">
+              Connect with friends, share your savings journey, and celebrate wins together
+            </p>
+            
+            {/* Quick Stats Cards - Mobile Optimized */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4 sm:mt-6 max-w-4xl mx-auto">
+              <Card className="bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border-emerald-200/20 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                    <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
+                    <span className="font-semibold text-emerald-700 text-xs sm:text-sm">Matched</span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-800">{formatCurrency(2450)}</p>
+                  <p className="text-xs sm:text-sm text-emerald-600">This month</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border-orange-200/20 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                    <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+                    <span className="font-semibold text-orange-700 text-xs sm:text-sm">Streaks</span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-bold text-orange-800">12</p>
+                  <p className="text-xs sm:text-sm text-orange-600">Friends</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 border-purple-200/20 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="flex flex-col items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+                    <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                    <span className="font-semibold text-purple-700 text-xs sm:text-sm">Sponsors</span>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-800">3</p>
+                  <p className="text-xs sm:text-sm text-purple-600">Active</p>
+                </CardContent>
+              </Card>
             </div>
-          </Card>
-          
-          <Card className="p-3 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 hover:shadow-md transition-shadow">
-            <div className="text-center">
-              <Gift className="h-6 w-6 text-purple-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-purple-700">{matchRules.length}</div>
-              <div className="text-xs text-purple-600">Sponsors</div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Social Proof */}
-        {posts.length > 0 && (
-          <div className="mt-4 text-sm text-muted-foreground">
-            🎉 <span className="font-medium">{posts.reduce((sum, post) => sum + (post.likes_count || 0), 0)}</span> community likes this week
           </div>
-        )}
-      </div>
-
-      {/* Enhanced Tab Navigation */}
-      <div className="flex justify-center">
-        <div className="flex bg-gradient-to-r from-muted to-muted/80 p-1.5 rounded-xl shadow-lg border border-muted-foreground/10">
-          <Button
-            variant={activeTab === 'feed' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('feed')}
-            className={`flex items-center gap-2 whitespace-nowrap transition-all duration-200 ${
-              activeTab === 'feed' 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md' 
-                : 'hover:bg-white/50 hover:scale-105'
-            }`}
-          >
-            <Heart className="h-4 w-4" />
-            Feed
-          </Button>
-          <Button
-            variant={activeTab === 'leaderboard' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('leaderboard')}
-            className={`flex items-center gap-2 whitespace-nowrap transition-all duration-200 ${
-              activeTab === 'leaderboard' 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md' 
-                : 'hover:bg-white/50 hover:scale-105'
-            }`}
-          >
-            <Trophy className="h-4 w-4" />
-            Leaderboard
-          </Button>
-          <Button
-            variant={activeTab === 'friends' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('friends')}
-            className={`flex items-center gap-2 whitespace-nowrap transition-all duration-200 ${
-              activeTab === 'friends' 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md' 
-                : 'hover:bg-white/50 hover:scale-105'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Friends
-          </Button>
-          <Button
-            variant={activeTab === 'streaks' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('streaks')}
-            className={`flex items-center gap-2 whitespace-nowrap transition-all duration-200 ${
-              activeTab === 'streaks' 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md' 
-                : 'hover:bg-white/50 hover:scale-105'
-            }`}
-          >
-            <Flame className="h-4 w-4" />
-            Streaks
-          </Button>
-          <Button
-            variant={activeTab === 'match' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('match')}
-            className={`flex items-center gap-2 whitespace-nowrap transition-all duration-200 ${
-              activeTab === 'match' 
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md' 
-                : 'hover:bg-white/50 hover:scale-105'
-            }`}
-          >
-            <Gift className="h-4 w-4" />
-            Match
-          </Button>
         </div>
       </div>
 
-      {/* Content with Animation */}
-      <div className="animate-fade-in">
-        {renderTabContent()}
+      {/* iOS-Style Tab Navigation */}
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'feed' | 'leaderboard' | 'friends' | 'streaks' | 'match')} className="w-full">
+          <div className="flex justify-center mb-6 sm:mb-8">
+            <TabsList className="grid w-full max-w-lg sm:max-w-2xl grid-cols-5 h-12 sm:h-14 bg-muted/60 backdrop-blur-sm rounded-2xl p-1 shadow-lg border border-border/30">
+              <TabsTrigger 
+                value="feed" 
+                className="rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary hover:bg-background/50 min-h-touch"
+              >
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs">Feed</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="leaderboard"
+                className="rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary hover:bg-background/50 min-h-touch"
+              >
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs">Board</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="friends"
+                className="rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary hover:bg-background/50 min-h-touch"
+              >
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs">Friends</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="streaks"
+                className="rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary hover:bg-background/50 min-h-touch"
+              >
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <Flame className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs">Streaks</span>
+                </div>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="match"
+                className="rounded-xl font-medium text-xs sm:text-sm transition-all duration-300 data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary hover:bg-background/50 min-h-touch"
+              >
+                <div className="flex flex-col items-center gap-0.5 sm:gap-1">
+                  <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-xs">Match</span>
+                </div>
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="animate-fade-in">
+            {renderTabContent()}
+          </div>
+        </Tabs>
       </div>
     </div>
   );

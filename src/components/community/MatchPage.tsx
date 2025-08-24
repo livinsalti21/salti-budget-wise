@@ -65,7 +65,14 @@ export default function MatchPage() {
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [userStats, setUserStats] = useState({ totalSaves: 0, currentStreak: 0, totalMatched: 0 });
+  const [userStats, setUserStats] = useState({
+    totalSavedCents: 0,
+    totalMatchedCents: 0,
+    currentStreak: 0,
+    totalSavesCount: 0,
+    activeSponsorsCount: 0,
+    recentMatchEvents: []
+  });
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -73,7 +80,72 @@ export default function MatchPage() {
     loadCommunityFeed();
     loadFriendStreaks();
     loadMatchData();
-  }, []);
+    loadUserStats();
+
+    // Set up real-time listener for save events to update stats
+    if (user) {
+      const channel = supabase
+        .channel('save-events-realtime')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'save_events',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            // Refresh user stats when new save is made
+            loadUserStats();
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'match_events',
+            filter: `recipient_user_id=eq.${user.id}`
+          },
+          () => {
+            // Refresh stats and match data when new match event occurs
+            loadUserStats();
+            loadMatchData();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
+
+  const loadUserStats = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.rpc('get_user_community_stats', {
+        target_user_id: user.id
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const stats = data[0];
+        setUserStats({
+          totalSavedCents: stats.total_saved_cents || 0,
+          totalMatchedCents: stats.total_matched_cents || 0,
+          currentStreak: stats.current_streak || 0,
+          totalSavesCount: stats.total_saves_count || 0,
+          activeSponsorsCount: stats.active_sponsors_count || 0,
+          recentMatchEvents: Array.isArray(stats.recent_match_events) ? stats.recent_match_events : []
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
+  };
 
   const loadCommunityFeed = async () => {
     try {
@@ -733,7 +805,7 @@ export default function MatchPage() {
                     <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
                     <span className="font-semibold text-emerald-700 text-xs sm:text-sm">Matched</span>
                   </div>
-                  <p className="text-lg sm:text-2xl font-bold text-emerald-800">{formatCurrency(2450)}</p>
+                  <p className="text-lg sm:text-2xl font-bold text-emerald-800">{formatCurrency(userStats.totalMatchedCents)}</p>
                   <p className="text-xs sm:text-sm text-emerald-600">This month</p>
                 </CardContent>
               </Card>
@@ -744,7 +816,7 @@ export default function MatchPage() {
                     <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
                     <span className="font-semibold text-orange-700 text-xs sm:text-sm">Streaks</span>
                   </div>
-                  <p className="text-lg sm:text-2xl font-bold text-orange-800">12</p>
+                  <p className="text-lg sm:text-2xl font-bold text-orange-800">{friendStreaks.length}</p>
                   <p className="text-xs sm:text-sm text-orange-600">Friends</p>
                 </CardContent>
               </Card>
@@ -755,7 +827,7 @@ export default function MatchPage() {
                     <Heart className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                     <span className="font-semibold text-purple-700 text-xs sm:text-sm">Sponsors</span>
                   </div>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-800">3</p>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-800">{userStats.activeSponsorsCount}</p>
                   <p className="text-xs sm:text-sm text-purple-600">Active</p>
                 </CardContent>
               </Card>

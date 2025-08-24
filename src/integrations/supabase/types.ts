@@ -2475,6 +2475,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_community_stats: {
+        Args: { target_user_id: string }
+        Returns: {
+          active_sponsors_count: number
+          current_streak: number
+          recent_match_events: Json
+          total_matched_cents: number
+          total_saved_cents: number
+          total_saves_count: number
+        }[]
+      }
       get_week_start: {
         Args: { input_date?: string }
         Returns: string

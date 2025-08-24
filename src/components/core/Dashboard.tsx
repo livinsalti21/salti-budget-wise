@@ -215,9 +215,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Budget Progress */}
-      <BudgetProgress />
-
       {/* Weekly Summary */}
       <Card>
         <CardHeader>
@@ -260,6 +257,9 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Budget Progress */}
+      <BudgetProgress />
 
       {/* Welcome Message */}
       <Card className="bg-gradient-to-r from-primary/10 to-accent/10">

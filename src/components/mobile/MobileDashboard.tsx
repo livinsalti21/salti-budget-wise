@@ -158,9 +158,6 @@ export default function MobileDashboard() {
         </CardContent>
       </Card>
 
-      {/* Budget Progress */}
-      <BudgetProgress />
-
       {/* Compact Header with Refresh */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -258,6 +255,11 @@ export default function MobileDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Budget Progress - Mobile Optimized */}
+      <div className="mb-4">
+        <BudgetProgress />
       </div>
 
       {/* Enhanced Top 3 Friends Streaks - Prominent Section */}

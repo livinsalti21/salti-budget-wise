@@ -5,6 +5,7 @@ import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, Refr
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BudgetProgress from '@/components/BudgetProgress';
 
 interface DashboardData {
   totalSaved: number;
@@ -213,6 +214,9 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Budget Progress */}
+      <BudgetProgress />
 
       {/* Weekly Summary */}
       <Card>

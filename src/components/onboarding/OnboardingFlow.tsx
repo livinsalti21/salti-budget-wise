@@ -80,8 +80,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       await createFirstSave();
     } else if (currentStep === 4) {
       // Complete onboarding
-        // Navigate to app after onboarding
-        navigate('/app');
+      await completeOnboarding();
       return;
     }
     
@@ -157,6 +156,40 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       toast({
         title: "Error",
         description: "Failed to create save",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeOnboarding = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          completed_onboarding: true,
+          onboarding_completed_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "🎉 Welcome to Livin Salti!",
+        description: "You're all set up and ready to start stacking!",
+      });
+
+      // Navigate to app after onboarding
+      navigate('/app');
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete onboarding",
         variant: "destructive",
       });
     } finally {

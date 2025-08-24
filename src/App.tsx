@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { useNativeFeatures } from "@/hooks/useNativeFeatures";
 import Index from "./pages/Index";
 import AuthPage from "./components/auth/AuthPage";
@@ -34,7 +36,9 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   const { trackAnalyticsEvent } = useNativeFeatures();
   const { user, loading } = useAuth();
-  const [showOnboarding, setShowOnboarding] = React.useState(false);
+  const [profileLoading, setProfileLoading] = React.useState(true);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(false);
+  const navigate = useNavigate();
 
   // Track page views
   React.useEffect(() => {
@@ -43,29 +47,51 @@ const AppContent = () => {
     });
   }, [trackAnalyticsEvent]);
 
-  // Check if user needs onboarding
+  // Check user profile and onboarding status
   React.useEffect(() => {
-    if (user && !loading) {
-      // Check if user has completed onboarding (has any saves)
-      // For now, we'll skip automatic onboarding - user can access it manually
-      setShowOnboarding(false);
-    }
-  }, [user, loading]);
+    async function checkUserProfile() {
+      if (!user || loading) {
+        setProfileLoading(false);
+        return;
+      }
 
-  if (loading) {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('completed_onboarding')
+          .eq('id', user.id)
+          .single();
+
+        const completed = profile?.completed_onboarding || false;
+        setHasCompletedOnboarding(completed);
+
+        // Smart routing logic
+        const currentPath = window.location.pathname;
+        
+        if (completed && currentPath === '/') {
+          navigate('/app');
+        } else if (!completed && currentPath === '/app') {
+          navigate('/onboarding');
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    }
+
+    checkUserProfile();
+  }, [user, loading, navigate]);
+
+  if (loading || profileLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return <AuthPage />;
-  }
-
-  if (showOnboarding) {
-    return <OnboardingFlow onComplete={() => setShowOnboarding(false)} />;
   }
 
   return (

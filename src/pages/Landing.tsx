@@ -6,11 +6,12 @@ import { Slider } from "@/components/ui/slider";
 import { Coffee, Users, TrendingUp, Shield, ArrowRight, Star, Lock, CheckCircle, Target, Award, Play, Download, Instagram, Youtube, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileLanding from "./MobileLanding";
 export default function Landing() {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [dailySave, setDailySave] = useState([5]);
   const [animatedValue, setAnimatedValue] = useState(0);
   useEffect(() => {
@@ -28,11 +29,16 @@ export default function Landing() {
   };
   const handleGetStarted = () => {
     if (user) {
-      navigate("/onboarding");
+      navigate("/app");
     } else {
       navigate("/auth");
     }
   };
+
+  // Show mobile-optimized version on mobile devices
+  if (isMobile) {
+    return <MobileLanding />;
+  }
   return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="px-4 lg:px-6 h-16 flex items-center justify-between border-b">

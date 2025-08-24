@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TouchTarget } from '@/components/ui/mobile-helpers';
 import { quickProjection } from '@/simulation/futureValue';
 import BudgetProgress from '@/components/BudgetProgress';
+import MobileMatchSection from './MobileMatchSection';
 
 interface DashboardData {
   totalSaved: number;
@@ -260,6 +261,11 @@ export default function MobileDashboard() {
       {/* Budget Progress - Mobile Optimized */}
       <div className="mb-4">
         <BudgetProgress />
+      </div>
+
+      {/* Match Section */}
+      <div className="mb-4">
+        <MobileMatchSection />
       </div>
 
       {/* Enhanced Top 3 Friends Streaks - Prominent Section */}

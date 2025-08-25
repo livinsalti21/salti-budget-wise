@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Heart, Plus, DollarSign, TrendingUp, Users, LogOut, Gift, Calculator, User, Sparkles, Target, Star, Activity, ArrowRight } from 'lucide-react';
+import { Heart, Plus, DollarSign, TrendingUp, Users, LogOut, Gift, Calculator, User, Sparkles, Target, Star, Activity, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { MobileSafeArea } from '@/components/ui/mobile-safe-area';
@@ -244,6 +244,9 @@ const SponsorDashboard = () => {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
+              <Link to="/profile" className="p-2 hover:bg-accent rounded-lg transition-colors">
+                <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+              </Link>
               <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
                 <Heart className="h-6 w-6 text-white" />
               </div>

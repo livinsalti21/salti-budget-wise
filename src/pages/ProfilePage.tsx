@@ -1,4 +1,4 @@
-import { ArrowLeft, User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield } from "lucide-react";
+import { ArrowLeft, User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,10 +14,13 @@ import { SecurityDashboard } from "@/components/SecurityDashboard";
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [isSponsor, setIsSponsor] = useState<boolean>(false);
+  const [sponsorLoading, setSponsorLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (user) {
       loadProfile();
+      checkSponsorStatus();
     }
   }, [user]);
 
@@ -31,6 +34,28 @@ export default function ProfilePage() {
       setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
+    }
+  };
+
+  const checkSponsorStatus = async () => {
+    if (!user?.email) {
+      setSponsorLoading(false);
+      return;
+    }
+    
+    try {
+      const { data } = await supabase
+        .from('sponsors')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      
+      setIsSponsor(!!data);
+    } catch (error) {
+      // If no sponsor record found, that's fine
+      setIsSponsor(false);
+    } finally {
+      setSponsorLoading(false);
     }
   };
 
@@ -101,6 +126,31 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
               </Link>
+
+              {/* Sponsor Dashboard Access */}
+              {sponsorLoading ? (
+                <Card className="animate-pulse">
+                  <CardContent className="flex items-center gap-3 py-4">
+                    <div className="h-5 w-5 bg-muted rounded" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded w-32" />
+                      <div className="h-3 bg-muted rounded w-48" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : isSponsor && (
+                <Link to="/sponsor-dashboard">
+                  <Card className="hover:bg-primary/10 transition-all duration-200 cursor-pointer border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
+                    <CardContent className="flex items-center gap-3 py-4">
+                      <Heart className="h-5 w-5 text-primary" />
+                      <div className="flex-1">
+                        <p className="font-medium text-primary">Sponsor Dashboard</p>
+                        <p className="text-sm text-muted-foreground">Manage your sponsorships and view impact</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              )}
 
               {!hasPro ? (
                 <Link to="/upgrade">

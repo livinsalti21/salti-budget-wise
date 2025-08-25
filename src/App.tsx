@@ -30,6 +30,8 @@ import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import MatchPage from "./components/community/MatchPage";
 import Leaderboard from "./components/leaderboard/Leaderboard";
 import ReferralSystem from "./components/referrals/ReferralSystem";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +119,10 @@ const AppContent = () => {
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />
         <Route path="/onboarding" element={<OnboardingFlow onComplete={() => {}} />} />
+        
+        {/* Legal pages (no bottom nav) */}
+        <Route path="/legal/privacy" element={<PrivacyPage />} />
+        <Route path="/legal/terms" element={<TermsPage />} />
         
         {/* Auth and admin routes (no bottom nav) */}
         <Route path="/auth" element={<AuthPage />} />

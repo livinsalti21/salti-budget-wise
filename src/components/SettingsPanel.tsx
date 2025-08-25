@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -340,10 +341,17 @@ const SettingsPanel = () => {
               <span className="text-muted-foreground">Build</span>
               <span>2024.01</span>
             </div>
-            <div className="pt-2">
-              <Button variant="outline" className="w-full">
-                Privacy Policy
-              </Button>
+            <div className="pt-2 space-y-2">
+              <Link to="/legal/privacy" className="w-full">
+                <Button variant="outline" className="w-full">
+                  Privacy Policy
+                </Button>
+              </Link>
+              <Link to="/legal/terms" className="w-full">
+                <Button variant="outline" className="w-full">
+                  Terms of Service
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

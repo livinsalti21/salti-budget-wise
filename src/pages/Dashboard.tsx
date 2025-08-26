@@ -154,50 +154,56 @@ export default function Dashboard() {
       <main className="p-4 space-y-6 max-w-md mx-auto">
         {/* Three snapshot cards */}
         <section className="grid gap-4">
-          <Card className="border-primary/20 bg-primary/5">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <Flame className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Streak</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">
-                {stats.currentStreak} {stats.currentStreak === 1 ? 'day' : 'days'}
-              </div>
-              <CardDescription>Keep it going! 🔥</CardDescription>
-            </CardContent>
-          </Card>
+          <Link to="/streaks" className="block">
+            <Card className="border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors active:scale-[0.99] transition-transform">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-primary" />
+                  <CardTitle className="text-lg">Streak</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {stats.currentStreak} {stats.currentStreak === 1 ? 'day' : 'days'}
+                </div>
+                <CardDescription>Keep it going! 🔥</CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="border-success/20 bg-success/5">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-success" />
-                <CardTitle className="text-lg">Total Saved</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-success">
-                ${stats.totalSaved.toLocaleString()}
-              </div>
-              <CardDescription>All time total</CardDescription>
-            </CardContent>
-          </Card>
+          <Link to="/save-history" className="block">
+            <Card className="border-success/20 bg-success/5 hover:bg-success/10 transition-colors active:scale-[0.99] transition-transform">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-success" />
+                  <CardTitle className="text-lg">Total Saved</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-success">
+                  ${stats.totalSaved.toLocaleString()}
+                </div>
+                <CardDescription>All time total</CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
 
-          <Card className="border-accent/20 bg-accent/5">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-accent" />
-                <CardTitle className="text-lg">30Y Projection</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent">
-                ${stats.futureValue.toLocaleString()}
-              </div>
-              <CardDescription>At 8% annual return</CardDescription>
-            </CardContent>
-          </Card>
+          <Link to="/net-worth" className="block">
+            <Card className="border-accent/20 bg-accent/5 hover:bg-accent/10 transition-colors active:scale-[0.99] transition-transform">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-accent" />
+                  <CardTitle className="text-lg">30Y Projection</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-accent">
+                  ${stats.futureValue.toLocaleString()}
+                </div>
+                <CardDescription>At 8% annual return</CardDescription>
+              </CardContent>
+            </Card>
+          </Link>
         </section>
 
         {/* Budget Progress */}
@@ -206,22 +212,24 @@ export default function Dashboard() {
         {/* Quick Stats for This Week */}
         <section className="space-y-4">
           <h2 className="text-lg font-semibold">This Week</h2>
-          <Card className="border-primary/20 bg-primary/5">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  <span className="font-medium">Weekly Goal Progress</span>
+          <Link to="/goals" className="block">
+            <Card className="border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors active:scale-[0.99] transition-transform">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    <span className="font-medium">Weekly Goal Progress</span>
+                  </div>
+                  <div className="text-xl font-bold text-primary">
+                    ${stats.weeklyTotal.toFixed(2)}
+                  </div>
                 </div>
-                <div className="text-xl font-bold text-primary">
-                  ${stats.weeklyTotal.toFixed(2)}
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Saved this week
-              </p>
-            </CardContent>
-          </Card>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Saved this week
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
         </section>
 
         {/* Budget Section */}

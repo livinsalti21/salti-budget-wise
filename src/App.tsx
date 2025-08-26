@@ -32,6 +32,10 @@ import Leaderboard from "./components/leaderboard/Leaderboard";
 import ReferralSystem from "./components/referrals/ReferralSystem";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import NetWorthPage from "./pages/NetWorthPage";
+import StreaksPage from "./pages/StreaksPage";
+import SaveHistoryPage from "./pages/SaveHistoryPage";
+import GoalsPage from "./pages/GoalsPage";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +121,12 @@ const AppContent = () => {
         <Route path="/referrals" element={<><ReferralSystem /><BottomNav /></>} />
         <Route path="/rewards" element={<><RewardsPage /><BottomNav /></>} />
         <Route path="/sponsor-dashboard-app" element={<><SponsorDashboardApp /><BottomNav /></>} />
+        
+        {/* Dashboard detail pages with bottom nav */}
+        <Route path="/net-worth" element={<><NetWorthPage /><BottomNav /></>} />
+        <Route path="/streaks" element={<><StreaksPage /><BottomNav /></>} />
+        <Route path="/save-history" element={<><SaveHistoryPage /><BottomNav /></>} />
+        <Route path="/goals" element={<><GoalsPage /><BottomNav /></>} />
         
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />

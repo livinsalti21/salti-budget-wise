@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,10 +32,10 @@ import Leaderboard from "./components/leaderboard/Leaderboard";
 import ReferralSystem from "./components/referrals/ReferralSystem";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
-import NetWorthPage from "./pages/NetWorthPage";
-import StreaksPage from "./pages/StreaksPage";
-import SaveHistoryPage from "./pages/SaveHistoryPage";
-import GoalsPage from "./pages/GoalsPage";
+const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
+const StreaksPage = lazy(() => import("./pages/StreaksPage"));
+const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
+const GoalsPage = lazy(() => import("./pages/GoalsPage"));
 
 const queryClient = new QueryClient();
 
@@ -123,10 +123,10 @@ const AppContent = () => {
         <Route path="/sponsor-dashboard-app" element={<><SponsorDashboardApp /><BottomNav /></>} />
         
         {/* Dashboard detail pages with bottom nav */}
-        <Route path="/net-worth" element={<><NetWorthPage /><BottomNav /></>} />
-        <Route path="/streaks" element={<><StreaksPage /><BottomNav /></>} />
-        <Route path="/save-history" element={<><SaveHistoryPage /><BottomNav /></>} />
-        <Route path="/goals" element={<><GoalsPage /><BottomNav /></>} />
+        <Route path="/net-worth" element={<Suspense fallback={<div>Loading...</div>}><NetWorthPage /><BottomNav /></Suspense>} />
+        <Route path="/streaks" element={<Suspense fallback={<div>Loading...</div>}><StreaksPage /><BottomNav /></Suspense>} />
+        <Route path="/save-history" element={<Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /><BottomNav /></Suspense>} />
+        <Route path="/goals" element={<Suspense fallback={<div>Loading...</div>}><GoalsPage /><BottomNav /></Suspense>} />
         
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />

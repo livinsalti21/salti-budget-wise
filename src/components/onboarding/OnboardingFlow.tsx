@@ -224,8 +224,8 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         description: "You're all set up and ready to start stacking!",
       });
 
-      // Navigate to app after onboarding
-      navigate('/app');
+      // Call parent onComplete callback
+      onComplete();
     } catch (error) {
       console.error('Error completing onboarding:', error);
       toast({

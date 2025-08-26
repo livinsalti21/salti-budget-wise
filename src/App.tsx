@@ -118,7 +118,10 @@ const AppContent = () => {
         
         {/* Utility routes (no bottom nav) */}
         <Route path="/save/confirm" element={<SaveConfirm />} />
-        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => {}} />} />
+        <Route path="/onboarding" element={<OnboardingFlow onComplete={() => {
+          setHasCompletedOnboarding(true);
+          navigate('/app');
+        }} />} />
         
         {/* Legal pages (no bottom nav) */}
         <Route path="/legal/privacy" element={<PrivacyPage />} />

@@ -29,23 +29,6 @@ const Index = () => {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
 
-  useEffect(() => {
-    // Check if user has completed onboarding
-    const completedOnboarding = localStorage.getItem(`onboarding_completed_${user?.id}`);
-    setHasCompletedOnboarding(!!completedOnboarding);
-    
-    if (user && !completedOnboarding) {
-      setShowOnboarding(true);
-    }
-  }, [user]);
-
-  const handleOnboardingComplete = () => {
-    if (user) {
-      localStorage.setItem(`onboarding_completed_${user.id}`, 'true');
-      setHasCompletedOnboarding(true);
-      setShowOnboarding(false);
-    }
-  };
 
   // Redirect to auth if not logged in
   if (loading) {
@@ -63,10 +46,6 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  // Show onboarding for new users
-  if (showOnboarding && !hasCompletedOnboarding) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
-  }
 
   // Mobile-optimized layout
   if (isMobile) {

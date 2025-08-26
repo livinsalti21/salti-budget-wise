@@ -67,12 +67,14 @@ const AppContent = () => {
         const completed = profile?.completed_onboarding || false;
         setHasCompletedOnboarding(completed);
 
-        // Smart routing logic
+        // Smart routing logic - avoid redirect loops
         const currentPath = window.location.pathname;
         
         if (completed && currentPath === '/') {
           navigate('/app');
-        } else if (!completed && currentPath === '/app') {
+        } else if (!completed && currentPath === '/app' && !hasCompletedOnboarding) {
+          // Only redirect to onboarding if local state also indicates not completed
+          // This prevents race condition redirects
           navigate('/onboarding');
         }
       } catch (error) {
@@ -83,7 +85,7 @@ const AppContent = () => {
     }
 
     checkUserProfile();
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, hasCompletedOnboarding]);
 
   if (loading || profileLoading) {
     return (

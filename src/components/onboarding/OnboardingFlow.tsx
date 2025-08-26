@@ -218,13 +218,24 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         .eq('id', user.id);
 
       if (error) throw error;
+
+      // Verify the update was successful by re-fetching
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('completed_onboarding')
+        .eq('id', user.id)
+        .single();
+
+      if (!updatedProfile?.completed_onboarding) {
+        throw new Error('Database update verification failed');
+      }
       
       toast({
         title: "🎉 Welcome to Livin Salti!",
         description: "You're all set up and ready to start stacking!",
       });
 
-      // Call parent onComplete callback
+      // Call parent onComplete callback only after database update is confirmed
       onComplete();
     } catch (error) {
       console.error('Error completing onboarding:', error);

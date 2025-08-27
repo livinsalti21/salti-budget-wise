@@ -7,22 +7,18 @@ export default function BottomNav() {
   
   return (
     <nav className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70 z-50 safe-area-bottom">
-      <div className="max-w-md mx-auto h-16 grid grid-cols-5">
+      <div className="max-w-md mx-auto h-16 grid grid-cols-4">
         <NavLink to="/app" className={(s) => `${item} ${active(s)}`}>
           <Home className="h-5 w-5" />
           Home
         </NavLink>
         <NavLink to="/save" className={(s) => `${item} ${active(s)}`}>
           <PiggyBank className="h-5 w-5" />
-          Save
+          Save n Stack
         </NavLink>
         <NavLink to="/budget" className={(s) => `${item} ${active(s)}`}>
           <Calculator className="h-5 w-5" />
           Budget
-        </NavLink>
-        <NavLink to="/community" className={(s) => `${item} ${active(s)}`}>
-          <Users className="h-5 w-5" />
-          Community
         </NavLink>
         <NavLink to="/profile" className={(s) => `${item} ${active(s)}`}>
           <User className="h-5 w-5" />

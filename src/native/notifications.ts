@@ -199,11 +199,26 @@ export const notificationService: NotificationService = Capacitor.isNativePlatfo
   ? new CapacitorNotificationService()
   : new WebNotificationService();
 
+// Daily savings reminder helper (7pm)
+export const scheduleDailySaveReminder = async (): Promise<void> => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(19, 0, 0, 0); // 7 PM reminder
+
+  await notificationService.scheduleLocal({
+    title: "Time to Save n Stack! 💰",
+    body: "Keep your momentum going - every save builds your future",
+    id: Date.now(),
+    schedule: { at: tomorrow },
+    extra: { type: 'daily_save_reminder' }
+  });
+};
+
 // Habit streak reminder helper
 export const scheduleStreakReminder = async (streakDays: number): Promise<void> => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(10, 0, 0, 0); // 10 AM reminder
+  tomorrow.setHours(19, 0, 0, 0); // 7 PM reminder
 
   await notificationService.scheduleLocal({
     title: `Keep your ${streakDays}-day streak alive! 🔥`,

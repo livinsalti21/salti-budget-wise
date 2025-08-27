@@ -36,6 +36,7 @@ const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
 const StreaksPage = lazy(() => import("./pages/StreaksPage"));
 const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
 const GoalsPage = lazy(() => import("./pages/GoalsPage"));
+const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
 
 const queryClient = new QueryClient();
 
@@ -138,6 +139,7 @@ const AppContent = () => {
         {/* Legal pages (no bottom nav) */}
         <Route path="/legal/privacy" element={<PrivacyPage />} />
         <Route path="/legal/terms" element={<TermsPage />} />
+        <Route path="/account/delete" element={<Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense>} />
         
         {/* Auth and admin routes (no bottom nav) */}
         <Route path="/auth" element={<AuthPage />} />

@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Bell, Fingerprint, Shield, Smartphone, CheckCircle, XCircle, TrendingUp, Percent } from 'lucide-react';
+import { Bell, Fingerprint, Shield, Smartphone, CheckCircle, XCircle, TrendingUp, Percent, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { scheduleDailySaveReminder } from '@/native/notifications';
 
 const SettingsPanel = () => {
   const [pushNotifications, setPushNotifications] = useState(false);
+  const [dailySaveReminder, setDailySaveReminder] = useState(false);
   const [faceIdEnabled, setFaceIdEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
   const [faceIdSupported, setFaceIdSupported] = useState(false);
@@ -29,9 +31,11 @@ const SettingsPanel = () => {
     
     // Load saved preferences
     const savedPushPref = localStorage.getItem('pushNotifications');
+    const savedDailySavePref = localStorage.getItem('dailySaveReminder');
     const savedFaceIdPref = localStorage.getItem('faceIdEnabled');
     
     setPushNotifications(savedPushPref === 'true');
+    setDailySaveReminder(savedDailySavePref === 'true');
     setFaceIdEnabled(savedFaceIdPref === 'true');
 
     // Load user settings
@@ -102,6 +106,33 @@ const SettingsPanel = () => {
       toast({
         title: "Push Notifications Disabled",
         description: "You won't receive push notifications anymore."
+      });
+    }
+  };
+
+  const handleDailySaveReminderToggle = async (enabled: boolean) => {
+    if (enabled) {
+      try {
+        await scheduleDailySaveReminder();
+        setDailySaveReminder(true);
+        localStorage.setItem('dailySaveReminder', 'true');
+        toast({
+          title: "Daily Save Reminder Enabled",
+          description: "You'll get a reminder at 7 PM daily to save n stack!"
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to schedule daily reminder.",
+          variant: "destructive"
+        });
+      }
+    } else {
+      setDailySaveReminder(false);
+      localStorage.setItem('dailySaveReminder', 'false');
+      toast({
+        title: "Daily Save Reminder Disabled",
+        description: "You won't receive daily save reminders anymore."
       });
     }
   };
@@ -324,6 +355,22 @@ const SettingsPanel = () => {
                 disabled={!pushSupported}
               />
             </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  Daily Save Reminder
+                </Label>
+                <div className="text-sm text-muted-foreground">
+                  Get reminded at 7 PM daily to save n stack
+                </div>
+              </div>
+              <Switch
+                checked={dailySaveReminder}
+                onCheckedChange={handleDailySaveReminderToggle}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -350,6 +397,12 @@ const SettingsPanel = () => {
               <Link to="/legal/terms" className="w-full">
                 <Button variant="outline" className="w-full">
                   Terms of Service
+                </Button>
+              </Link>
+              <Link to="/account/delete" className="w-full">
+                <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Account
                 </Button>
               </Link>
             </div>

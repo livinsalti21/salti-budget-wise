@@ -39,16 +39,33 @@ const ShareCard = ({ data, onClose }: ShareCardProps) => {
     }
   };
 
-  const shareToSocial = (platform: string) => {
-    const encodedText = encodeURIComponent(shareText);
-    const urls = {
-      twitter: `https://twitter.com/intent/tweet?text=${encodedText}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://livinsalti.com')}&quote=${encodedText}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://livinsalti.com')}&summary=${encodedText}`
-    };
+  const shareToSocial = async (platform?: string) => {
+    // Try native share first (Capacitor)
+    try {
+      const { Share } = await import('@capacitor/share');
+      await Share.share({
+        title: 'My Savings Progress - Livin Salti',
+        text: shareText,
+        url: 'https://livinsalti.com',
+      });
+      return;
+    } catch (error) {
+      // Fallback to web sharing
+      console.log('Native share not available, using web fallback');
+    }
 
-    if (urls[platform as keyof typeof urls]) {
-      window.open(urls[platform as keyof typeof urls], '_blank', 'width=600,height=400');
+    // Web fallback for specific platforms
+    if (platform) {
+      const encodedText = encodeURIComponent(shareText);
+      const urls = {
+        twitter: `https://twitter.com/intent/tweet?text=${encodedText}`,
+        facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://livinsalti.com')}&quote=${encodedText}`,
+        linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://livinsalti.com')}&summary=${encodedText}`
+      };
+
+      if (urls[platform as keyof typeof urls]) {
+        window.open(urls[platform as keyof typeof urls], '_blank', 'width=600,height=400');
+      }
     }
   };
 
@@ -112,26 +129,36 @@ const ShareCard = ({ data, onClose }: ShareCardProps) => {
           <div className="space-y-4">
             <h3 className="font-semibold text-center">Share Your Success! 🎉</h3>
             
-            {/* Copy Text */}
-            <Button 
-              onClick={copyToClipboard}
-              variant="outline" 
-              className="w-full"
-            >
-              {copied ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copy Text
-                </>
-              )}
-            </Button>
+            {/* Copy Text & Native Share */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                onClick={copyToClipboard}
+                variant="outline" 
+                className="flex-1"
+              >
+                {copied ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                onClick={() => shareToSocial()}
+                className="flex-1"
+              >
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+            </div>
             
-            {/* Social Media */}
+            {/* Social Media Fallbacks */}
             <div className="grid grid-cols-3 gap-2">
               <Button 
                 onClick={() => shareToSocial('twitter')}

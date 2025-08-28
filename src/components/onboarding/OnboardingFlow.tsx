@@ -205,45 +205,90 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   };
 
   const completeOnboarding = async () => {
-    if (!user) return;
+    if (!user) {
+      console.error('❌ No user found during onboarding completion');
+      return;
+    }
     
     setLoading(true);
     try {
-      const { error } = await supabase
+      console.log('🎯 Completing onboarding for user:', user.id);
+      
+      // First ensure the user profile exists
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .update({ 
-          completed_onboarding: true,
-          onboarding_completed_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (!existingProfile) {
+        console.log('📝 Creating profile during onboarding completion');
+        const { error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email || email,
+            phone: phone || null,
+            completed_onboarding: true,
+            onboarding_completed_at: new Date().toISOString()
+          });
 
-      // Verify the update was successful by re-fetching
-      const { data: updatedProfile } = await supabase
+        if (createError) {
+          console.error('❌ Error creating profile:', createError);
+          throw createError;
+        }
+      } else {
+        // Update existing profile
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            completed_onboarding: true,
+            onboarding_completed_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('❌ Error updating profile:', error);
+          throw error;
+        }
+      }
+
+      // Verify the update was successful
+      const { data: updatedProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('completed_onboarding')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!updatedProfile?.completed_onboarding) {
+      if (verifyError || !updatedProfile?.completed_onboarding) {
+        console.error('❌ Database update verification failed:', verifyError);
         throw new Error('Database update verification failed');
       }
+      
+      console.log('✅ Onboarding completed successfully');
       
       toast({
         title: "🎉 Welcome to Livin Salti!",
         description: "You're all set up and ready to start stacking!",
       });
 
-      // Call parent onComplete callback only after database update is confirmed
-      onComplete();
+      // Add a small delay to ensure database changes propagate
+      setTimeout(() => {
+        onComplete();
+      }, 500);
+      
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      console.error('❌ Error completing onboarding:', error);
       toast({
         title: "Error",
-        description: "Failed to complete onboarding",
+        description: "Failed to complete onboarding. Please try again.",
         variant: "destructive",
       });
+      
+      // Retry logic
+      setTimeout(() => {
+        completeOnboarding();
+      }, 2000);
     } finally {
       setLoading(false);
     }

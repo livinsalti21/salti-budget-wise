@@ -63,34 +63,66 @@ const AppContent = () => {
       }
 
       try {
-        const { data: profile } = await supabase
+        console.log('🔍 Checking profile for user:', user.id);
+        
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('completed_onboarding')
           .eq('id', user.id)
-          .single();
+          .maybeSingle(); // Use maybeSingle to handle missing profiles gracefully
 
-        const completed = profile?.completed_onboarding || false;
-        setHasCompletedOnboarding(completed);
+        if (error) {
+          console.error('❌ Error fetching profile:', error);
+          
+          // If profile doesn't exist, create it
+          if (error.code === 'PGRST116' || !profile) {
+            console.log('📝 Creating missing profile for user:', user.id);
+            
+            const { error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email,
+                completed_onboarding: false,
+              });
+              
+            if (createError) {
+              console.error('❌ Error creating profile:', createError);
+              return;
+            }
+            
+            // Set to uncompleted since we just created it
+            setHasCompletedOnboarding(false);
+          }
+        } else {
+          const completed = profile?.completed_onboarding || false;
+          console.log('✅ Profile check result:', { completed, profile });
+          setHasCompletedOnboarding(completed);
+        }
 
-        // Smart routing logic - avoid redirect loops
+        // Simple routing logic - only redirect based on current path and database state
         const currentPath = window.location.pathname;
+        console.log('🛣️ Current path:', currentPath, 'Completed:', hasCompletedOnboarding);
         
-        if (completed && currentPath === '/') {
+        // Only redirect if we're on landing and onboarding is complete
+        if (hasCompletedOnboarding && currentPath === '/') {
+          console.log('🔄 Redirecting to /app (onboarding complete)');
           navigate('/app');
-        } else if (!completed && currentPath === '/app' && !hasCompletedOnboarding) {
-          // Only redirect to onboarding if local state also indicates not completed
-          // This prevents race condition redirects
+        }
+        // Only redirect to onboarding if we're on /app and onboarding is NOT complete
+        else if (!hasCompletedOnboarding && currentPath === '/app') {
+          console.log('🔄 Redirecting to /onboarding (onboarding incomplete)');
           navigate('/onboarding');
         }
       } catch (error) {
-        console.error('Error checking profile:', error);
+        console.error('❌ Error in profile check:', error);
       } finally {
         setProfileLoading(false);
       }
     }
 
     checkUserProfile();
-  }, [user, loading, navigate, hasCompletedOnboarding]);
+  }, [user, loading, navigate]); // Removed hasCompletedOnboarding dependency to prevent loops
 
   if (loading || profileLoading) {
     return (

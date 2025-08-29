@@ -25,12 +25,15 @@ import { hasProAccess } from '@/lib/permissions/hasProAccess';
 import BudgetPaywallModal from '@/components/ui/BudgetPaywallModal';
 import type { BudgetInput, WeeklyBudgetResult, UserPlan } from '@/lib/budgetUtils';
 import { computeWeeklyBudget, getCurrentWeekStart, getCurrentWeekEnd } from '@/lib/budgetUtils';
+import { saveBudgetToDatabase } from '@/lib/budgetStorage';
 
 interface WeeklyBudgetDashboardProps {
   budgetData: BudgetInput;
+  budgetId?: string;
+  onBudgetSaved?: (budgetId: string) => void;
 }
 
-const WeeklyBudgetDashboard = ({ budgetData }: WeeklyBudgetDashboardProps) => {
+const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBudgetDashboardProps) => {
   const [budgetResult, setBudgetResult] = useState<WeeklyBudgetResult | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan>('free');
   const [defaultSplits, setDefaultSplits] = useState<any>(null);
@@ -104,69 +107,31 @@ const WeeklyBudgetDashboard = ({ budgetData }: WeeklyBudgetDashboardProps) => {
     setBudgetResult(result);
 
     // Save to database
-    saveBudgetToDatabase(result);
+    saveBudgetToSupabase(result);
   };
 
-  const saveBudgetToDatabase = async (result: WeeklyBudgetResult) => {
+  const saveBudgetToSupabase = async (result: WeeklyBudgetResult) => {
     if (!user) return;
 
     try {
-      const weekStart = getCurrentWeekStart();
-      const weekEnd = getCurrentWeekEnd();
+      const { success, budgetId: savedBudgetId, error } = await saveBudgetToDatabase(
+        user.id,
+        budgetData,
+        result
+      );
 
-      // Create weekly budget record
-      const { data: weeklyBudget, error: budgetError } = await supabase
-        .from('weekly_budgets')
-        .upsert({
-          user_id: user.id,
-          week_start_date: weekStart,
-          week_end_date: weekEnd,
-          income_weekly: result.weekly.income,
-          fixed_weekly: result.weekly.fixed,
-          sinking_weekly: result.weekly.sinking,
-          variable_total: result.weekly.variable_total,
-          save_n_stack: result.weekly.save_n_stack
-        })
-        .select()
-        .single();
+      if (success && savedBudgetId && onBudgetSaved) {
+        onBudgetSaved(savedBudgetId);
+      }
 
-      if (budgetError) throw budgetError;
-
-      // Delete existing lines and create new ones
-      await supabase
-        .from('weekly_budget_lines')
-        .delete()
-        .eq('weekly_budget_id', weeklyBudget.id);
-
-      const budgetLines = [
-        ...budgetData.fixed_expenses.map(expense => ({
-          weekly_budget_id: weeklyBudget.id,
-          type: 'fixed' as const,
-          name: expense.name,
-          weekly_amount: result.weekly.fixed
-        })),
-        ...budgetData.goals.map(goal => ({
-          weekly_budget_id: weeklyBudget.id,
-          type: 'sinking' as const,
-          name: goal.name,
-          weekly_amount: result.weekly.sinking
-        })),
-        ...result.weekly.allocations.map(allocation => ({
-          weekly_budget_id: weeklyBudget.id,
-          type: allocation.type as 'fixed' | 'variable' | 'sinking' | 'save',
-          name: allocation.name,
-          weekly_amount: allocation.weekly_amount
-        })),
-        {
-          weekly_budget_id: weeklyBudget.id,
-          type: 'save' as const,
-          name: 'Save n Stack',
-          weekly_amount: result.weekly.save_n_stack
-        }
-      ];
-
-      await supabase.from('weekly_budget_lines').insert(budgetLines);
-
+      if (error) {
+        console.error('Error saving budget:', error);
+        toast({
+          title: "Save Error",
+          description: "Failed to save budget to database",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
       console.error('Error saving budget:', error);
     }

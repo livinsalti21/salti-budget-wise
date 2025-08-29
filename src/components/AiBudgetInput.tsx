@@ -8,6 +8,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { BudgetInput } from '@/lib/budgetUtils';
+import { saveBudgetToDatabase } from '@/lib/budgetStorage';
+import { computeWeeklyBudget } from '@/lib/budgetUtils';
 
 interface AiBudgetInputProps {
   onBudgetExtracted: (data: BudgetInput) => void;
@@ -41,11 +43,20 @@ const AiBudgetInput = ({ onBudgetExtracted }: AiBudgetInputProps) => {
 
       if (data.success && data.extracted_data) {
         setExtractedData(data.extracted_data);
+        
+        // Save the computed budget to database immediately
+        try {
+          const budgetResult = computeWeeklyBudget(data.extracted_data, 'free');
+          await saveBudgetToDatabase(user.id, data.extracted_data, budgetResult, 'AI Generated Budget');
+        } catch (saveError) {
+          console.error('Error saving AI budget:', saveError);
+        }
+        
         onBudgetExtracted(data.extracted_data);
         
         toast({
           title: "Budget Analyzed! 🎉",
-          description: "Your financial information has been processed"
+          description: "Your financial information has been processed and saved"
         });
 
         // Show tips if available

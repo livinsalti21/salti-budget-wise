@@ -22,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { hasProAccess } from '@/lib/permissions/hasProAccess';
 import BudgetPaywallModal from '@/components/ui/BudgetPaywallModal';
 import type { BudgetInput } from '@/lib/budgetUtils';
+import { saveBudgetToDatabase } from '@/lib/budgetStorage';
+import { computeWeeklyBudget } from '@/lib/budgetUtils';
 
 interface EnhancedManualInputProps {
   onBudgetCreated: (data: BudgetInput) => void;
@@ -181,7 +183,7 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
     }
   };
 
-  const handleCreateBudget = () => {
+  const handleCreateBudget = async () => {
     // Validate required fields
     const validIncomes = budgetData.incomes.filter(income => income.amount > 0 && income.source);
     if (validIncomes.length === 0) {
@@ -200,11 +202,21 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
       goals: budgetData.goals.filter(goal => goal.name && goal.target_amount > 0 && goal.due_date)
     };
 
+    // Save to database if user is available
+    if (user) {
+      try {
+        const budgetResult = computeWeeklyBudget(finalBudgetData, 'free');
+        await saveBudgetToDatabase(user.id, finalBudgetData, budgetResult, 'Manual Budget');
+      } catch (saveError) {
+        console.error('Error saving manual budget:', saveError);
+      }
+    }
+
     onBudgetCreated(finalBudgetData);
     
     toast({
       title: "Budget Created! 🎉",
-      description: "Your manual budget has been created successfully"
+      description: "Your manual budget has been created and saved successfully"
     });
   };
 

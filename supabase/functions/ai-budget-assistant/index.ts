@@ -129,6 +129,82 @@ Respond ONLY with valid JSON matching this schema:
       throw new Error('Failed to save budget data');
     }
 
+    // Also create structured budget record for immediate viewing
+    const weekStart = new Date();
+    const dayOfWeek = weekStart.getDay();
+    weekStart.setDate(weekStart.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+
+    const { data: budget, error: budgetError } = await supabaseClient
+      .from('budgets')
+      .upsert({
+        user_id: user.id,
+        week_start_date: weekStartStr,
+        title: `AI Budget - ${new Date().toLocaleDateString()}`
+      })
+      .select()
+      .single();
+
+    if (!budgetError && budget) {
+      // Create budget items from AI data
+      const budgetItems = [];
+      
+      // Add income items
+      cleanedData.incomes.forEach((income, index) => {
+        budgetItems.push({
+          budget_id: budget.id,
+          category: income.source || `Income ${index + 1}`,
+          planned_cents: Math.round(income.amount * 100),
+          actual_cents: 0
+        });
+      });
+
+      // Add fixed expenses
+      cleanedData.fixed_expenses.forEach(expense => {
+        budgetItems.push({
+          budget_id: budget.id,
+          category: expense.name,
+          planned_cents: Math.round(expense.amount * 100),
+          actual_cents: 0
+        });
+      });
+
+      // Add variable categories
+      const variableCategories = [
+        { name: 'Groceries', split: cleanedData.variable_preferences.splits.groceries },
+        { name: 'Gas', split: cleanedData.variable_preferences.splits.gas },
+        { name: 'Eating Out', split: cleanedData.variable_preferences.splits.eating_out },
+        { name: 'Fun', split: cleanedData.variable_preferences.splits.fun },
+        { name: 'Misc', split: cleanedData.variable_preferences.splits.misc }
+      ];
+
+      // Calculate remaining amount for variable spending
+      const totalIncome = cleanedData.incomes.reduce((sum, income) => sum + income.amount, 0);
+      const totalFixed = cleanedData.fixed_expenses.reduce((sum, expense) => sum + expense.amount, 0);
+      const remainder = Math.max(0, totalIncome - totalFixed);
+      const saveAmount = remainder * cleanedData.variable_preferences.save_rate;
+      const variableAmount = remainder - saveAmount;
+
+      variableCategories.forEach(category => {
+        budgetItems.push({
+          budget_id: budget.id,
+          category: category.name,
+          planned_cents: Math.round(variableAmount * category.split * 100),
+          actual_cents: 0
+        });
+      });
+
+      // Add savings
+      budgetItems.push({
+        budget_id: budget.id,
+        category: 'Save n Stack',
+        planned_cents: Math.round(saveAmount * 100),
+        actual_cents: 0
+      });
+
+      await supabaseClient.from('budget_items').insert(budgetItems);
+    }
+
     // Generate coaching tips based on the data
     const tips = [];
     const totalIncome = cleanedData.incomes.reduce((sum, income) => sum + income.amount, 0);

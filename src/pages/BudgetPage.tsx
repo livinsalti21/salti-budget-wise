@@ -1,8 +1,10 @@
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { BudgetInput } from "@/lib/budgetUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import { loadCurrentWeekBudget } from "@/lib/budgetStorage";
 
 // New unified components
 import BudgetCreationFlow from "@/components/BudgetCreationFlow";
@@ -15,6 +17,38 @@ import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
 export default function BudgetPage() {
   const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'dashboard'>('method-select');
   const [budgetData, setBudgetData] = useState<BudgetInput | null>(null);
+  const [budgetId, setBudgetId] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Load existing budget on component mount
+  useEffect(() => {
+    if (user) {
+      loadExistingBudget();
+    }
+  }, [user]);
+
+  const loadExistingBudget = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const { budgetData: existingBudget, budgetId: existingBudgetId } = await loadCurrentWeekBudget(user.id);
+      
+      if (existingBudget) {
+        setBudgetData(existingBudget);
+        setBudgetId(existingBudgetId);
+        setCurrentView('dashboard');
+      } else {
+        setCurrentView('method-select');
+      }
+    } catch (error) {
+      console.error('Error loading existing budget:', error);
+      setCurrentView('method-select');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleMethodSelected = (method: 'ai' | 'upload' | 'template' | 'manual') => {
     setCurrentView(method);
@@ -22,6 +56,7 @@ export default function BudgetPage() {
 
   const handleBudgetCreated = (data: BudgetInput) => {
     setBudgetData(data);
+    setBudgetId(undefined); // New budget, no ID yet
     setCurrentView('dashboard');
   };
 
@@ -31,7 +66,7 @@ export default function BudgetPage() {
 
   const getPageTitle = () => {
     switch (currentView) {
-      case 'method-select': return 'Create Budget';
+      case 'method-select': return budgetData ? 'Budget Options' : 'Create Budget';
       case 'ai': return 'AI Budget Assistant';
       case 'upload': return 'Upload Spreadsheet';
       case 'template': return 'Budget Templates';
@@ -43,7 +78,7 @@ export default function BudgetPage() {
 
   const getPageDescription = () => {
     switch (currentView) {
-      case 'method-select': return 'Choose how you want to create your budget';
+      case 'method-select': return budgetData ? 'Create a new budget or modify existing' : 'Choose how you want to create your budget';
       case 'ai': return 'Describe your finances in plain English';
       case 'upload': return 'Import from spreadsheet files';
       case 'template': return 'Professional budget templates';
@@ -84,7 +119,14 @@ export default function BudgetPage() {
       </header>
 
       <main className="p-4 max-w-2xl mx-auto">
-        {currentView === 'method-select' && (
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your budget...</p>
+            </div>
+          </div>
+        ) : currentView === 'method-select' && (
           <BudgetCreationFlow 
             onMethodSelected={handleMethodSelected}
             onBudgetCreated={handleBudgetCreated}
@@ -117,7 +159,11 @@ export default function BudgetPage() {
         )}
         
         {currentView === 'dashboard' && budgetData && (
-          <WeeklyBudgetDashboard budgetData={budgetData} />
+          <WeeklyBudgetDashboard 
+            budgetData={budgetData} 
+            budgetId={budgetId}
+            onBudgetSaved={(savedBudgetId) => setBudgetId(savedBudgetId)}
+          />
         )}
       </main>
     </div>

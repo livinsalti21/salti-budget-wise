@@ -306,6 +306,8 @@ export type Database = {
           file_data: Json
           filename: string
           id: string
+          processed_at: string | null
+          processed_budget_id: string | null
           status: string
           upload_date: string
           user_id: string
@@ -314,6 +316,8 @@ export type Database = {
           file_data: Json
           filename: string
           id?: string
+          processed_at?: string | null
+          processed_budget_id?: string | null
           status?: string
           upload_date?: string
           user_id: string
@@ -322,11 +326,21 @@ export type Database = {
           file_data?: Json
           filename?: string
           id?: string
+          processed_at?: string | null
+          processed_budget_id?: string | null
           status?: string
           upload_date?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_uploads_processed_budget_id_fkey"
+            columns: ["processed_budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budgets: {
         Row: {

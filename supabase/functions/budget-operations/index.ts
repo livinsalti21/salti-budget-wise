@@ -33,6 +33,8 @@ serve(async (req) => {
         return await exportBudget(supabase, params);
       case 'calculate_budget':
         return await calculateBudget(supabase, params);
+      case 'process_csv_upload':
+        return await processCSVUpload(supabase, params);
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -361,6 +363,242 @@ function generateTips(income: number, expenses: number, savings: number, remaind
   }
   
   return tips;
+}
+
+async function processCSVUpload(supabase: any, { userId, uploadId, csvContent }: any) {
+  try {
+    console.log('Processing CSV upload for user:', userId, 'Upload ID:', uploadId);
+    
+    // Parse CSV content
+    const lines = csvContent.split('\n').filter((line: string) => line.trim());
+    if (lines.length < 2) {
+      throw new Error('CSV file must contain headers and at least one data row');
+    }
+
+    const headers = lines[0].split(',').map((h: string) => h.trim().toLowerCase());
+    const rows = lines.slice(1).map((line: string) => {
+      const values = line.split(',').map((v: string) => v.trim());
+      const row: Record<string, string> = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+      return row;
+    });
+
+    console.log('Parsed CSV headers:', headers);
+    console.log('Parsed rows count:', rows.length);
+
+    // Smart column detection
+    const incomes: any[] = [];
+    const fixed_expenses: any[] = [];
+    const goals: any[] = [];
+    
+    // Detect column mappings
+    const categoryCol = headers.find(h => h.includes('category') || h.includes('item') || h.includes('name')) || headers[0];
+    const amountCol = headers.find(h => h.includes('amount') || h.includes('value') || h.includes('cost')) || headers[1];
+    const typeCol = headers.find(h => h.includes('type') || h.includes('kind'));
+    const frequencyCol = headers.find(h => h.includes('frequency') || h.includes('cadence') || h.includes('period'));
+    const descriptionCol = headers.find(h => h.includes('description') || h.includes('note'));
+
+    console.log('Column mappings:', { categoryCol, amountCol, typeCol, frequencyCol });
+
+    rows.forEach((row, index) => {
+      const category = row[categoryCol] || `Item ${index + 1}`;
+      const amountStr = row[amountCol] || '0';
+      const amount = parseFloat(amountStr.replace(/[^\d.-]/g, '')) || 0;
+      const type = row[typeCol]?.toLowerCase() || '';
+      const frequency = row[frequencyCol]?.toLowerCase() || 'monthly';
+      const description = row[descriptionCol] || '';
+
+      if (amount <= 0) return; // Skip zero amounts
+
+      // Categorize based on type or keywords
+      if (type.includes('income') || type.includes('salary') || type.includes('wage') ||
+          category.toLowerCase().includes('income') || category.toLowerCase().includes('salary')) {
+        incomes.push({
+          amount,
+          cadence: normalizeFrequency(frequency),
+          source: category
+        });
+      } else if (type.includes('goal') || type.includes('target') || type.includes('save') ||
+                 category.toLowerCase().includes('goal') || category.toLowerCase().includes('save')) {
+        // Try to extract target date from description
+        const dateMatch = description.match(/(\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{4})/);
+        const targetDate = dateMatch ? dateMatch[0] : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        
+        goals.push({
+          name: category,
+          target_amount: amount,
+          due_date: targetDate
+        });
+      } else {
+        // Default to fixed expense
+        fixed_expenses.push({
+          name: category,
+          amount,
+          cadence: normalizeFrequency(frequency)
+        });
+      }
+    });
+
+    // If no incomes found, add a default one
+    if (incomes.length === 0) {
+      const totalExpenses = fixed_expenses.reduce((sum, exp) => sum + normalizeToWeekly(exp.amount, exp.cadence), 0);
+      const estimatedIncome = Math.max(totalExpenses * 1.3, 2000); // 30% buffer over expenses, minimum $2000/month
+      incomes.push({
+        amount: estimatedIncome,
+        cadence: 'monthly',
+        source: 'Primary Income (estimated)'
+      });
+    }
+
+    // Create BudgetInput structure
+    const budgetInput = {
+      incomes,
+      fixed_expenses,
+      variable_preferences: {
+        save_rate: 0.20,
+        splits: {
+          groceries: 0.4,
+          gas: 0.2,
+          eating_out: 0.2,
+          fun: 0.15,
+          misc: 0.05
+        }
+      },
+      goals
+    };
+
+    console.log('Generated budget input:', budgetInput);
+
+    // Store the processed budget
+    const weekStart = getCurrentWeekStart();
+    
+    // Create budget record
+    const { data: budget, error: budgetError } = await supabase
+      .from('budgets')
+      .upsert({
+        user_id: userId,
+        week_start_date: weekStart,
+        title: `Budget from CSV Upload`
+      })
+      .select()
+      .single();
+
+    if (budgetError) throw budgetError;
+
+    // Calculate budget result
+    const weeklyIncome = incomes.reduce((sum, income) => sum + normalizeToWeekly(income.amount, income.cadence), 0);
+    const weeklyFixedExpenses = fixed_expenses.reduce((sum, exp) => sum + normalizeToWeekly(exp.amount, exp.cadence), 0);
+    const remainder = weeklyIncome - weeklyFixedExpenses;
+    const savings = remainder * 0.20;
+    const variableSpending = remainder - savings;
+
+    const splits = budgetInput.variable_preferences.splits;
+    const allocations = Object.entries(splits).map(([category, percentage]) => ({
+      name: category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      weekly_amount: variableSpending * (percentage as number)
+    }));
+
+    // Delete existing budget items
+    await supabase.from('budget_items').delete().eq('budget_id', budget.id);
+
+    // Create budget items
+    const budgetItems = [];
+
+    // Income items
+    incomes.forEach((income, index) => {
+      budgetItems.push({
+        budget_id: budget.id,
+        category: income.source,
+        planned_cents: Math.round(normalizeToWeekly(income.amount, income.cadence) * 100),
+        actual_cents: 0
+      });
+    });
+
+    // Fixed expense items
+    fixed_expenses.forEach(expense => {
+      budgetItems.push({
+        budget_id: budget.id,
+        category: expense.name,
+        planned_cents: Math.round(normalizeToWeekly(expense.amount, expense.cadence) * 100),
+        actual_cents: 0
+      });
+    });
+
+    // Variable spending allocations
+    allocations.forEach(allocation => {
+      budgetItems.push({
+        budget_id: budget.id,
+        category: allocation.name,
+        planned_cents: Math.round(allocation.weekly_amount * 100),
+        actual_cents: 0
+      });
+    });
+
+    // Savings
+    budgetItems.push({
+      budget_id: budget.id,
+      category: 'Save n Stack',
+      planned_cents: Math.round(savings * 100),
+      actual_cents: 0
+    });
+
+    // Insert budget items
+    const { error: itemsError } = await supabase
+      .from('budget_items')
+      .insert(budgetItems);
+
+    if (itemsError) throw itemsError;
+
+    // Update upload record with processed status
+    if (uploadId) {
+      await supabase
+        .from('budget_uploads')
+        .update({ 
+          processed_at: new Date().toISOString(),
+          processed_budget_id: budget.id
+        })
+        .eq('id', uploadId);
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true,
+      budget_input: budgetInput,
+      budget_id: budget.id,
+      message: `Successfully processed ${rows.length} rows from CSV`
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error processing CSV upload:', error);
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: error.message 
+    }), {
+      status: 400,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+function normalizeFrequency(frequency: string): string {
+  const freq = frequency.toLowerCase();
+  if (freq.includes('week')) return 'weekly';
+  if (freq.includes('month')) return 'monthly';
+  if (freq.includes('year')) return 'yearly';
+  if (freq.includes('day')) return 'daily';
+  return 'monthly'; // default
+}
+
+function getCurrentWeekStart(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - dayOfWeek);
+  startOfWeek.setHours(0, 0, 0, 0);
+  return startOfWeek.toISOString().split('T')[0];
 }
 
 function generateCSV(budget: any): string {

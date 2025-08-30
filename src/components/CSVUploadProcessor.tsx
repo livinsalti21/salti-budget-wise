@@ -13,6 +13,9 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { processCSVUpload, validateCSVContent, generateBudgetTemplate } from '@/lib/csvUtils';
 import type { BudgetInput } from '@/lib/budgetUtils';
 
 interface CSVUploadProcessorProps {
@@ -25,12 +28,14 @@ const CSVUploadProcessor = ({ onBudgetExtracted, onBack }: CSVUploadProcessorPro
   const [uploadProgress, setUploadProgress] = useState(0);
   const [extractedData, setExtractedData] = useState<BudgetInput | null>(null);
   const [fileName, setFileName] = useState<string>('');
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
     // Validate file type
     const validTypes = ['.csv', '.xlsx', '.xls'];
@@ -49,34 +54,50 @@ const CSVUploadProcessor = ({ onBudgetExtracted, onBack }: CSVUploadProcessorPro
     setUploadStep('processing');
     setUploadProgress(0);
 
-    // Simulate processing steps
-    const steps = [
-      { progress: 20, message: 'Reading file...' },
-      { progress: 40, message: 'Parsing data...' },
-      { progress: 60, message: 'Identifying columns...' },
-      { progress: 80, message: 'Extracting budget information...' },
-      { progress: 100, message: 'Processing complete!' }
-    ];
-
     try {
-      // Read and parse the file
+      // Read file content
       const fileContent = await readFileContent(file);
       
-      for (const step of steps) {
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setUploadProgress(step.progress);
-        
-        if (step.progress === 100) {
-          // Process the file content
-          const extractedBudget = await processFileContent(fileContent, fileExtension);
-          setExtractedData(extractedBudget);
-          setUploadStep('preview');
-        }
+      // Validate CSV content
+      const validation = validateCSVContent(fileContent);
+      if (!validation.valid) {
+        throw new Error(validation.error);
       }
+
+      // Simulate processing steps for better UX
+      const steps = [
+        { progress: 20, message: 'Reading file structure...' },
+        { progress: 40, message: 'Detecting columns...' },
+        { progress: 60, message: 'Categorizing income and expenses...' },
+        { progress: 80, message: 'Processing savings goals...' },
+        { progress: 100, message: 'Generating budget...' }
+      ];
+
+      for (const step of steps) {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        setUploadProgress(step.progress);
+      }
+
+      // Process via edge function
+      const result = await processCSVUpload(user.id, fileContent, file.name);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to process CSV');
+      }
+
+      setExtractedData(result.budgetInput!);
+      setUploadStep('preview');
+
+      toast({
+        title: "CSV Processed Successfully! 🎉",
+        description: result.message || 'Your budget data has been extracted and saved.'
+      });
+
     } catch (error) {
+      console.error('Processing error:', error);
       toast({
         title: "Processing Error",
-        description: "Failed to process the uploaded file. Please check the format and try again.",
+        description: error.message || "Failed to process the uploaded file. Please check the format and try again.",
         variant: "destructive"
       });
       setUploadStep('upload');
@@ -92,76 +113,50 @@ const CSVUploadProcessor = ({ onBudgetExtracted, onBack }: CSVUploadProcessorPro
     });
   };
 
-  const processFileContent = async (content: string, fileType: string): Promise<BudgetInput> => {
-    // Simple CSV processing (in a real app, you'd use a proper CSV parser)
-    const lines = content.split('\n').filter(line => line.trim());
-    
-    // Mock extraction logic - in reality, this would be much more sophisticated
-    // and potentially use AI to intelligently parse different formats
-    const mockExtractedData: BudgetInput = {
-      incomes: [
-        { amount: 2500, cadence: 'monthly', source: 'Salary' }
-      ],
-      fixed_expenses: [
-        { name: 'Rent', amount: 800, cadence: 'monthly' },
-        { name: 'Car Payment', amount: 300, cadence: 'monthly' },
-        { name: 'Insurance', amount: 150, cadence: 'monthly' }
-      ],
-      variable_preferences: {
-        save_rate: 0.20,
-        splits: {
-          groceries: 0.4,
-          gas: 0.2,
-          eating_out: 0.2,
-          fun: 0.15,
-          misc: 0.05
-        }
-      },
-      goals: [
-        { name: 'Emergency Fund', target_amount: 5000, due_date: '2024-12-31' }
-      ]
-    };
-
-    return mockExtractedData;
-  };
-
   const handleConfirmExtraction = () => {
     if (extractedData) {
       onBudgetExtracted(extractedData);
       setUploadStep('complete');
-      
-      toast({
-        title: "Budget Created! 🎉",
-        description: "Your spreadsheet has been successfully processed into a weekly budget"
-      });
     }
   };
 
   const downloadTemplate = () => {
-    const template = `Category,Type,Amount,Frequency
-Salary,Income,2500,Monthly
-Side Hustle,Income,500,Monthly
-Rent,Fixed Expense,800,Monthly
-Car Payment,Fixed Expense,300,Monthly
-Insurance,Fixed Expense,150,Monthly
-Phone,Fixed Expense,80,Monthly
-Emergency Fund,Goal,5000,2024-12-31
-Vacation,Goal,2000,2024-08-01`;
-
+    const template = generateBudgetTemplate();
     const blob = new Blob([template], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'budget_template.csv';
+    a.download = 'livin_salti_budget_template.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
     toast({
-      title: "Template Downloaded",
-      description: "Use this template to format your budget data correctly"
+      title: "Template Downloaded 📋",
+      description: "Use this template to format your budget data correctly. Include Type column for automatic categorization."
     });
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const event = { target: { files: [e.dataTransfer.files[0]] } } as any;
+      handleFileUpload(event);
+    }
   };
 
   return (
@@ -172,7 +167,7 @@ Vacation,Goal,2000,2024-08-01`;
           <div className="text-center space-y-2">
             <h3 className="text-2xl font-bold">Upload Your Budget Spreadsheet</h3>
             <p className="text-muted-foreground">
-              Import from Excel, CSV, or Google Sheets files
+              Smart parsing automatically detects Income, Expenses, and Goals
             </p>
           </div>
 
@@ -180,7 +175,7 @@ Vacation,Goal,2000,2024-08-01`;
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                File Upload
+                Drag & Drop Upload
               </CardTitle>
               <CardDescription>
                 Supported formats: .csv, .xlsx, .xls (max 5MB)
@@ -188,15 +183,30 @@ Vacation,Goal,2000,2024-08-01`;
             </CardHeader>
             <CardContent className="space-y-4">
               <div 
-                className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer"
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer ${
+                  dragActive 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-muted-foreground/20 hover:border-primary/50'
+                }`}
                 onClick={() => fileInputRef.current?.click()}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
               >
-                <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <FileSpreadsheet className={`h-12 w-12 mx-auto mb-4 ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
                 <div className="space-y-2">
-                  <p className="text-lg font-medium">Drop your file here or click to browse</p>
-                  <p className="text-sm text-muted-foreground">
-                    We'll automatically detect columns for income, expenses, and goals
+                  <p className="text-lg font-medium">
+                    {dragActive ? 'Drop your file here!' : 'Drop your file here or click to browse'}
                   </p>
+                  <p className="text-sm text-muted-foreground">
+                    Smart column detection: Income, Expenses, Goals automatically categorized
+                  </p>
+                  <div className="flex flex-wrap gap-2 justify-center mt-2">
+                    <Badge variant="outline" className="text-xs">Auto-detect</Badge>
+                    <Badge variant="outline" className="text-xs">Smart parsing</Badge>
+                    <Badge variant="outline" className="text-xs">Instant preview</Badge>
+                  </div>
                 </div>
               </div>
 
@@ -215,7 +225,7 @@ Vacation,Goal,2000,2024-08-01`;
                 </Button>
                 <Button variant="outline" onClick={downloadTemplate}>
                   <Download className="mr-2 h-4 w-4" />
-                  Download Template
+                  Template
                 </Button>
               </div>
             </CardContent>
@@ -223,21 +233,36 @@ Vacation,Goal,2000,2024-08-01`;
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Supported File Formats</CardTitle>
+              <CardTitle className="text-lg">How It Works</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span>CSV files (.csv)</span>
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full p-2 mt-1">
+                    <FileSpreadsheet className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Smart Detection</p>
+                    <p className="text-muted-foreground">Automatically identifies income, expenses, and goals from your data</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span>Excel files (.xlsx, .xls)</span>
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full p-2 mt-1">
+                    <Eye className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Preview & Verify</p>
+                    <p className="text-muted-foreground">Review extracted data before creating your budget</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-success" />
-                  <span>Google Sheets exports</span>
+                <div className="flex items-start gap-3">
+                  <div className="bg-primary/10 rounded-full p-2 mt-1">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Instant Budget</p>
+                    <p className="text-muted-foreground">Create your weekly budget dashboard in seconds</p>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -261,10 +286,11 @@ Vacation,Goal,2000,2024-08-01`;
             <Progress value={uploadProgress} className="w-full" />
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
-                {uploadProgress < 40 ? 'Reading file structure...' :
-                 uploadProgress < 60 ? 'Identifying income and expenses...' :
-                 uploadProgress < 80 ? 'Processing goal information...' :
-                 'Finalizing budget data...'}
+                {uploadProgress < 30 ? 'Reading file structure...' :
+                 uploadProgress < 50 ? 'Detecting columns and categories...' :
+                 uploadProgress < 70 ? 'Processing income and expenses...' :
+                 uploadProgress < 90 ? 'Organizing savings goals...' :
+                 'Finalizing your budget...'}
               </p>
             </div>
           </CardContent>
@@ -277,7 +303,7 @@ Vacation,Goal,2000,2024-08-01`;
           <div className="text-center space-y-2">
             <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
               <CheckCircle className="h-6 w-6 text-success" />
-              Data Extracted Successfully
+              Budget Data Extracted Successfully
             </h3>
             <p className="text-muted-foreground">
               Review the information we found in your spreadsheet
@@ -298,43 +324,63 @@ Vacation,Goal,2000,2024-08-01`;
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Income */}
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-success">Income Sources</h4>
+                  <h4 className="font-semibold text-success flex items-center gap-2">
+                    💰 Income Sources ({extractedData.incomes.length})
+                  </h4>
                   {extractedData.incomes.map((income, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-success/10 rounded">
-                      <span>{income.source || 'Income'}</span>
-                      <Badge variant="outline">${income.amount} {income.cadence}</Badge>
+                    <div key={index} className="flex justify-between items-center p-3 bg-success/10 rounded-lg">
+                      <span className="font-medium">{income.source || 'Income'}</span>
+                      <Badge variant="outline" className="bg-success/20">
+                        ${income.amount} {income.cadence}
+                      </Badge>
                     </div>
                   ))}
                 </div>
 
                 {/* Fixed Expenses */}
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-destructive">Fixed Expenses</h4>
+                  <h4 className="font-semibold text-destructive flex items-center gap-2">
+                    💳 Fixed Expenses ({extractedData.fixed_expenses.length})
+                  </h4>
                   {extractedData.fixed_expenses.map((expense, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-destructive/10 rounded">
-                      <span>{expense.name}</span>
-                      <Badge variant="outline">${expense.amount} {expense.cadence}</Badge>
+                    <div key={index} className="flex justify-between items-center p-3 bg-destructive/10 rounded-lg">
+                      <span className="font-medium">{expense.name}</span>
+                      <Badge variant="outline" className="bg-destructive/20">
+                        ${expense.amount} {expense.cadence}
+                      </Badge>
                     </div>
                   ))}
                 </div>
 
                 {/* Goals */}
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-primary">Savings Goals</h4>
-                  {extractedData.goals.map((goal, index) => (
-                    <div key={index} className="flex justify-between items-center p-2 bg-primary/10 rounded">
-                      <span>{goal.name}</span>
-                      <Badge variant="outline">${goal.target_amount} by {goal.due_date}</Badge>
-                    </div>
-                  ))}
-                </div>
+                {extractedData.goals && extractedData.goals.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-primary flex items-center gap-2">
+                      🎯 Savings Goals ({extractedData.goals.length})
+                    </h4>
+                    {extractedData.goals.map((goal, index) => (
+                      <div key={index} className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
+                        <span className="font-medium">{goal.name}</span>
+                        <Badge variant="outline" className="bg-primary/20">
+                          ${goal.target_amount} by {goal.due_date}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Settings */}
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-muted-foreground">Settings</h4>
-                  <div className="p-2 bg-muted/10 rounded">
-                    <p className="text-sm">Save Rate: {(extractedData.variable_preferences.save_rate * 100).toFixed(0)}%</p>
-                    <p className="text-sm text-muted-foreground">Default category splits applied</p>
+                  <h4 className="font-semibold text-muted-foreground flex items-center gap-2">
+                    ⚙️ Budget Settings
+                  </h4>
+                  <div className="p-3 bg-muted/10 rounded-lg space-y-1">
+                    <p className="text-sm">
+                      <span className="font-medium">Save Rate:</span> {(extractedData.variable_preferences.save_rate * 100).toFixed(0)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Default category splits and preferences applied
+                    </p>
                   </div>
                 </div>
               </div>

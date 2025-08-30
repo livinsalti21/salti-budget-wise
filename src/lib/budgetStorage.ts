@@ -44,13 +44,16 @@ export async function saveBudgetToDatabase(
   try {
     const weekStart = getCurrentWeekStart();
     
-    // Create main budget record
+    // Create main budget record with conflict resolution
     const { data: budget, error: budgetError } = await supabase
       .from('budgets')
       .upsert({
         user_id: userId,
         week_start_date: weekStart,
-        title: title || `Budget for ${new Date(weekStart).toLocaleDateString()}`
+        title: title || `Budget for ${new Date(weekStart).toLocaleDateString()}`,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,week_start_date'
       })
       .select()
       .single();

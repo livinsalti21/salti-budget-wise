@@ -206,9 +206,18 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Computing your weekly budget...</p>
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <div>
+              <p className="text-muted-foreground">
+                {budgetId ? 'Loading your budget from uploaded data...' : 'Computing your weekly budget...'}
+              </p>
+              {budgetId && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  📊 Processing spreadsheet data and calculating allocations
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

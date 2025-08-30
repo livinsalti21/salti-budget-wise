@@ -26,6 +26,7 @@ import BudgetPaywallModal from '@/components/ui/BudgetPaywallModal';
 import type { BudgetInput, WeeklyBudgetResult, UserPlan } from '@/lib/budgetUtils';
 import { computeWeeklyBudget, getCurrentWeekStart, getCurrentWeekEnd } from '@/lib/budgetUtils';
 import { saveBudgetToDatabase } from '@/lib/budgetStorage';
+import BalanceSheet from '@/components/BalanceSheet';
 
 interface WeeklyBudgetDashboardProps {
   budgetData: BudgetInput;
@@ -292,8 +293,9 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
       </Card>
 
       <Tabs defaultValue="current" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="current">Current Week</TabsTrigger>
+          <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
           <TabsTrigger value="customize" className="relative">
             Customize
             {!isPro && <Crown className="h-3 w-3 ml-1 text-primary" />}
@@ -367,6 +369,10 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="balance-sheet" className="space-y-6">
+          <BalanceSheet budgetId={budgetId} />
         </TabsContent>
 
         <TabsContent value="customize" className="space-y-6">

@@ -2,6 +2,25 @@ import { supabase } from '@/integrations/supabase/client';
 import type { BudgetInput, WeeklyBudgetResult } from './budgetUtils';
 import { getCurrentWeekStart, normToWeekly } from './budgetUtils';
 
+// Optional: Use edge function for enhanced budget operations
+export async function getBudgetAnalytics(userId: string, weeksBack = 8): Promise<any[]> {
+  try {
+    const { data, error } = await supabase.functions.invoke('budget-operations', {
+      body: {
+        action: 'get_budget_analytics',
+        userId,
+        weeksBack
+      }
+    });
+
+    if (error) throw error;
+    return data?.analytics || [];
+  } catch (error) {
+    console.error('Error getting budget analytics:', error);
+    return [];
+  }
+}
+
 interface StoredBudget {
   id: string;
   user_id: string;

@@ -17,6 +17,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { processCSVUpload, validateCSVContent, generateBudgetTemplate } from '@/lib/csvUtils';
 import type { BudgetInput } from '@/lib/budgetUtils';
+import * as XLSX from 'xlsx';
 
 interface CSVUploadProcessorProps {
   onBudgetExtracted: (data: BudgetInput) => void;
@@ -107,9 +108,40 @@ const CSVUploadProcessor = ({ onBudgetExtracted, onBack }: CSVUploadProcessorPro
   const readFileContent = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
+      
+      reader.onload = (e) => {
+        try {
+          const data = e.target?.result;
+          if (!data) {
+            reject(new Error('Failed to read file'));
+            return;
+          }
+
+          // Check if it's an Excel file
+          if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+            // Parse Excel file and convert to CSV
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const csvContent = XLSX.utils.sheet_to_csv(worksheet);
+            resolve(csvContent);
+          } else {
+            // For CSV files, use as text
+            resolve(data as string);
+          }
+        } catch (error) {
+          reject(new Error('Failed to parse file: ' + error.message));
+        }
+      };
+      
       reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
+      
+      // Use ArrayBuffer for Excel files, text for CSV
+      if (file.name.toLowerCase().endsWith('.xlsx') || file.name.toLowerCase().endsWith('.xls')) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
     });
   };
 

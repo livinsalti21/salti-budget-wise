@@ -20,6 +20,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getCurrentWeekStart, formatCurrency } from '@/lib/budgetUtils';
+import { hasProAccess } from '@/lib/permissions/hasProAccess';
+import UpgradeModal from '@/components/ui/UpgradeModal';
 
 interface BalanceSheetProps {
   budgetId?: string;
@@ -59,8 +61,12 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheetData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const isPro = hasProAccess(user);
+  const FREE_LIMIT = { income: 1, expenses: 3, assets: 3, liabilities: 3 };
 
   useEffect(() => {
     if (user) {
@@ -258,17 +264,24 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
         </CardContent>
       </Card>
 
-      {/* Assets Section */}
+      {/* Income Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-success" />
-            Assets (Income)
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-success" />
+              Income Sources
+            </div>
+            {!isPro && (
+              <Badge variant="outline" className="text-xs">
+                {balanceSheet.assets.items.length}/{FREE_LIMIT.income} Free
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {balanceSheet.assets.items.map((item, index) => (
+            {balanceSheet.assets.items.slice(0, isPro ? undefined : FREE_LIMIT.income).map((item, index) => (
               <div key={index} className="flex justify-between items-center py-2">
                 <span className="font-medium">{item.name}</span>
                 <div className="text-right">
@@ -283,8 +296,20 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
                 </div>
               </div>
             ))}
+            
+            {!isPro && balanceSheet.assets.items.length > FREE_LIMIT.income && (
+              <div className="p-3 border border-dashed border-primary/30 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {balanceSheet.assets.items.length - FREE_LIMIT.income} more income sources available with Pro
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setShowUpgradeModal(true)}>
+                  Upgrade to Pro
+                </Button>
+              </div>
+            )}
+            
             <div className="border-t pt-3 flex justify-between items-center font-bold">
-              <span>Total Assets</span>
+              <span>Total Income</span>
               <div className="text-right">
                 <div className="text-success text-lg">
                   ${balanceSheet.assets.total_planned.toFixed(2)}
@@ -300,17 +325,24 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
         </CardContent>
       </Card>
 
-      {/* Liabilities Section */}
+      {/* Expenses Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-destructive" />
-            Liabilities (Expenses)
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-destructive" />
+              Expenses (Fixed & Variable)
+            </div>
+            {!isPro && (
+              <Badge variant="outline" className="text-xs">
+                {balanceSheet.liabilities.items.length}/{FREE_LIMIT.expenses} Free
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {balanceSheet.liabilities.items.map((item, index) => (
+            {balanceSheet.liabilities.items.slice(0, isPro ? undefined : FREE_LIMIT.expenses).map((item, index) => (
               <div key={index} className="flex justify-between items-center py-2">
                 <span className="font-medium">{item.name}</span>
                 <div className="text-right">
@@ -325,8 +357,20 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
                 </div>
               </div>
             ))}
+            
+            {!isPro && balanceSheet.liabilities.items.length > FREE_LIMIT.expenses && (
+              <div className="p-3 border border-dashed border-primary/30 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  {balanceSheet.liabilities.items.length - FREE_LIMIT.expenses} more expenses available with Pro
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setShowUpgradeModal(true)}>
+                  Upgrade to Pro
+                </Button>
+              </div>
+            )}
+            
             <div className="border-t pt-3 flex justify-between items-center font-bold">
-              <span>Total Liabilities</span>
+              <span>Total Expenses</span>
               <div className="text-right">
                 <div className="text-destructive text-lg">
                   ${balanceSheet.liabilities.total_planned.toFixed(2)}
@@ -429,6 +473,15 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal 
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        feature="Unlimited budget items"
+        title="Unlock Full Budget Tracking"
+        description="Upgrade to Pro for unlimited income sources, expenses, and financial tracking."
+      />
     </div>
   );
 }

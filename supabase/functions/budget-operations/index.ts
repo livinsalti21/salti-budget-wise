@@ -49,6 +49,15 @@ serve(async (req) => {
 
 async function getBalanceSheet(supabase: any, { userId, weekStart }: any) {
   try {
+    // Get user's plan for limits
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('plan')
+      .eq('id', userId)
+      .single();
+    
+    const isPro = profile?.plan === 'Pro' || profile?.plan === 'Family';
+    
     // Get current week's budget
     const { data: budget } = await supabase
       .from('budgets')
@@ -75,7 +84,7 @@ async function getBalanceSheet(supabase: any, { userId, weekStart }: any) {
 
     const items = budget.budget_items || [];
     
-    // Categorize items for balance sheet
+    // Categorize items for balance sheet - return all items but with plan information
     const assets = items
       .filter((item: any) => item.category.toLowerCase().includes('income'))
       .map((item: any) => ({

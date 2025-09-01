@@ -1,32 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { 
   TrendingUp, 
   TrendingDown, 
   DollarSign, 
-  Target, 
-  Lock, 
-  History,
-  FileDown,
-  Calendar,
-  AlertCircle,
+  Target,
+  AlertTriangle,
   CheckCircle,
-  Crown
+  Download,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { hasProAccess } from '@/lib/permissions/hasProAccess';
-import BudgetPaywallModal from '@/components/ui/BudgetPaywallModal';
 import type { BudgetInput, WeeklyBudgetResult, UserPlan } from '@/lib/budgetUtils';
-import { computeWeeklyBudget, getCurrentWeekStart, getCurrentWeekEnd } from '@/lib/budgetUtils';
+import { computeWeeklyBudget, formatCurrency } from '@/lib/budgetUtils';
+import UpgradeModal from '@/components/ui/UpgradeModal';
 import { saveBudgetToDatabase } from '@/lib/budgetStorage';
-import BalanceSheet from '@/components/BalanceSheet';
 
 interface WeeklyBudgetDashboardProps {
   budgetData: BudgetInput;
@@ -35,541 +29,368 @@ interface WeeklyBudgetDashboardProps {
 }
 
 const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBudgetDashboardProps) => {
-  const [budgetResult, setBudgetResult] = useState<WeeklyBudgetResult | null>(null);
+  const [result, setResult] = useState<WeeklyBudgetResult | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan>('free');
-  const [defaultSplits, setDefaultSplits] = useState<any>(null);
-  const [saveRate, setSaveRate] = useState<number[]>([20]);
-  const [categorySliders, setCategorySliders] = useState<Record<string, number>>({});
-  const [paywallModal, setPaywallModal] = useState<{ isOpen: boolean; feature: string }>({ isOpen: false, feature: '' });
-  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const isPro = hasProAccess({ plan: userPlan } as any);
-
   useEffect(() => {
-    if (user) {
-      loadUserProfile();
+    if (user && budgetData) {
+      calculateBudget();
+      checkUserPlan();
     }
-  }, [user]);
+  }, [user, budgetData]);
 
-  useEffect(() => {
-    if (budgetData && userPlan) {
-      computeBudget();
-    }
-  }, [budgetData, userPlan, defaultSplits, saveRate, categorySliders]);
-
-  const loadUserProfile = async () => {
+  const checkUserPlan = async () => {
     if (!user) return;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('plan, default_splits')
-      .eq('id', user.id)
-      .single();
-
-    if (profile) {
-      setUserPlan((profile.plan as UserPlan) || 'free');
-      setDefaultSplits(profile.default_splits);
-      
-      if (profile.default_splits && typeof profile.default_splits === 'object') {
-        const splits = profile.default_splits as any;
-        if (splits.save_rate) {
-          setSaveRate([splits.save_rate * 100]);
-        }
-        
-        if (splits.splits) {
-          const sliders: Record<string, number> = {};
-          Object.entries(splits.splits).forEach(([key, value]) => {
-            sliders[key] = (value as number) * 100;
-          });
-          setCategorySliders(sliders);
-        }
-      }
-    }
+    
+    const isProUser = await hasProAccess(user);
+    setUserPlan(isProUser ? 'pro' : 'free');
   };
 
-  const computeBudget = () => {
+  const calculateBudget = () => {
     if (!budgetData) return;
-
-    // Update budget data with current sliders if Pro
-    let updatedBudgetData = { ...budgetData };
-    if (isPro) {
-      updatedBudgetData.variable_preferences = {
-        save_rate: saveRate[0] / 100,
-        splits: Object.entries(categorySliders).reduce((acc, [key, value]) => {
-          acc[key] = value / 100;
-          return acc;
-        }, {} as Record<string, number>)
-      };
-    }
-
-    const result = computeWeeklyBudget(updatedBudgetData, userPlan, defaultSplits);
-    setBudgetResult(result);
-
-    // Save to database
-    saveBudgetToSupabase(result);
+    
+    // Get user's default splits from profile
+    const defaultSplits = {
+      save_rate: 0.20,
+      splits: {
+        groceries: 0.4,
+        gas: 0.2,
+        eating_out: 0.2,
+        fun: 0.15,
+        misc: 0.05
+      }
+    };
+    
+    const budgetResult = computeWeeklyBudget(budgetData, userPlan, defaultSplits);
+    setResult(budgetResult);
   };
 
-  const saveBudgetToSupabase = async (result: WeeklyBudgetResult) => {
-    if (!user) return;
+  const saveBudget = async () => {
+    if (!user || !budgetData || !result) return;
+
+    setIsLoading(true);
+    try {
+      const saveResult = await saveBudgetToDatabase(user.id, budgetData, result);
+      
+      if (saveResult.success && saveResult.budgetId) {
+        onBudgetSaved?.(saveResult.budgetId);
+        toast({
+          title: "Budget Saved",
+          description: "Your weekly budget has been saved successfully"
+        });
+      } else {
+        throw new Error(saveResult.error);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save budget",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const exportBudget = async () => {
+    if (!budgetId || !user) return;
 
     try {
-      const { success, budgetId: savedBudgetId, error } = await saveBudgetToDatabase(
-        user.id,
-        budgetData,
-        result
-      );
+      const { data, error } = await supabase.functions.invoke('budget-operations', {
+        body: {
+          action: 'export_budget',
+          userId: user.id,
+          budgetId,
+          format: 'csv'
+        }
+      });
 
-      if (success && savedBudgetId && onBudgetSaved) {
-        onBudgetSaved(savedBudgetId);
-      }
+      if (error) throw error;
 
-      if (error) {
-        console.error('Error saving budget:', error);
-        toast({
-          title: "Save Error",
-          description: "Failed to save budget to database",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error('Error saving budget:', error);
+      // Create and download CSV file
+      const blob = new Blob([data.csv_data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `budget-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export Complete",
+        description: "Your budget has been exported to CSV"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Export Failed",
+        description: error.message || "Failed to export budget",
+        variant: "destructive"
+      });
     }
   };
 
-  const handleSliderChange = (feature: string, value: number[]) => {
-    if (!isPro) {
-      setPaywallModal({ isOpen: true, feature });
-      return;
-    }
-
-    if (feature === 'save_rate') {
-      setSaveRate(value);
-    } else {
-      setCategorySliders(prev => ({ ...prev, [feature]: value[0] }));
-    }
-  };
-
-  const updateUserDefaults = async () => {
-    if (!user || !isPro) return;
-
-    const newDefaults = {
-      save_rate: saveRate[0] / 100,
-      splits: Object.entries(categorySliders).reduce((acc, [key, value]) => {
-        acc[key] = value / 100;
-        return acc;
-      }, {} as Record<string, number>)
-    };
-
-    await supabase
-      .from('profiles')
-      .update({ default_splits: newDefaults })
-      .eq('id', user.id);
-
-    toast({
-      title: "Settings Saved",
-      description: "Your budget preferences have been updated"
-    });
-  };
-
-  const loadHistory = async () => {
-    if (!isPro) {
-      setPaywallModal({ isOpen: true, feature: 'HISTORY' });
-      return;
-    }
-
-    const { data } = await supabase
-      .from('weekly_budgets')
-      .select('*')
-      .eq('user_id', user?.id)
-      .order('week_start_date', { ascending: false })
-      .limit(12);
-
-    setHistoryData(data || []);
-  };
-
-  const exportBudget = (format: 'csv' | 'pdf') => {
-    if (!isPro) {
-      setPaywallModal({ isOpen: true, feature: 'EXPORT' });
-      return;
-    }
-
-    // Implementation for export functionality
-    toast({
-      title: "Export Started",
-      description: `Preparing ${format.toUpperCase()} export...`
-    });
-  };
-
-  if (!budgetResult) {
+  if (!result) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center p-8">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <div>
-              <p className="text-muted-foreground">
-                {budgetId ? 'Loading your budget from uploaded data...' : 'Computing your weekly budget...'}
-              </p>
-              {budgetId && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  📊 Processing spreadsheet data and calculating allocations
-                </p>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
-  const statusColor = {
-    healthy: 'text-success',
-    warning: 'text-warning', 
-    critical: 'text-destructive'
-  }[budgetResult.status];
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'healthy': return <CheckCircle className="h-5 w-5 text-success" />;
+      case 'warning': return <AlertTriangle className="h-5 w-5 text-warning" />;
+      case 'critical': return <AlertTriangle className="h-5 w-5 text-destructive" />;
+      default: return null;
+    }
+  };
 
-  const statusIcon = {
-    healthy: CheckCircle,
-    warning: AlertCircle,
-    critical: AlertCircle
-  }[budgetResult.status];
-
-  const StatusIcon = statusIcon;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'healthy': return 'text-success border-success/20 bg-success/10';
+      case 'warning': return 'text-warning border-warning/20 bg-warning/10';
+      case 'critical': return 'text-destructive border-destructive/20 bg-destructive/10';
+      default: return '';
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Budget Overview */}
-      <Card>
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Weekly Budget Dashboard</h2>
+          <p className="text-muted-foreground">Your personalized financial plan</p>
+        </div>
+        <div className="flex gap-2">
+          {budgetId && (
+            <Button variant="outline" size="sm" onClick={exportBudget}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          )}
+          <Button onClick={saveBudget} disabled={isLoading}>
+            {isLoading ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Target className="h-4 w-4 mr-2" />
+            )}
+            {budgetId ? 'Update Budget' : 'Save Budget'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Status Overview */}
+      <Card className={`border-2 ${getStatusColor(result.status)}`}>
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Weekly Budget Overview
-              </CardTitle>
-              <CardDescription>
-                Week of {new Date(getCurrentWeekStart()).toLocaleDateString()}
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <StatusIcon className={`h-5 w-5 ${statusColor}`} />
-              <Badge variant="outline" className={statusColor}>
-                {budgetResult.status.charAt(0).toUpperCase() + budgetResult.status.slice(1)}
-              </Badge>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            {getStatusIcon(result.status)}
+            Budget Health: {result.status.charAt(0).toUpperCase() + result.status.slice(1)}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-success">
-                ${budgetResult.weekly.income}
-              </div>
-              <div className="text-sm text-muted-foreground">Weekly Income</div>
+              <p className="text-sm text-muted-foreground">Weekly Income</p>
+              <p className="text-2xl font-bold text-success">${result.weekly.income}</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-destructive">
-                ${budgetResult.weekly.fixed}
-              </div>
-              <div className="text-sm text-muted-foreground">Fixed Expenses</div>
+              <p className="text-sm text-muted-foreground">Fixed Expenses</p>
+              <p className="text-2xl font-bold text-muted-foreground">${result.weekly.fixed}</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">
-                ${budgetResult.weekly.save_n_stack}
-              </div>
-              <div className="text-sm text-muted-foreground">Save n Stack</div>
+              <p className="text-sm text-muted-foreground">Savings</p>
+              <p className="text-2xl font-bold text-primary">${result.weekly.save_n_stack}</p>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-foreground">
-                ${budgetResult.weekly.variable_total}
-              </div>
-              <div className="text-sm text-muted-foreground">Variable Spending</div>
+              <p className="text-sm text-muted-foreground">Spending Money</p>
+              <p className="text-2xl font-bold text-info">${result.weekly.variable_total}</p>
             </div>
           </div>
 
-          {/* AI Tips */}
-          {budgetResult.tips.length > 0 && (
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold text-sm">💡 AI Insights</h4>
-              {budgetResult.tips.map((tip, index) => (
-                <p key={index} className="text-sm text-muted-foreground">{tip}</p>
-              ))}
+          {/* Tips */}
+          <div className="space-y-2">
+            {result.tips.map((tip, index) => (
+              <div key={index} className="flex items-start gap-2 p-2 bg-background/50 rounded">
+                <span className="text-sm">{tip}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Income Sources */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-success" />
+            Income Sources
+            {userPlan === 'free' && budgetData.incomes.length >= 1 && (
+              <Badge variant="outline" className="text-xs">Free: 1 source</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {budgetData.incomes.slice(0, userPlan === 'free' ? 1 : undefined).map((income, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
+                <div>
+                  <p className="font-medium">{income.source || `Income ${index + 1}`}</p>
+                  <p className="text-sm text-muted-foreground">{income.cadence}</p>
+                </div>
+                <p className="font-bold text-success">${income.amount}</p>
+              </div>
+            ))}
+            
+            {userPlan === 'free' && budgetData.incomes.length > 1 && (
+              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {budgetData.incomes.length - 1} more income source{budgetData.incomes.length > 2 ? 's' : ''} (Pro feature)
+                  </p>
+                  <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                    Upgrade
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Fixed Expenses */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
+            Fixed Expenses
+            {userPlan === 'free' && budgetData.fixed_expenses.length >= 4 && (
+              <Badge variant="outline" className="text-xs">Free: 4 expenses</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {budgetData.fixed_expenses.slice(0, userPlan === 'free' ? 4 : undefined).map((expense, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border">
+                <div>
+                  <p className="font-medium">{expense.name}</p>
+                  <p className="text-sm text-muted-foreground">{expense.cadence}</p>
+                </div>
+                <p className="font-bold text-muted-foreground">${expense.amount}</p>
+              </div>
+            ))}
+            
+            {userPlan === 'free' && budgetData.fixed_expenses.length > 4 && (
+              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    {budgetData.fixed_expenses.length - 4} more expense{budgetData.fixed_expenses.length > 5 ? 's' : ''} (Pro feature)
+                  </p>
+                  <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                    Upgrade
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Variable Spending Categories */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            Weekly Spending Plan
+            {userPlan === 'free' && (
+              <Badge variant="secondary" className="text-xs">Free: Default categories</Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2">
+            {result.weekly.allocations.map((allocation, index) => (
+              <div key={index} className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium">{allocation.name}</p>
+                  <p className="font-bold text-primary">${allocation.weekly_amount}</p>
+                </div>
+                <Progress 
+                  value={(allocation.weekly_amount / result.weekly.variable_total) * 100} 
+                  className="h-2"
+                />
+              </div>
+            ))}
+          </div>
+          
+          {userPlan === 'free' && (
+            <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Customize spending categories and percentages
+                </p>
+                <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                  Upgrade for Custom Categories
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="current" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="current">Current Week</TabsTrigger>
-          <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
-          <TabsTrigger value="customize" className="relative">
-            Customize
-            {!isPro && <Crown className="h-3 w-3 ml-1 text-primary" />}
-          </TabsTrigger>
-          <TabsTrigger value="history" onClick={loadHistory} className="relative">
-            History
-            {!isPro && <Crown className="h-3 w-3 ml-1 text-primary" />}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="current" className="space-y-6">
-          {/* Category Breakdown */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Weekly Spending Plan</CardTitle>
-              <CardDescription>How your money is allocated this week</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {budgetResult.weekly.allocations.map((allocation, index) => {
-                  const percentage = budgetResult.weekly.variable_total > 0 
-                    ? (allocation.weekly_amount / budgetResult.weekly.variable_total) * 100 
-                    : 0;
-                  
-                  return (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium">{allocation.name}</span>
-                        <div className="text-right">
-                          <div className="font-semibold">${allocation.weekly_amount}</div>
-                          <div className="text-xs text-muted-foreground">{percentage.toFixed(0)}%</div>
-                        </div>
-                      </div>
-                      <Progress value={percentage} className="h-2" />
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save n Stack Action */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                Save n Stack This Week
-              </CardTitle>
-              <CardDescription>
-                Your automated savings goal for this week
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-3xl font-bold text-primary">
-                    ${budgetResult.weekly.save_n_stack}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {((budgetResult.weekly.save_n_stack / budgetResult.weekly.income) * 100).toFixed(1)}% of income
-                  </div>
-                </div>
-                <Button 
-                  size="lg"
-                  onClick={() => !isPro && setPaywallModal({ isOpen: true, feature: 'AUTOMATION' })}
-                  className="relative"
-                >
-                  {!isPro && <Lock className="mr-2 h-4 w-4" />}
-                  {isPro ? 'Schedule Transfer' : 'Schedule (Pro)'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="balance-sheet" className="space-y-6">
-          <BalanceSheet budgetId={budgetId} />
-        </TabsContent>
-
-        <TabsContent value="customize" className="space-y-6">
-          {/* Save Rate Slider */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {!isPro && <Lock className="h-4 w-4 text-muted-foreground" />}
-                Save Rate
-                {!isPro && <Badge variant="outline" className="ml-2">Pro</Badge>}
-              </CardTitle>
-              <CardDescription>
-                {isPro ? 'Adjust how much of your remaining income to save' : 'Fixed at 20% for Free users'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm w-12">0%</span>
-                  <div className="flex-1">
-                    <Slider
-                      value={saveRate}
-                      onValueChange={(value) => handleSliderChange('save_rate', value)}
-                      max={50}
-                      step={5}
-                      disabled={!isPro}
-                      className={!isPro ? 'opacity-50' : ''}
-                    />
-                  </div>
-                  <span className="text-sm w-12">50%</span>
-                </div>
-                <div className="text-center">
-                  <span className="text-2xl font-bold text-primary">{saveRate[0]}%</span>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    = ${((budgetResult.weekly.remainder * saveRate[0]) / 100).toFixed(2)}/week
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Category Splits */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {!isPro && <Lock className="h-4 w-4 text-muted-foreground" />}
-                Category Splits
-                {!isPro && <Badge variant="outline" className="ml-2">Pro</Badge>}
-              </CardTitle>
-              <CardDescription>
-                {isPro ? 'Customize how your variable spending is allocated' : 'Fixed default splits for Free users'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(budgetResult.weekly.allocations[0] ? { 
-                  groceries: 40,
-                  gas: 20,
-                  eating_out: 20,
-                  fun: 15,
-                  misc: 5
-                } : {}).map(([category, defaultValue]) => (
-                  <div key={category} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium capitalize">
-                        {category.replace('_', ' ')}
-                      </span>
-                      <span className="text-sm">
-                        {categorySliders[category] || defaultValue}%
-                      </span>
-                    </div>
-                    <Slider
-                      value={[categorySliders[category] || defaultValue]}
-                      onValueChange={(value) => handleSliderChange(category, value)}
-                      max={60}
-                      step={5}
-                      disabled={!isPro}
-                      className={!isPro ? 'opacity-50' : ''}
-                    />
-                  </div>
-                ))}
-              </div>
-              
-              {isPro && (
-                <div className="pt-4 border-t">
-                  <Button onClick={updateUserDefaults} variant="outline" className="w-full">
-                    Save as Default
-                  </Button>
-                </div>
+      {/* Goals */}
+      {budgetData.goals && budgetData.goals.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-warning" />
+              Savings Goals
+              {userPlan === 'free' && budgetData.goals.length >= 1 && (
+                <Badge variant="outline" className="text-xs">Free: 1 goal</Badge>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <History className="h-5 w-5" />
-                    Budget History
-                  </CardTitle>
-                  <CardDescription>Track your weekly budget performance over time</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => exportBudget('csv')}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    CSV
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => exportBudget('pdf')}>
-                    <FileDown className="mr-2 h-4 w-4" />
-                    PDF
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {!isPro ? (
-                <div className="text-center py-8 space-y-4">
-                  <Lock className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {budgetData.goals.slice(0, userPlan === 'free' ? 1 : undefined).map((goal, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
                   <div>
-                    <h3 className="font-semibold">History & Analytics</h3>
-                    <p className="text-muted-foreground">Track trends and export your budget data with Pro</p>
+                    <p className="font-medium">{goal.name}</p>
+                    <p className="text-sm text-muted-foreground">Due: {goal.due_date}</p>
                   </div>
-                  <Button onClick={() => setPaywallModal({ isOpen: true, feature: 'HISTORY' })}>
-                    <Crown className="mr-2 h-4 w-4" />
-                    Upgrade to Pro
-                  </Button>
+                  <p className="font-bold text-warning">${goal.target_amount}</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {historyData.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No budget history yet. Come back next week!</p>
-                    </div>
-                  ) : (
-                    historyData.map((budget, index) => (
-                      <div key={budget.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <div className="font-medium">
-                              Week of {new Date(budget.week_start_date).toLocaleDateString()}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {Math.abs(new Date().getTime() - new Date(budget.week_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7) > 1 ? 
-                                `${Math.floor(Math.abs(new Date().getTime() - new Date(budget.week_start_date).getTime()) / (1000 * 60 * 60 * 24 * 7))} weeks ago` :
-                                'Current week'
-                              }
-                            </div>
-                          </div>
-                          <Badge variant="outline">
-                            ${budget.save_n_stack} saved
-                          </Badge>
-                        </div>
-                        <div className="grid grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">Income</div>
-                            <div className="font-semibold">${budget.income_weekly}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Fixed</div>
-                            <div className="font-semibold">${budget.fixed_weekly}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Variable</div>
-                            <div className="font-semibold">${budget.variable_total}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">Saved</div>
-                            <div className="font-semibold text-success">${budget.save_n_stack}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+              ))}
+              
+              {userPlan === 'free' && budgetData.goals.length > 1 && (
+                <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {budgetData.goals.length - 1} more goal{budgetData.goals.length > 2 ? 's' : ''} (Pro feature)
+                    </p>
+                    <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
+                      Upgrade
+                    </Button>
+                  </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <BudgetPaywallModal
-        isOpen={paywallModal.isOpen}
-        onClose={() => setPaywallModal({ isOpen: false, feature: '' })}
-        feature={paywallModal.feature}
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)}
+        feature="unlimited budget items"
       />
     </div>
   );

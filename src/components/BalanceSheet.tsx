@@ -74,31 +74,26 @@ export default function BalanceSheet({ budgetId }: BalanceSheetProps) {
     }
   }, [user, budgetId]);
 
+  // Load real balance sheet data
   const loadBalanceSheet = async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('budget-operations', {
         body: {
           action: 'get_balance_sheet',
           userId: user.id,
-          weekStart: getCurrentWeekStart()
+          budgetId
         }
       });
 
       if (error) throw error;
       
-      if (data?.balance_sheet) {
-        setBalanceSheet(data.balance_sheet);
-      }
-    } catch (error) {
+      setBalanceSheet(data?.balance_sheet || null);
+    } catch (error: any) {
       console.error('Error loading balance sheet:', error);
-      toast({
-        title: "Load Error",
-        description: "Failed to load balance sheet data",
-        variant: "destructive"
-      });
+      setBalanceSheet(null);
     } finally {
       setIsLoading(false);
     }

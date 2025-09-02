@@ -12,10 +12,11 @@ import AiBudgetInput from "@/components/AiBudgetInput";
 import CSVUploadProcessor from "@/components/CSVUploadProcessor";
 import EnhancedTemplateStore from "@/components/EnhancedTemplateStore";
 import EnhancedManualInput from "@/components/EnhancedManualInput";
+import FallbackBudgetForm from "@/components/FallbackBudgetForm";
 import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
 
 export default function BudgetPage() {
-  const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'dashboard'>('method-select');
+  const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'fallback' | 'dashboard'>('method-select');
   const [budgetData, setBudgetData] = useState<BudgetInput | null>(null);
   const [budgetId, setBudgetId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +51,7 @@ export default function BudgetPage() {
     }
   };
 
-  const handleMethodSelected = (method: 'ai' | 'upload' | 'template' | 'manual') => {
+  const handleMethodSelected = (method: 'ai' | 'upload' | 'template' | 'manual' | 'fallback') => {
     setCurrentView(method);
   };
 
@@ -71,6 +72,7 @@ export default function BudgetPage() {
       case 'upload': return 'Upload Spreadsheet';
       case 'template': return 'Budget Templates';
       case 'manual': return 'Manual Entry';
+      case 'fallback': return 'Save-n-Stack Budget';
       case 'dashboard': return 'Weekly Budget';
       default: return 'Weekly Budget';
     }
@@ -83,6 +85,7 @@ export default function BudgetPage() {
       case 'upload': return 'Import from spreadsheet files';
       case 'template': return 'Professional budget templates';
       case 'manual': return 'Step-by-step budget creation';
+      case 'fallback': return 'Quick budget with smart defaults';
       case 'dashboard': return 'Your personalized weekly budget plan';
       default: return 'Plan your weekly finances';
     }
@@ -153,6 +156,13 @@ export default function BudgetPage() {
         
         {currentView === 'manual' && (
           <EnhancedManualInput 
+            onBudgetCreated={handleBudgetCreated}
+            onBack={handleBackToMethodSelect}
+          />
+        )}
+        
+        {currentView === 'fallback' && (
+          <FallbackBudgetForm 
             onBudgetCreated={handleBudgetCreated}
             onBack={handleBackToMethodSelect}
           />

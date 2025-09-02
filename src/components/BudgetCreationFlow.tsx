@@ -16,22 +16,41 @@ import { cn } from '@/lib/utils';
 import type { BudgetInput } from '@/lib/budgetUtils';
 
 interface BudgetCreationFlowProps {
-  onMethodSelected: (method: 'ai' | 'upload' | 'template' | 'manual') => void;
+  onMethodSelected: (method: 'ai' | 'upload' | 'template' | 'manual' | 'fallback') => void;
   onBudgetCreated: (data: BudgetInput) => void;
 }
 
 const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreationFlowProps) => {
   const [currentStep, setCurrentStep] = useState<'select' | 'input'>('select');
 
+  const isFallbackEnabled = import.meta.env.VITE_FEATURE_BUDGET_FALLBACK_ENABLED !== "false";
+  const isAIEnabled = import.meta.env.VITE_FEATURE_AI_BUDGET_ENABLED === "true";
+
   const methods = [
-    {
+    ...(isFallbackEnabled ? [{
+      id: 'fallback' as const,
+      title: 'Save-n-Stack Budget',
+      description: 'Quick, reliable budget using smart defaults',
+      details: 'Enter your income and expenses, and we\'ll create an optimized budget with smart allocation rules',
+      icon: Calculator,
+      badge: 'Fast',
+      badgeVariant: 'default' as const,
+      color: 'bg-gradient-to-br from-success/10 to-success/5 border-success/20',
+      iconColor: 'text-success',
+      examples: [
+        'Student budgets with 35% groceries allocation',
+        'Family budgets with 40% groceries allocation',
+        'Automatic savings optimization'
+      ]
+    }] : []),
+    ...(isAIEnabled ? [{
       id: 'ai' as const,
       title: 'AI Budget Assistant',
       description: 'Describe your finances in plain English',
       details: 'Just tell us about your income, expenses, and goals - our AI will create your budget',
       icon: Sparkles,
-      badge: 'Recommended',
-      badgeVariant: 'default' as const,
+      badge: 'Smart',
+      badgeVariant: 'secondary' as const,
       color: 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20',
       iconColor: 'text-primary',
       examples: [
@@ -39,7 +58,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
         'Biweekly pay $1200, want to save for vacation...',
         'Multiple income streams, complex expenses...'
       ]
-    },
+    }] : []),
     {
       id: 'upload' as const,
       title: 'Upload Spreadsheet',
@@ -161,7 +180,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
 
                 <Button 
                   className="w-full group"
-                  variant={method.id === 'ai' ? 'default' : 'outline'}
+                  variant={method.id === 'fallback' || method.id === 'ai' ? 'default' : 'outline'}
                   onClick={() => handleMethodSelect(method)}
                 >
                   Choose {method.title}

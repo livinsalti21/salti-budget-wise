@@ -154,9 +154,36 @@ function createAnalyticsService(): AnalyticsService {
 
 export const analytics = createAnalyticsService();
 
+// Standard events to use across the app
+export const EVENTS = {
+  auth_login: 'auth_login',
+  goal_set: 'goal_set',
+  onboarding_complete: 'onboarding_complete',
+  save_started: 'save_started',
+  save_confirmed: 'save_confirmed',
+  streak_tick: 'streak_tick',
+  budget_upload: 'budget_upload',
+  save_completed: 'save_completed',
+  streak_milestone: 'streak_milestone',
+  budget_created: 'budget_created',
+};
+
+// Simple track helper that works with current system
+export function track(event: string, properties: Record<string, any> = {}) {
+  try {
+    // Use existing analytics system or console for development
+    console.log('[analytics]', event, properties);
+    
+    // Hook up to existing analytics if available
+    analytics.track(event, properties);
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+}
+
 // Helper functions for common events
 export const trackSave = async (amount: number, source: string) => {
-  await analytics.track('save_completed', {
+  await track(EVENTS.save_completed, {
     amount_cents: amount,
     source,
     timestamp: Date.now()
@@ -164,21 +191,21 @@ export const trackSave = async (amount: number, source: string) => {
 };
 
 export const trackStreakMilestone = async (days: number) => {
-  await analytics.track('streak_milestone', {
+  await track(EVENTS.streak_milestone, {
     streak_days: days,
     timestamp: Date.now()
   });
 };
 
 export const trackBudgetCreated = async (categories: number) => {
-  await analytics.track('budget_created', {
+  await track(EVENTS.budget_created, {
     category_count: categories,
     timestamp: Date.now()
   });
 };
 
 export const trackOnboardingComplete = async (steps: number) => {
-  await analytics.track('onboarding_completed', {
+  await track(EVENTS.onboarding_complete, {
     steps_completed: steps,
     timestamp: Date.now()
   });

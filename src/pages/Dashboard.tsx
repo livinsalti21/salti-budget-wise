@@ -1,15 +1,18 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Flame, DollarSign, PieChart, Target, AlertCircle, Gift } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import BudgetProgress from "@/components/BudgetProgress";
+import { FeatureGate } from "@/components/core/FeatureGate";
+import { track, EVENTS } from "@/analytics/analytics";
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     currentStreak: 0,
     weeklyTotal: 0,
@@ -291,28 +294,53 @@ export default function Dashboard() {
         {/* Quick actions */}
         <section className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Link to="/save">
-              <Button className="w-full h-12" size="lg">
-                Quick Save
+            <Button 
+              className="w-full h-12" 
+              size="lg"
+              onClick={() => { 
+                track(EVENTS.save_started); 
+                navigate('/save/choose'); 
+              }}
+            >
+              Save Now
+            </Button>
+            <FeatureGate flag="REWARDS" fallback={
+              <Button variant="outline" className="w-full h-12" size="lg" disabled>
+                Rewards (Soon)
               </Button>
-            </Link>
-            <Link to="/rewards">
-              <Button variant="outline" className="w-full h-12" size="lg">
-                <Gift className="h-4 w-4 mr-1" />
-                Rewards
-              </Button>
-            </Link>
+            }>
+              <Link to="/rewards">
+                <Button variant="outline" className="w-full h-12" size="lg">
+                  <Gift className="h-4 w-4 mr-1" />
+                  Rewards
+                </Button>
+              </Link>
+            </FeatureGate>
           </div>
         </section>
 
-        {/* Daily tip widget (placeholder for Phase 2) */}
-        <Card className="bg-muted/30">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground text-center">
-              💡 Skip coffee today? That's +$800 in 10 years
-            </p>
-          </CardContent>
-        </Card>
+        {/* AI Insights (feature-gated) */}
+        <FeatureGate flag="AI_INSIGHTS" fallback={
+          <Card className="bg-muted/30">
+            <CardContent className="pt-6">
+              <p className="text-sm text-muted-foreground text-center">
+                💡 Skip coffee today? That's +$800 in 10 years
+              </p>
+            </CardContent>
+          </Card>
+        }>
+          <Card className="border-accent/20 bg-accent/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">🤖</span>
+                <span className="font-semibold">AI Coach</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Based on your spending, try saving on subscriptions this week for an extra $40/month.
+              </p>
+            </CardContent>
+          </Card>
+        </FeatureGate>
       </main>
     </div>
   );

@@ -3,10 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Brain, TrendingUp, DollarSign, Clock } from 'lucide-react';
+import { Brain, TrendingUp, DollarSign, Clock, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { FeatureGate } from '@/components/core/FeatureGate';
+import ProGate from '@/components/core/ProGate';
 
 interface AISuggestion {
   id: string;
@@ -120,7 +122,41 @@ export const AIExpenseCoach: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <FeatureGate flag="AI_INSIGHTS" fallback={
+      <ProGate feature="ai_expense_coach">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI Expense Coach
+            </CardTitle>
+            <CardDescription>
+              Get personalized suggestions to optimize your spending and increase your future wealth
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button 
+              onClick={runAnalysis} 
+              disabled={analyzing}
+              className="w-full"
+            >
+              {analyzing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Analyzing your expenses...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Run AI Analysis
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </ProGate>
+    }>
+      <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -223,6 +259,7 @@ export const AIExpenseCoach: React.FC = () => {
           </Card>
         ))}
       </div>
-    </div>
+      </div>
+    </FeatureGate>
   );
 };

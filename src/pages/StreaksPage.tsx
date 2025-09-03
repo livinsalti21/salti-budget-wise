@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import EnhancedStreaksDashboard from "@/components/EnhancedStreaksDashboard";
+import ProGate from "@/components/core/ProGate";
 
 export default function StreaksPage() {
   return (
@@ -21,7 +22,9 @@ export default function StreaksPage() {
       </header>
 
       <main className="p-4 max-w-4xl mx-auto">
-        <EnhancedStreaksDashboard />
+        <ProGate feature="enhanced_streaks">
+          <EnhancedStreaksDashboard />
+        </ProGate>
       </main>
     </div>
   );

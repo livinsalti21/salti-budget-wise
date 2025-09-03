@@ -166,6 +166,11 @@ export const EVENTS = {
   save_completed: 'save_completed',
   streak_milestone: 'streak_milestone',
   budget_created: 'budget_created',
+  
+  // Pro feature events
+  pro_upsell_view: 'pro_upsell_view',
+  pro_upsell_click_cta: 'pro_upsell_click_cta',
+  pro_enabled: 'pro_enabled',
 };
 
 // Simple track helper that works with current system

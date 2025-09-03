@@ -10,6 +10,7 @@ import { Users, Plus, Crown, Trophy, Calendar, Target, Copy, Check } from 'lucid
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import ProGate from '@/components/core/ProGate';
 
 interface Group {
   id: string;
@@ -379,12 +380,14 @@ const GroupChallenges = () => {
           </Dialog>
 
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Create Challenge
-              </Button>
-            </DialogTrigger>
+            <ProGate feature="create_challenge" fallback={null}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Challenge
+                </Button>
+              </DialogTrigger>
+            </ProGate>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Create New Challenge</DialogTitle>
@@ -438,10 +441,12 @@ const GroupChallenges = () => {
             Create or join a challenge to start saving with friends
           </p>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Challenge
-            </Button>
+            <ProGate feature="create_challenge">
+              <Button onClick={() => setShowCreateDialog(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Challenge
+              </Button>
+            </ProGate>
             <Button variant="outline" onClick={() => setShowJoinDialog(true)}>
               <Users className="mr-2 h-4 w-4" />
               Join Challenge

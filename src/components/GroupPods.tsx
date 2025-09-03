@@ -10,6 +10,7 @@ import { Users, Plus, Crown, UserPlus, TrendingUp, Flame, PiggyBank, Target } fr
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import ProGate from '@/components/core/ProGate';
 
 interface Group {
   id: string;
@@ -95,12 +96,14 @@ const GroupPods = () => {
           <p className="text-muted-foreground">Save together, celebrate together, grow together</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Pod
-            </Button>
-          </DialogTrigger>
+          <ProGate feature="create_pod" fallback={null}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Pod
+              </Button>
+            </DialogTrigger>
+          </ProGate>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create a New Pod</DialogTitle>
@@ -157,10 +160,12 @@ const GroupPods = () => {
             <p className="text-muted-foreground mb-4">
               Create your first pod to start saving with friends and family!
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Pod
-            </Button>
+            <ProGate feature="create_pod">
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Pod
+              </Button>
+            </ProGate>
           </CardContent>
         </Card>
       ) : (

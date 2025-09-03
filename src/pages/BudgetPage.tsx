@@ -14,6 +14,8 @@ import EnhancedTemplateStore from "@/components/EnhancedTemplateStore";
 import EnhancedManualInput from "@/components/EnhancedManualInput";
 import FallbackBudgetForm from "@/components/FallbackBudgetForm";
 import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
+import ProGate from "@/components/core/ProGate";
+import { FeatureGate } from "@/components/core/FeatureGate";
 
 export default function BudgetPage() {
   const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'fallback' | 'dashboard'>('method-select');
@@ -137,7 +139,13 @@ export default function BudgetPage() {
         )}
         
         {currentView === 'ai' && (
-          <AiBudgetInput onBudgetExtracted={handleBudgetCreated} />
+          <FeatureGate flag="AI_INSIGHTS" fallback={
+            <ProGate feature="ai_budget_input">
+              <AiBudgetInput onBudgetExtracted={handleBudgetCreated} />
+            </ProGate>
+          }>
+            <AiBudgetInput onBudgetExtracted={handleBudgetCreated} />
+          </FeatureGate>
         )}
         
         {currentView === 'upload' && (

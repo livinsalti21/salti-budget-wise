@@ -7,6 +7,7 @@ export const FLAGS = {
   AI_INSIGHTS: import.meta.env.VITE_FEATURE_AI_INSIGHTS_ENABLED === 'true',
   GROUPS: import.meta.env.VITE_FEATURE_GROUPS_ENABLED !== 'false',
   PERKS: import.meta.env.VITE_FEATURE_PERKS_ENABLED === 'true',
+  PRO: import.meta.env.VITE_FEATURE_PRO_ENABLED === 'true',
 };
 
 export function featureEnabled(key: keyof typeof FLAGS) {

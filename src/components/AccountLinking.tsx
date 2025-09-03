@@ -246,3 +246,5 @@ export const AccountLinking: React.FC = () => {
     </div>
   );
 };
+
+export default AccountLinking;

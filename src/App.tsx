@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
+import InteractiveLanding from "./pages/InteractiveLanding";
 import Landing from "./pages/Landing";
 import MobileLanding from "./pages/MobileLanding";
 import AuthPage from "./components/auth/AuthPage";
@@ -51,7 +52,8 @@ const AppContent = () => {
       <Sonner />
       <Routes>
         {/* Public */}
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<InteractiveLanding />} />
+        <Route path="/landing" element={<Landing />} />
         <Route path="/index" element={<Index />} />
         <Route path="/m" element={<MobileLanding />} />
         <Route path="/auth" element={<AuthPage />} />

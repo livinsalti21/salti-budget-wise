@@ -19,12 +19,7 @@ interface OnboardingStep {
 const steps: OnboardingStep[] = [
   {
     title: "Welcome to Livin Salti",
-    description: "Start your first Save n Stack streak today!",
-    icon: <PiggyBank className="h-8 w-8" />
-  },
-  {
-    title: "Set Your First Goal",
-    description: "What are you saving for?",
+    description: "Set your first savings goal and start building wealth",
     icon: <Target className="h-8 w-8" />
   },
   {
@@ -33,8 +28,8 @@ const steps: OnboardingStep[] = [
     icon: <Zap className="h-8 w-8" />
   },
   {
-    title: "See Your Future",
-    description: "Watch your money grow over time",
+    title: "The Power of Compound Interest",
+    description: "See how your small saves become massive wealth",
     icon: <TrendingUp className="h-8 w-8" />
   },
   {
@@ -43,8 +38,8 @@ const steps: OnboardingStep[] = [
     icon: <Mail className="h-8 w-8" />
   },
   {
-    title: "Join the Community",
-    description: "Invite friends or join a group",
+    title: "Ready to Start",
+    description: "Join the community and begin your journey",
     icon: <Users className="h-8 w-8" />
   }
 ];
@@ -77,18 +72,18 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   };
 
   const handleNext = async () => {
-    if (currentStep === 1) {
+    if (currentStep === 0) {
       // Create first goal
       await createFirstGoal();
-    } else if (currentStep === 2) {
-      // Just continue to show future value
-    } else if (currentStep === 3) {
+    } else if (currentStep === 1) {
       // Create first save
       await createFirstSave();
-    } else if (currentStep === 4) {
+    } else if (currentStep === 2) {
+      // Just continue to compound interest education
+    } else if (currentStep === 3) {
       // Save contact info
       await saveContactInfo();
-    } else if (currentStep === 5) {
+    } else if (currentStep === 4) {
       // Complete onboarding
       await completeOnboarding();
       return;
@@ -316,49 +311,49 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         </CardHeader>
         <CardContent className="space-y-6">
           {currentStep === 0 && (
-            <div className="text-center space-y-4">
-              <p>Ready to build wealth through simple daily habits?</p>
-              <div className="bg-accent/10 p-4 rounded-lg">
-                <TrendingUp className="h-6 w-6 mx-auto mb-2 text-accent" />
-                <p className="text-sm">Every save becomes future wealth. Let's get started!</p>
+            <div className="space-y-6">
+              <div className="text-center space-y-4">
+                <p className="text-lg">Ready to build wealth through simple daily habits?</p>
+                <div className="bg-accent/10 p-4 rounded-lg">
+                  <TrendingUp className="h-6 w-6 mx-auto mb-2 text-accent" />
+                  <p className="text-sm">Every save becomes future wealth. Let's set your first goal!</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="goalName">Goal Name</Label>
+                  <Input
+                    id="goalName"
+                    value={goalName}
+                    onChange={(e) => setGoalName(e.target.value)}
+                    placeholder="Emergency Fund, Vacation, etc."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="goalAmount">Target Amount (Optional)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      id="goalAmount"
+                      type="number"
+                      value={goalAmount}
+                      onChange={(e) => setGoalAmount(e.target.value)}
+                      className="pl-8"
+                      placeholder="1000"
+                    />
+                  </div>
+                </div>
+                <div className="bg-primary/5 p-3 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    💡 Free plan allows 1 goal. Upgrade to Pro for unlimited goals!
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
           {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="goalName">Goal Name</Label>
-                <Input
-                  id="goalName"
-                  value={goalName}
-                  onChange={(e) => setGoalName(e.target.value)}
-                  placeholder="Emergency Fund, Vacation, etc."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="goalAmount">Target Amount (Optional)</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                  <Input
-                    id="goalAmount"
-                    type="number"
-                    value={goalAmount}
-                    onChange={(e) => setGoalAmount(e.target.value)}
-                    className="pl-8"
-                    placeholder="1000"
-                  />
-                </div>
-              </div>
-              <div className="bg-primary/5 p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  💡 Free plan allows 1 goal. Upgrade to Pro for unlimited goals!
-                </p>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="saveAmount">How much will you save today?</Label>
@@ -392,38 +387,70 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             </div>
           )}
 
-          {currentStep === 3 && (
-            <div className="text-center space-y-6">
-              <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-lg">
-                <h3 className="text-lg font-bold mb-4">Your Future Impact</h3>
-                <div className="text-3xl font-bold text-primary mb-2">
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-primary mb-2">🚀 The Magic of Compound Interest</h3>
+                <p className="text-sm text-muted-foreground">
+                  Here's why your ${saveAmount} daily save is more powerful than you think...
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-lg text-center">
+                <div className="text-4xl font-bold text-primary mb-2">
                   ${calculateFutureValue(parseFloat(saveAmount) || 5, 40).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  If you save ${saveAmount} daily at 8% growth for 40 years
+                  Your wealth after 40 years of saving ${saveAmount}/day
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-accent/10 p-4 rounded-lg">
-                  <div className="text-lg font-bold text-accent">
-                    ${calculateFutureValue(parseFloat(saveAmount) || 5, 10).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+
+              <div className="space-y-4">
+                <div className="bg-secondary/10 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">📈 How Compound Interest Works:</h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Your money doesn't just grow - it grows on its growth! Each year your savings earn about 8% returns, and those returns start earning returns too.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="bg-accent/10 p-2 rounded text-center">
+                      <div className="font-bold text-accent">${calculateFutureValue(parseFloat(saveAmount) || 5, 10).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      <div className="text-muted-foreground">10 years</div>
+                    </div>
+                    <div className="bg-primary/10 p-2 rounded text-center">
+                      <div className="font-bold text-primary">${calculateFutureValue(parseFloat(saveAmount) || 5, 20).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      <div className="text-muted-foreground">20 years</div>
+                    </div>
+                    <div className="bg-success/10 p-2 rounded text-center">
+                      <div className="font-bold text-success">${calculateFutureValue(parseFloat(saveAmount) || 5, 30).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+                      <div className="text-muted-foreground">30 years</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground">10 years</div>
                 </div>
-                <div className="bg-success/10 p-4 rounded-lg">
-                  <div className="text-lg font-bold text-success">
-                    ${calculateFutureValue(parseFloat(saveAmount) || 5, 20).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-                  </div>
-                  <div className="text-xs text-muted-foreground">20 years</div>
+
+                <div className="bg-primary/5 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">⏰ Time is Your Secret Weapon:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Starting today vs. waiting 10 years could mean a difference of hundreds of thousands of dollars. The earlier you start, the more time compound interest has to work its magic!
+                  </p>
+                </div>
+
+                <div className="bg-accent/5 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">💪 Consistency Beats Perfect Timing:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Even if markets go up and down, regular saving smooths out the bumps. Your ${saveAmount} today is building tomorrow's financial freedom.
+                  </p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Ready to make your first save and start building your future?
-              </p>
+              
+              <div className="text-center">
+                <p className="text-sm font-medium text-primary">
+                  Ready to harness the power of compound interest? Let's continue!
+                </p>
+              </div>
             </div>
           )}
 
-          {currentStep === 4 && (
+          {currentStep === 3 && (
             <div className="space-y-4">
               <div className="text-center mb-4">
                 <p className="text-sm text-muted-foreground">
@@ -468,21 +495,40 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             </div>
           )}
 
-          {currentStep === 5 && (
-            <div className="text-center space-y-4">
-              <p>Ready to save with friends and family?</p>
-              <div className="space-y-3">
-                <Button variant="outline" className="w-full">
-                  <Users className="mr-2 h-4 w-4" />
-                  Join a Group
-                </Button>
-                <Button variant="outline" className="w-full">
-                  Invite Friends
-                </Button>
+          {currentStep === 4 && (
+            <div className="text-center space-y-6">
+              <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-6 rounded-lg">
+                <h3 className="text-xl font-bold mb-4">🎉 You're All Set!</h3>
+                <div className="space-y-2">
+                  <p className="text-lg">Goal: <span className="font-semibold">{goalName}</span></p>
+                  <p className="text-lg">Daily Save: <span className="font-semibold text-primary">${saveAmount}</span></p>
+                  <p className="text-sm text-muted-foreground">
+                    Future Value: ${calculateFutureValue(parseFloat(saveAmount) || 5, 40).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Or skip for now - you can always join later in the Community tab
-              </p>
+              
+              <div className="space-y-4">
+                <p className="text-lg font-medium">Ready to save with friends and family?</p>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full">
+                    <Users className="mr-2 h-4 w-4" />
+                    Join a Group
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    Invite Friends
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Or skip for now - you can always join later in the Community tab
+                </p>
+              </div>
+              
+              <div className="bg-primary/5 p-4 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  🎯 You've learned about compound interest, set your goal, and made your first save. Time to start stacking!
+                </p>
+              </div>
             </div>
           )}
 
@@ -491,7 +537,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             className="w-full" 
             disabled={loading}
           >
-            {loading ? 'Saving...' : (currentStep === 5 ? 'Start Stacking!' : 'Continue')}
+            {loading ? 'Saving...' : (currentStep === 4 ? 'Start Stacking!' : 'Continue')}
           </Button>
         </CardContent>
       </Card>

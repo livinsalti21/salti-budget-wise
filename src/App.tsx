@@ -25,7 +25,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SponsorAuth from "./pages/SponsorAuth";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import NotFound from "./pages/NotFound";
-import UserOnboarding from "./components/UserOnboarding";
+import OnboardingFlow from "./components/onboarding/OnboardingFlow";
 import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
 import SnoozeConfirm from "./pages/SnoozeConfirm";
@@ -64,12 +64,12 @@ const AppContent = () => {
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={
           <RequireAuth>
-            <UserOnboarding />
+            <OnboardingFlow onComplete={() => window.location.href = '/save/choose'} />
           </RequireAuth>
         } />
         <Route path="/link" element={
           <RequireAuth>
-            <FeatureGate flag="ACCOUNT_LINKING" fallback={<UserOnboarding />}>
+            <FeatureGate flag="ACCOUNT_LINKING" fallback={<OnboardingFlow onComplete={() => window.location.href = '/save/choose'} />}>
               <AccountLinking />
             </FeatureGate>
           </RequireAuth>

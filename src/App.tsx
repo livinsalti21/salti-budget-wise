@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import InteractiveLanding from "./pages/InteractiveLanding";
@@ -39,9 +39,18 @@ const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
 const queryClient = new QueryClient();
 
 function RequireAuth({ children }: { children: JSX.Element }) {
-  const { user, loading } = useAuth();
+  const { user, loading, redirectAfterAuth } = useAuth();
+  const location = useLocation();
+  
   if (loading) return <div>Loading…</div>;
-  return user ? children : <Navigate to="/auth" replace />;
+  
+  if (!user) {
+    // Store the intended destination
+    redirectAfterAuth(location.pathname + location.search);
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return children;
 }
 
 const AppContent = () => {

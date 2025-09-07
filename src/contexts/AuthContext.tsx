@@ -9,6 +9,8 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  redirectAfterAuth: (path: string) => void;
+  clearRedirect: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,14 +19,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Handle post-authentication routing
+        if (event === 'SIGNED_IN' && session?.user) {
+          setTimeout(async () => {
+            try {
+              // Check if user has completed onboarding
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('completed_onboarding')
+                .eq('id', session.user.id)
+                .single();
+
+              const hasCompletedOnboarding = profile?.completed_onboarding;
+              const storedRedirect = localStorage.getItem('authRedirect');
+              
+              if (storedRedirect) {
+                localStorage.removeItem('authRedirect');
+                window.location.href = storedRedirect;
+              } else if (!hasCompletedOnboarding) {
+                window.location.href = '/onboarding';
+              } else {
+                window.location.href = '/app';
+              }
+            } catch (error) {
+              console.error('Error checking onboarding status:', error);
+              window.location.href = '/app';
+            }
+          }, 100);
+        }
       }
     );
 
@@ -63,6 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const redirectAfterAuth = (path: string) => {
+    localStorage.setItem('authRedirect', path);
+  };
+
+  const clearRedirect = () => {
+    localStorage.removeItem('authRedirect');
+  };
+
   const value = {
     user,
     session,
@@ -70,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signIn,
     signOut,
+    redirectAfterAuth,
+    clearRedirect,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

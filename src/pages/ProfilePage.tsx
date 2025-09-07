@@ -139,7 +139,7 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
               ) : isSponsor && (
-                <Link to="/sponsor-dashboard">
+                <Link to="/sponsor">
                   <Card className="hover:bg-primary/10 transition-all duration-200 cursor-pointer border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5">
                     <CardContent className="flex items-center gap-3 py-4">
                       <Heart className="h-5 w-5 text-primary" />

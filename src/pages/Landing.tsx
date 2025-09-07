@@ -112,7 +112,7 @@ export default function Landing() {
                 Start Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6" onClick={() => navigate('/sponsor-auth')}>
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6" onClick={() => navigate('/sponsor')}>
                 <Heart className="mr-2 h-5 w-5" />
                 Become a Sponsor
               </Button>
@@ -315,7 +315,7 @@ export default function Landing() {
               Sign Up Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-primary" onClick={() => navigate('/sponsor-auth')}>
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white text-white hover:bg-white hover:text-primary" onClick={() => navigate('/sponsor')}>
               <Heart className="mr-2 h-5 w-5" />
               Become a Sponsor
             </Button>

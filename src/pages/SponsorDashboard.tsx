@@ -79,7 +79,7 @@ const SponsorDashboard = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate('/sponsor-auth');
+        navigate('/sponsor/auth');
         return;
       }
 
@@ -208,7 +208,7 @@ const SponsorDashboard = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate('/sponsor-auth');
+    navigate('/sponsor/auth');
   };
 
   const formatCurrency = (cents: number) => {

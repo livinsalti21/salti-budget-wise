@@ -103,7 +103,7 @@ const AppContent = () => {
         <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
         <Route path="/account-delete" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense></RequireAuth>} />
         <Route path="/sponsor/auth" element={<SponsorAuth />} />
-        <Route path="/sponsor" element={<RequireAuth><SponsorDashboard /></RequireAuth>} />
+        <Route path="/sponsor" element={<SponsorDashboard />} />
 
         {/* Utility routes */}
         <Route path="/app/save/choose" element={<RequireAuth><SaveChoose /></RequireAuth>} />

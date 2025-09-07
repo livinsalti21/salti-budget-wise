@@ -20,8 +20,7 @@ const Auth = () => {
 
   useEffect(() => {
     if (user) {
-      // Auth context will handle the routing automatically
-      return;
+      navigate('/app');
     }
   }, [user, navigate]);
 
@@ -42,7 +41,7 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      // Auth context will handle the routing automatically
+      navigate('/app');
     }
     
     setIsLoading(false);

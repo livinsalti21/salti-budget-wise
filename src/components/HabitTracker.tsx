@@ -1,286 +1,188 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Calendar, 
-  Flame, 
-  Trophy, 
-  Users, 
-  Target,
-  TrendingUp,
-  Coffee,
-  Upload,
-  FileSpreadsheet
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { Coffee, Utensils, ShoppingCart, Car, Gamepad2, Plus, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-interface HabitStats {
-  currentStreak: number;
-  longestStreak: number;
-  totalSaves: number;
-  monthlyGoal: number;
-  monthlyProgress: number;
-  habitScore: number;
+interface Habit {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  avgSaving: number;
+  streak: number;
+  todayStatus: 'pending' | 'saved' | 'spent';
+  category: 'food' | 'transport' | 'entertainment' | 'shopping';
 }
 
 const HabitTracker = () => {
-  const { user } = useAuth();
-  const [stats, setStats] = useState<HabitStats>({
-    currentStreak: 0,
-    longestStreak: 0,
-    totalSaves: 0,
-    monthlyGoal: 50,
-    monthlyProgress: 0,
-    habitScore: 0
-  });
-
-  useEffect(() => {
-    if (user) {
-      fetchHabitData();
+  const { toast } = useToast();
+  const [habits, setHabits] = useState<Habit[]>([
+    {
+      id: '1',
+      name: 'Skip Coffee Shop',
+      icon: <Coffee className="h-4 w-4" />,
+      avgSaving: 5.50,
+      streak: 7,
+      todayStatus: 'pending',
+      category: 'food'
+    },
+    {
+      id: '2', 
+      name: 'Cook vs Delivery',
+      icon: <Utensils className="h-4 w-4" />,
+      avgSaving: 15.00,
+      streak: 3,
+      todayStatus: 'saved',
+      category: 'food'
+    },
+    {
+      id: '3',
+      name: 'Walk vs Ride Share',
+      icon: <Car className="h-4 w-4" />,
+      avgSaving: 8.00,
+      streak: 5,
+      todayStatus: 'pending',
+      category: 'transport'
     }
-  }, [user]);
+  ]);
 
-  const fetchHabitData = async () => {
-    if (!user) return;
+  const markHabit = (habitId: string, status: 'saved' | 'spent') => {
+    setHabits(prev => prev.map(habit => {
+      if (habit.id === habitId) {
+        const newStreak = status === 'saved' ? habit.streak + 1 : 0;
+        return { ...habit, todayStatus: status, streak: newStreak };
+      }
+      return habit;
+    }));
 
-    const { data: saves } = await supabase
-      .from('saves')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (saves) {
-      const totalSaves = saves.length;
-      const monthlyProgress = calculateMonthlyProgress(saves);
-      const currentStreak = calculateCurrentStreak(saves);
-      const longestStreak = calculateLongestStreak(saves);
-      const habitScore = Math.min(100, (currentStreak * 10) + (totalSaves * 2));
-
-      setStats({
-        currentStreak,
-        longestStreak,
-        totalSaves,
-        monthlyGoal: 50,
-        monthlyProgress,
-        habitScore
+    const habit = habits.find(h => h.id === habitId);
+    if (habit) {
+      toast({
+        title: status === 'saved' ? "Habit Win! 🎉" : "Tomorrow's a new day",
+        description: status === 'saved' 
+          ? `You saved $${habit.avgSaving} and kept your ${habit.name.toLowerCase()} streak going!`
+          : `Your ${habit.name.toLowerCase()} streak resets, but you can start fresh tomorrow.`
       });
     }
   };
 
-  const calculateMonthlyProgress = (saves: any[]) => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthySaves = saves.filter(save => 
-      new Date(save.created_at) >= startOfMonth
-    );
-    return monthySaves.length;
-  };
-
-  const calculateCurrentStreak = (saves: any[]) => {
-    if (saves.length === 0) return 0;
-    
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (let i = 0; i < saves.length; i++) {
-      const saveDate = new Date(saves[i].created_at);
-      saveDate.setHours(0, 0, 0, 0);
-      
-      const expectedDate = new Date(today);
-      expectedDate.setDate(expectedDate.getDate() - i);
-      
-      if (saveDate.getTime() === expectedDate.getTime()) {
-        streak++;
-      } else {
-        break;
-      }
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'food': return 'from-orange-500/10 to-red-500/10 border-orange-500/20';
+      case 'transport': return 'from-blue-500/10 to-cyan-500/10 border-blue-500/20';
+      case 'entertainment': return 'from-purple-500/10 to-pink-500/10 border-purple-500/20';
+      case 'shopping': return 'from-green-500/10 to-emerald-500/10 border-green-500/20';
+      default: return 'from-muted/10 to-muted/5 border-muted/20';
     }
-    
-    return streak;
   };
 
-  const calculateLongestStreak = (saves: any[]) => {
-    if (saves.length === 0) return 0;
-    
-    let longestStreak = 1;
-    let currentStreak = 1;
-    
-    for (let i = 1; i < saves.length; i++) {
-      const currentDate = new Date(saves[i].created_at);
-      const previousDate = new Date(saves[i - 1].created_at);
-      
-      const dayDiff = Math.abs(currentDate.getTime() - previousDate.getTime()) / (1000 * 60 * 60 * 24);
-      
-      if (dayDiff <= 1) {
-        currentStreak++;
-      } else {
-        longestStreak = Math.max(longestStreak, currentStreak);
-        currentStreak = 1;
-      }
-    }
-    
-    return Math.max(longestStreak, currentStreak);
-  };
-
-  const getStreakMessage = () => {
-    if (stats.currentStreak === 0) return "Start your first save to begin building your habit!";
-    if (stats.currentStreak === 1) return "Great start! Keep the momentum going.";
-    if (stats.currentStreak < 7) return "Building momentum! You're on your way.";
-    if (stats.currentStreak < 30) return "Strong habit forming! Keep it up.";
-    return "Incredible dedication! You're a saving champion.";
-  };
+  const totalPotentialSaving = habits.reduce((sum, habit) => sum + habit.avgSaving, 0);
+  const todaySaved = habits
+    .filter(habit => habit.todayStatus === 'saved')
+    .reduce((sum, habit) => sum + habit.avgSaving, 0);
 
   return (
-    <div className="space-y-6">
-      {/* Habit Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
-                <p className="text-2xl font-bold text-primary">{stats.currentStreak}</p>
-                <p className="text-xs text-muted-foreground">days</p>
-              </div>
-              <Flame className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Habit Score</p>
-                <p className="text-2xl font-bold text-accent">{stats.habitScore}</p>
-                <p className="text-xs text-muted-foreground">/ 100</p>
-              </div>
-              <Trophy className="h-8 w-8 text-accent" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-success/20 bg-gradient-to-br from-success/5 to-success/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Monthly Goal</p>
-                <p className="text-2xl font-bold text-success">{stats.monthlyProgress}</p>
-                <p className="text-xs text-muted-foreground">/ {stats.monthlyGoal}</p>
-              </div>
-              <Target className="h-8 w-8 text-success" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Best Streak</p>
-                <p className="text-2xl font-bold text-warning">{stats.longestStreak}</p>
-                <p className="text-xs text-muted-foreground">days</p>
-              </div>
-              <Calendar className="h-8 w-8 text-warning" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Habit Building Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Habit Building Progress
+    <div className="space-y-4">
+      {/* Header Card */}
+      <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Today's Habit Tracker
           </CardTitle>
-          <CardDescription>
-            {getStreakMessage()}
-          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Monthly Progress</span>
-                <span>{stats.monthlyProgress} / {stats.monthlyGoal}</span>
-              </div>
-              <Progress value={(stats.monthlyProgress / stats.monthlyGoal) * 100} className="h-2" />
+        <CardContent className="space-y-3">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-3 bg-success/10 rounded-lg border border-success/20">
+              <p className="text-2xl font-bold text-success">${todaySaved.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Saved Today</p>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="text-center p-4 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg">
-                <Coffee className="h-8 w-8 text-primary mx-auto mb-2" />
-                <p className="font-semibold">Conscious Spending</p>
-                <p className="text-sm text-muted-foreground">Every skip is a win</p>
-              </div>
-              
-              <div className="text-center p-4 bg-gradient-to-br from-accent/5 to-accent/10 rounded-lg">
-                <Users className="h-8 w-8 text-accent mx-auto mb-2" />
-                <p className="font-semibold">Social Accountability</p>
-                <p className="text-sm text-muted-foreground">Friends amplify success</p>
-              </div>
-              
-              <div className="text-center p-4 bg-gradient-to-br from-success/5 to-success/10 rounded-lg">
-                <Trophy className="h-8 w-8 text-success mx-auto mb-2" />
-                <p className="font-semibold">Compound Growth</p>
-                <p className="text-sm text-muted-foreground">Small habits, big results</p>
-              </div>
+            <div className="text-center p-3 bg-warning/10 rounded-lg border border-warning/20">
+              <p className="text-2xl font-bold text-warning">${totalPotentialSaving.toFixed(2)}</p>
+              <p className="text-xs text-muted-foreground">Daily Potential</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Budget Options */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5" />
-            Budget Setup Options
-          </CardTitle>
-          <CardDescription>
-            Choose how you want to manage your budget and track progress
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg hover:bg-secondary/50 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <Upload className="h-8 w-8 text-primary" />
-                <div>
-                  <h3 className="font-semibold">Upload Your Spreadsheet</h3>
-                  <p className="text-sm text-muted-foreground">Use your existing budget</p>
+      {/* Habit Cards */}
+      <div className="space-y-3">
+        {habits.map((habit) => (
+          <Card key={habit.id} className={`bg-gradient-to-r ${getCategoryColor(habit.category)} hover:shadow-md transition-all`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/50 dark:bg-black/20 rounded-full">
+                    {habit.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm">{habit.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-success font-medium">${habit.avgSaving}/save</span>
+                      {habit.streak > 0 && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                          🔥 {habit.streak} days
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <Button variant="outline" className="w-full">
-                Upload Spreadsheet
-              </Button>
-            </div>
 
-            <div className="p-4 border rounded-lg hover:bg-secondary/50 transition-colors">
-              <div className="flex items-center gap-3 mb-3">
-                <Target className="h-8 w-8 text-accent" />
-                <div>
-                  <h3 className="font-semibold">Livin Salti Template</h3>
-                  <p className="text-sm text-muted-foreground">Auto-sync smart budgeting</p>
+                <div className="flex gap-2">
+                  {habit.todayStatus === 'pending' ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => markHabit(habit.id, 'saved')}
+                        className="p-2 h-8 w-8 bg-success/10 border-success/30 hover:bg-success/20"
+                      >
+                        <CheckCircle className="h-4 w-4 text-success" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => markHabit(habit.id, 'spent')}
+                        className="p-2 h-8 w-8 bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
+                      >
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Badge 
+                      variant={habit.todayStatus === 'saved' ? 'default' : 'destructive'}
+                      className="text-xs"
+                    >
+                      {habit.todayStatus === 'saved' ? '✅ Saved' : '❌ Spent'}
+                    </Badge>
+                  )}
                 </div>
               </div>
-              <Button className="w-full">
-                Get Template - $9.99
-              </Button>
-            </div>
-          </div>
-          
-          <div className="mt-4 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              💡 <strong>Pro Tip:</strong> Our template automatically calculates your savings projections 
-              and integrates with your habit tracking for maximum motivation.
-            </p>
-          </div>
+
+              {/* Future Impact */}
+              <div className="bg-white/30 dark:bg-black/10 rounded p-2 text-center">
+                <p className="text-xs text-muted-foreground">
+                  30-year impact: <span className="font-bold text-primary">
+                    ${(habit.avgSaving * 365 * 30 * 1.08).toLocaleString()}
+                  </span>
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Add New Habit */}
+      <Card className="border-dashed border-2 border-muted-foreground/30 hover:border-primary/50 transition-colors">
+        <CardContent className="p-6 text-center">
+          <Button variant="ghost" className="w-full" size="lg">
+            <Plus className="h-5 w-5 mr-2" />
+            Add New Habit to Track
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            What else can you skip to build wealth?
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -9,6 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import BudgetProgress from "@/components/BudgetProgress";
 import { FeatureGate } from "@/components/core/FeatureGate";
 import { track, EVENTS } from "@/analytics/analytics";
+import MissionClarityBanner from "@/components/MissionClarityBanner";
+import HabitTracker from "@/components/HabitTracker";
+import StoryTimeline from "@/components/StoryTimeline";
+import FutureSelfVisualization from "@/components/FutureSelfVisualization";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -149,12 +153,12 @@ export default function Dashboard() {
 
   return (
     <div className="pb-20 safe-area-top">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <h1 className="text-2xl font-bold text-primary">Livin Salti</h1>
-        <p className="text-sm text-muted-foreground">Save n Stack • Live Your Way</p>
-      </header>
-
       <main className="p-4 space-y-6 max-w-md mx-auto">
+        {/* Mission Clarity Banner */}
+        <MissionClarityBanner />
+        
+        {/* Story Timeline */}
+        <StoryTimeline />
         {/* Three snapshot cards */}
         <section className="grid gap-4">
           <Link to="/streaks" className="block">
@@ -318,6 +322,12 @@ export default function Dashboard() {
             </FeatureGate>
           </div>
         </section>
+
+        {/* Habit Tracker */}
+        <HabitTracker />
+
+        {/* Future Self Visualization */}
+        <FutureSelfVisualization />
 
         {/* AI Insights (feature-gated) */}
         <FeatureGate flag="AI_INSIGHTS" fallback={

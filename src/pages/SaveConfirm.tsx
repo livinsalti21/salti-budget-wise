@@ -3,10 +3,11 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, Sparkles, Users, ArrowLeft } from "lucide-react";
+import { DollarSign, Sparkles, Users, ArrowLeft, Share2, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { track, EVENTS } from '@/analytics/analytics';
 
 interface SaveConfirmProps {
   amount_cents?: number;
@@ -26,6 +27,8 @@ export default function SaveConfirm() {
   const [pushId, setPushId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
+  const [totalSaved, setTotalSaved] = useState(0);
 
   useEffect(() => {
     const verifyAndSetParams = async () => {
@@ -150,10 +153,22 @@ export default function SaveConfirm() {
 
       if (error) throw error;
 
+      // Update local stats immediately
+      setStreakCount(data?.streak_count || 0);
+      setTotalSaved(data?.total_saved_cents || 0);
+
       // Log save confirmed if from push
       if (pushId) {
         await logPushEvent(pushId, 'save_confirmed');
       }
+
+      // Track analytics
+      await track(EVENTS.save_confirmed, {
+        amount_cents: amount,
+        source,
+        total_saved_cents: data?.total_saved_cents || 0,
+        streak_count: data?.streak_count || 0
+      });
 
       setShowConfetti(true);
       toast({
@@ -178,25 +193,86 @@ export default function SaveConfirm() {
     }
   };
 
-  const inviteMatch = () => {
-    navigate('/app/match/invite');
+  const shareSuccess = async () => {
+    const shareData = {
+      title: 'Livin Salti - Save Success!',
+      text: `Just saved $${formatCurrency(amount)}! 💪 Join me on Livin Salti to build wealth together.`,
+      url: 'https://livinsalti.com'
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        track('share_success', { source: 'save_confirmation', amount_cents: amount });
+      } catch (error) {
+        console.log('Share was cancelled or failed', error);
+      }
+    } else {
+      // Fallback for web - copy to clipboard
+      navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      toast({
+        title: "Copied to clipboard!",
+        description: "Share your success with friends",
+      });
+    }
   };
 
   if (showConfetti) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary/20 via-accent/20 to-secondary/20 flex items-center justify-center p-4 animate-fade-in">
+        <Card className="w-full max-w-md text-center animate-scale-in">
           <CardContent className="p-8">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold mb-2">Save Confirmed!</h2>
-            <p className="text-lg mb-4">${formatCurrency(amount)} added to your stack</p>
-            <p className="text-sm text-muted-foreground mb-6">
-              In 30 years, this could be worth ${calculateImpact(amount).toLocaleString()}!
-            </p>
-            <Button onClick={inviteMatch} variant="outline">
-              <Users className="h-4 w-4 mr-2" />
-              Invite a Match?
-            </Button>
+            {/* Animated Success Icons */}
+            <div className="relative mb-6">
+              <div className="text-8xl animate-pulse">🎉</div>
+              <div className="absolute -top-2 -right-2 text-4xl animate-bounce">✨</div>
+              <div className="absolute -bottom-2 -left-2 text-4xl animate-bounce delay-100">💰</div>
+            </div>
+            
+            {/* Success Message */}
+            <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Save Confirmed!
+            </h2>
+            <p className="text-xl mb-2">${formatCurrency(amount)} added to your stack</p>
+            
+            {/* Updated Stats */}
+            <div className="flex justify-center gap-4 mb-4">
+              {streakCount > 0 && (
+                <Badge variant="secondary" className="bg-orange-100 text-orange-700">
+                  🔥 {streakCount} day streak
+                </Badge>
+              )}
+              {totalSaved > 0 && (
+                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                  💎 ${formatCurrency(totalSaved)} total
+                </Badge>
+              )}
+            </div>
+            
+            {/* Future Value Impact */}
+            <div className="p-4 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg mb-6 border border-accent/20">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-accent" />
+                <span className="text-sm font-semibold">30-Year Impact</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                This save could grow to{" "}
+                <span className="text-lg font-bold text-accent">
+                  ${calculateImpact(amount).toLocaleString()}
+                </span>
+              </p>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button onClick={shareSuccess} className="w-full" size="lg">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Your Success
+              </Button>
+              <Button onClick={() => navigate('/app')} variant="outline" className="w-full">
+                Back to Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

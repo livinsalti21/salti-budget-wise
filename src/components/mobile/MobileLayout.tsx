@@ -2,6 +2,7 @@ import React from 'react';
 import { MobileSafeArea } from '@/components/ui/mobile-safe-area';
 import BottomNav from '@/components/ui/BottomNav';
 import { MobileKeyboardSpacer } from '@/components/ui/mobile-helpers';
+import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
 
 interface MobileLayoutProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export default function MobileLayout({ children, showBottomNav = true }: MobileL
       </MobileSafeArea>
       
       {showBottomNav && <BottomNav />}
+      {showBottomNav && <FloatingSaveButton />}
     </div>
   );
 }

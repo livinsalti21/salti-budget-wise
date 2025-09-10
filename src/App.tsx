@@ -65,12 +65,12 @@ const AppContent = () => {
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={
           <RequireAuth>
-            <OnboardingFlow onComplete={() => window.location.href = '/save/choose'} />
+            <OnboardingFlow onComplete={() => window.location.href = '/app'} />
           </RequireAuth>
         } />
         <Route path="/link" element={
           <RequireAuth>
-            <FeatureGate flag="ACCOUNT_LINKING" fallback={<OnboardingFlow onComplete={() => window.location.href = '/save/choose'} />}>
+            <FeatureGate flag="ACCOUNT_LINKING" fallback={<OnboardingFlow onComplete={() => window.location.href = '/app'} />}>
               <AccountLinking />
             </FeatureGate>
           </RequireAuth>
@@ -110,6 +110,7 @@ const AppContent = () => {
 
         {/* Utility routes */}
         <Route path="/app/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />
+        <Route path="/app/save/confirm" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveConfirm /></AppWrapper></RequireAuth>} />
         <Route path="/app/notify/snooze" element={<RequireAuth><AppWrapper showBottomNav={false}><SnoozeConfirm /></AppWrapper></RequireAuth>} />
         <Route path="/app/match/accept" element={<RequireAuth><AppWrapper showBottomNav={false}><MatchAccept /></AppWrapper></RequireAuth>} />
 

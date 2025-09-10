@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -284,6 +285,49 @@ export default function MobileDashboard() {
             </CardContent>
           </Card>
         </Link>
+      </div>
+
+      {/* Quick Save Section */}
+      <div className="mb-4">
+        <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <PiggyBank className="h-5 w-5 text-green-600" />
+                <h3 className="text-base font-bold text-green-700 dark:text-green-300">Quick Save</h3>
+              </div>
+              <Link 
+                to="/app/save/choose" 
+                className="text-sm text-green-600 dark:text-green-400 font-medium hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                onClick={() => track(EVENTS.save_started, { source: 'quick_save_custom' })}
+              >
+                Custom →
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2">
+              {[500, 1000, 2000].map((cents) => (
+                <Link
+                  key={cents}
+                  to={`/app/save/confirm?amount_cents=${cents}&source=quick_save`}
+                  onClick={() => track(EVENTS.save_started, { source: 'quick_save', amount: cents })}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-green-50/50 dark:bg-green-900/20 border-green-200 dark:border-green-800 hover:bg-green-100/80 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 font-semibold transition-all active:scale-95"
+                  >
+                    ${(cents / 100).toFixed(0)}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+            
+            <p className="text-xs text-green-600/80 dark:text-green-400/80 text-center mt-2">
+              💡 Tap to save instantly or customize amount
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Budget Progress - Mobile Optimized */}

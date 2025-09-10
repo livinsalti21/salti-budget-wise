@@ -90,8 +90,8 @@ export default function SavePage() {
 
       if (error) throw error;
 
-      // Navigate to confirmation page with amount and future value
-      navigate(`/save/confirm?amount=${amount}&future=${calculateFutureValue(amount).toFixed(0)}&reason=${selectedPurchase.name}`);
+      // Navigate to standardized confirmation flow
+      navigate(`/app/save/confirm?amount_cents=${Math.round(amount * 100)}&source=manual`);
     } catch (error) {
       console.error('Error saving:', error);
       toast({

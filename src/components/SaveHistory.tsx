@@ -3,9 +3,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, PiggyBank, TrendingUp, Users, Flame, History, Target, Calendar } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Clock, PiggyBank, TrendingUp, Users, Flame, History, Target, Calendar, Search, Filter, Sparkles, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Save {
   id: string;
@@ -19,11 +22,16 @@ interface Save {
 const SaveHistory = () => {
   const [saves, setSaves] = useState<Save[]>([]);
   const [allSaves, setAllSaves] = useState<Save[]>([]);
+  const [filteredSaves, setFilteredSaves] = useState<Save[]>([]);
   const [totalSaved, setTotalSaved] = useState(0);
   const [totalSessions, setTotalSessions] = useState(0);
   const [streak, setStreak] = useState(0);
   const [matches, setMatches] = useState(0);
   const [projectionRate, setProjectionRate] = useState(7);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [insights, setInsights] = useState<string[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -31,8 +39,51 @@ const SaveHistory = () => {
       fetchSaves();
       fetchUserSettings();
       fetchMatches();
+      setupRealtimeSubscription();
     }
   }, [user]);
+
+  useEffect(() => {
+    filterSaves();
+  }, [allSaves, searchTerm, filterPeriod, filterCategory]);
+
+  const setupRealtimeSubscription = () => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('save-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'save_events',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newSave = {
+            id: payload.new.id,
+            amount_cents: payload.new.amount_cents,
+            reason: payload.new.reason || payload.new.note || 'Manual Save',
+            created_at: payload.new.created_at,
+            future_value_cents: payload.new.future_value_cents,
+            stacklet_id: payload.new.stacklet_id
+          };
+          
+          setSaves(prev => [newSave, ...prev.slice(0, 9)]);
+          setAllSaves(prev => [newSave, ...prev]);
+          setTotalSaved(prev => prev + payload.new.amount_cents);
+          setTotalSessions(prev => prev + 1);
+          
+          toast.success(`New save added: $${(payload.new.amount_cents / 100).toFixed(2)}! 🎉`);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const fetchSaves = async () => {
     if (!user) return;
@@ -81,7 +132,99 @@ const SaveHistory = () => {
       // Calculate streak based on consecutive days
       const streakDays = calculateStreak(allSavesData);
       setStreak(streakDays);
+      
+      // Generate smart insights
+      generateInsights(allSavesFormatted);
     }
+  };
+
+  const filterSaves = () => {
+    let filtered = [...allSaves];
+
+    // Search filter
+    if (searchTerm) {
+      filtered = filtered.filter(save => 
+        save.reason.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Period filter
+    if (filterPeriod !== 'all') {
+      const now = new Date();
+      const filterDate = new Date();
+      
+      switch (filterPeriod) {
+        case 'today':
+          filterDate.setHours(0, 0, 0, 0);
+          break;
+        case 'week':
+          filterDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          filterDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'year':
+          filterDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+      
+      filtered = filtered.filter(save => new Date(save.created_at) >= filterDate);
+    }
+
+    // Category filter
+    if (filterCategory !== 'all') {
+      filtered = filtered.filter(save => save.reason.toLowerCase().includes(filterCategory.toLowerCase()));
+    }
+
+    setFilteredSaves(filtered);
+  };
+
+  const generateInsights = (savesData: Save[]) => {
+    const insights: string[] = [];
+    
+    if (savesData.length === 0) return;
+
+    // Most common save reason
+    const reasonCounts = savesData.reduce((acc, save) => {
+      acc[save.reason] = (acc[save.reason] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const topReason = Object.entries(reasonCounts).sort(([,a], [,b]) => b - a)[0];
+    if (topReason) {
+      insights.push(`Your top saving trigger: ${topReason[0]} (${topReason[1]} times)`);
+    }
+
+    // Average save amount
+    const avgAmount = savesData.reduce((sum, save) => sum + save.amount_cents, 0) / savesData.length;
+    insights.push(`Your average save: $${(avgAmount / 100).toFixed(2)}`);
+
+    // Best saving day analysis
+    const dayOfWeekCounts = savesData.reduce((acc, save) => {
+      const dayOfWeek = new Date(save.created_at).getDay();
+      const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+      acc[dayName] = (acc[dayName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const bestDay = Object.entries(dayOfWeekCounts).sort(([,a], [,b]) => b - a)[0];
+    if (bestDay) {
+      insights.push(`You save most on ${bestDay[0]}s`);
+    }
+
+    // Recent momentum
+    const recentSaves = savesData.filter(save => {
+      const saveDate = new Date(save.created_at);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return saveDate >= weekAgo;
+    });
+    
+    if (recentSaves.length > 0) {
+      insights.push(`${recentSaves.length} saves this week - great momentum! 🔥`);
+    }
+
+    setInsights(insights);
   };
 
   const fetchUserSettings = async () => {
@@ -154,6 +297,28 @@ const SaveHistory = () => {
 
   return (
     <div className="space-y-6">
+      {/* Smart Insights */}
+      {insights.length > 0 && (
+        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Smart Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {insights.map((insight, index) => (
+                <div key={index} className="flex items-center gap-2 animate-fade-in">
+                  <Award className="h-3 w-3 text-primary flex-shrink-0" />
+                  <p className="text-sm text-foreground">{insight}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -211,11 +376,68 @@ const SaveHistory = () => {
         </Card>
       </div>
 
+      {/* Interactive Filters */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            Filter & Search
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search saves..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
+              <SelectTrigger>
+                <SelectValue placeholder="Time period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                <SelectItem value="coffee">Coffee</SelectItem>
+                <SelectItem value="lunch">Lunch</SelectItem>
+                <SelectItem value="snack">Snack</SelectItem>
+                <SelectItem value="manual">Manual Save</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {(searchTerm || filterPeriod !== 'all' || filterCategory !== 'all') && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Showing {filteredSaves.length} of {allSaves.length} saves</span>
+              {filteredSaves.length > 0 && (
+                <span className="text-success">
+                  (${(filteredSaves.reduce((sum, save) => sum + save.amount_cents, 0) / 100).toFixed(2)} total)
+                </span>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Save History Tabs */}
       <Tabs defaultValue="recent" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="recent">Recent Saves</TabsTrigger>
-          <TabsTrigger value="all">All History</TabsTrigger>
+          <TabsTrigger value="filtered">Filtered Results ({filteredSaves.length})</TabsTrigger>
           <TabsTrigger value="projections">Projections</TabsTrigger>
         </TabsList>
 
@@ -238,12 +460,18 @@ const SaveHistory = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {saves.map((save) => (
-                    <div key={save.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {saves.map((save, index) => (
+                    <div 
+                      key={save.id} 
+                      className="flex items-center justify-between p-4 border rounded-lg hover:border-primary/30 transition-all duration-200 hover:shadow-sm animate-fade-in hover-scale"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium">${(save.amount_cents / 100).toFixed(2)}</p>
-                          <Badge variant="secondary">{save.reason}</Badge>
+                          <Badge variant="secondary" className="hover:bg-primary/10 transition-colors">
+                            {save.reason}
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">{formatDate(save.created_at)}</p>
                       </div>
@@ -252,6 +480,12 @@ const SaveHistory = () => {
                           ${calculateFutureValue(save.amount_cents).toFixed(2)}
                         </p>
                         <p className="text-xs text-muted-foreground">in 10 years</p>
+                        <div className="mt-1">
+                          <Progress 
+                            value={(save.amount_cents / Math.max(...saves.map(s => s.amount_cents))) * 100} 
+                            className="h-1 w-16"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -261,31 +495,47 @@ const SaveHistory = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="all" className="space-y-4">
+        <TabsContent value="filtered" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <History className="h-5 w-5" />
-                Complete Save History
+                Filtered Save History
               </CardTitle>
               <CardDescription>
-                Every save you've ever made ({allSaves.length} total)
+                {filteredSaves.length} saves matching your filters
+                {filteredSaves.length > 0 && (
+                  <span className="ml-2 text-success">
+                    (${(filteredSaves.reduce((sum, save) => sum + save.amount_cents, 0) / 100).toFixed(2)} total)
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="max-h-96 overflow-y-auto">
-              {allSaves.length === 0 ? (
+              {filteredSaves.length === 0 ? (
                 <div className="text-center py-8">
                   <PiggyBank className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No saves yet. Start stacking!</p>
+                  <p className="text-muted-foreground">
+                    {searchTerm || filterPeriod !== 'all' || filterCategory !== 'all' 
+                      ? 'No saves match your filters. Try adjusting them.'
+                      : 'No saves yet. Start stacking!'
+                    }
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {allSaves.map((save) => (
-                    <div key={save.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {filteredSaves.map((save, index) => (
+                    <div 
+                      key={save.id} 
+                      className="flex items-center justify-between p-3 border rounded-lg hover:border-primary/30 transition-all duration-200 hover:shadow-sm animate-fade-in hover-scale"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium">${(save.amount_cents / 100).toFixed(2)}</p>
-                          <Badge variant="outline" className="text-xs">{save.reason}</Badge>
+                          <Badge variant="outline" className="text-xs hover:bg-primary/10 transition-colors">
+                            {save.reason}
+                          </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground">{formatDate(save.created_at)}</p>
                       </div>
@@ -294,6 +544,12 @@ const SaveHistory = () => {
                           ${calculateFutureValue(save.amount_cents).toFixed(2)}
                         </p>
                         <p className="text-xs text-muted-foreground">10yr @ {projectionRate}%</p>
+                        <div className="mt-1">
+                          <Progress 
+                            value={(save.amount_cents / Math.max(...filteredSaves.map(s => s.amount_cents), 1)) * 100} 
+                            className="h-1 w-16"
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}

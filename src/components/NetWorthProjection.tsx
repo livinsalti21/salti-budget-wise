@@ -1,20 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
+import { TrendingUp, Calculator, Target, DollarSign, Lightbulb, AlertCircle } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserBudgetAnalysis, generateDataDrivenScenarios, getBudgetInsights, type BudgetAnalysis, type ScenarioData } from '@/lib/budgetAnalytics';
 
 interface NetWorthProjectionProps {
   currentSavings: number;
 }
 
 const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
+  const { user } = useAuth();
   const [monthlyContribution, setMonthlyContribution] = useState(500);
   const [targetAmount, setTargetAmount] = useState(10000);
   const [interestRate, setInterestRate] = useState(8); // 8% annual return default
+  const [budgetAnalysis, setBudgetAnalysis] = useState<BudgetAnalysis | null>(null);
+  const [scenarios, setScenarios] = useState<ScenarioData[]>([]);
+  const [insights, setInsights] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const calculateProjections = () => {
     const monthly = currentSavings + monthlyContribution;
@@ -33,9 +40,69 @@ const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
     };
   };
 
+  // Load user's budget data and generate scenarios
+  useEffect(() => {
+    if (user) {
+      loadBudgetAnalysis();
+    }
+  }, [user]);
+
+  const loadBudgetAnalysis = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    try {
+      const analysis = await getUserBudgetAnalysis(user.id);
+      setBudgetAnalysis(analysis);
+      
+      if (analysis) {
+        const dataDrivenScenarios = generateDataDrivenScenarios(analysis);
+        setScenarios(dataDrivenScenarios);
+        setInsights(getBudgetInsights(analysis));
+        
+        // Update monthly contribution based on current savings
+        if (analysis.totalSavings > 0) {
+          setMonthlyContribution(Math.round(analysis.totalSavings * 4)); // Weekly to monthly
+        }
+      } else {
+        // Fallback to static scenarios if no budget data
+        setScenarios([
+          {
+            title: 'Conservative Saver',
+            monthlyExtra: 200,
+            description: 'Cut one dining out per week',
+            categories: ['Eating Out'],
+            achievability: 'easy',
+            color: 'bg-success'
+          },
+          {
+            title: 'Aggressive Saver',
+            monthlyExtra: 500,
+            description: 'Optimize all categories',
+            categories: ['All'],
+            achievability: 'moderate',
+            color: 'bg-accent'
+          },
+          {
+            title: 'Investment Focused',
+            monthlyExtra: 800,
+            description: 'Side hustle + optimization',
+            categories: ['Income'],
+            achievability: 'challenging',
+            color: 'bg-primary'
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading budget analysis:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const projections = calculateProjections();
 
-  const scenarios = [
+  const staticScenarios = [
     {
       title: 'Conservative Saver',
       monthlyExtra: 200,
@@ -233,14 +300,55 @@ const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
         </Card>
       </div>
 
+      {/* Budget Insights */}
+      {budgetAnalysis && insights.length > 0 && (
+        <Card className="border-accent/20 bg-gradient-to-r from-accent/5 to-accent/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-accent" />
+              Budget Insights
+            </CardTitle>
+            <CardDescription>
+              Based on your actual spending patterns
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {insights.map((insight, index) => (
+                <div key={index} className="flex items-start gap-2 p-3 rounded-lg bg-background/50">
+                  <AlertCircle className="h-4 w-4 text-accent mt-0.5 flex-shrink-0" />
+                  <p className="text-sm">{insight}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>What-If Scenarios</CardTitle>
-          <CardDescription>See how extra savings impact your 5-year wealth</CardDescription>
+          <CardDescription>
+            {budgetAnalysis 
+              ? "Personalized scenarios based on your budget" 
+              : "See how extra savings impact your 5-year wealth"
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {scenarios.map((scenario) => {
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 rounded-lg border space-y-3 animate-pulse">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-full"></div>
+                  <div className="h-8 bg-muted rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {scenarios.map((scenario) => {
               const projection = getScenarioProjection(scenario.monthlyExtra);
               const difference = projection - projections.fiveYear;
               
@@ -253,21 +361,36 @@ const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
                   
                   <p className="text-sm text-muted-foreground">{scenario.description}</p>
                   
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">+${scenario.monthlyExtra}/month</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm text-muted-foreground">+${scenario.monthlyExtra}/month</p>
+                      <Badge 
+                        variant={scenario.achievability === 'easy' ? 'default' : scenario.achievability === 'moderate' ? 'secondary' : 'outline'}
+                        className="text-xs capitalize"
+                      >
+                        {scenario.achievability}
+                      </Badge>
+                    </div>
                     <p className="text-lg font-bold">${projection.toFixed(0)}</p>
                     <Badge variant="secondary" className="text-xs">
                       +${difference.toFixed(0)} more
                     </Badge>
+                    {budgetAnalysis && scenario.categories.length > 0 && scenario.categories[0] !== 'All categories' && (
+                      <p className="text-xs text-muted-foreground">
+                        Focus: {scenario.categories.slice(0, 2).join(', ')}
+                        {scenario.categories.length > 2 && ' +more'}
+                      </p>
+                    )}
                   </div>
                   
                   <Button variant="outline" className="w-full">
-                    Adopt This Plan
+                    {budgetAnalysis ? 'View Details' : 'Adopt This Plan'}
                   </Button>
                 </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

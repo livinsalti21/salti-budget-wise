@@ -1,6 +1,7 @@
-import { ArrowLeft, User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield, Heart } from "lucide-react";
+import { User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,12 +68,11 @@ export default function ProfilePage() {
 
   return (
     <div className="pb-20 safe-area-top">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-xl font-bold text-primary">Profile</h1>
-          <p className="text-sm text-muted-foreground">Account & settings</p>
-        </div>
-      </header>
+      <PageHeader 
+        title="Profile" 
+        subtitle="Account & settings"
+        backTo="/app"
+      />
 
       <main className="p-4 max-w-md mx-auto">
         <Tabs defaultValue="profile" className="space-y-6">

@@ -1,6 +1,7 @@
-import { ArrowLeft, Coffee, ShoppingBag, Car, Heart, PiggyBank, TrendingUp } from "lucide-react";
+import { Coffee, ShoppingBag, Car, Heart, PiggyBank, TrendingUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,12 +109,11 @@ export default function SavePage() {
 
   return (
     <div className="pb-20 safe-area-top">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-xl font-bold text-primary">Save n Stack</h1>
-          <p className="text-sm text-muted-foreground">Save, track, and grow your wealth</p>
-        </div>
-      </header>
+      <PageHeader 
+        title="Save n Stack" 
+        subtitle="Save, track, and grow your wealth"
+        backTo="/app"
+      />
 
       <main className="p-4 max-w-md mx-auto">
         <Tabs defaultValue="save" className="space-y-6">

@@ -1,6 +1,5 @@
-import { ArrowLeft, Target, TrendingUp, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Target, TrendingUp, Calendar } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
@@ -67,19 +66,11 @@ export default function GoalsPage() {
 
   return (
     <div className="pb-20 safe-area-top">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <div className="flex items-center gap-3">
-          <Link to="/app">
-            <Button variant="ghost" size="sm" className="p-0 h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold">Goals & Projections</h1>
-            <p className="text-sm text-muted-foreground">Track your progress</p>
-          </div>
-        </div>
-      </header>
+      <PageHeader 
+        title="Goals & Projections" 
+        subtitle="Track your progress"
+        backTo="/app"
+      />
 
       <main className="p-4 space-y-6 max-w-2xl mx-auto">
         {/* Current Week Goal */}

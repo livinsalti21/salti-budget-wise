@@ -1,6 +1,6 @@
-import { ArrowLeft, BarChart3 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import PageHeader from "@/components/ui/PageHeader";
 import { useState, useEffect } from "react";
 import type { BudgetInput } from "@/lib/budgetUtils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -95,33 +95,21 @@ export default function BudgetPage() {
 
   return (
     <div className="pb-20 safe-area-top">
-      <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
-        <div className="flex items-center gap-3 max-w-2xl mx-auto">
-          <Link to="/app">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-primary">
-              {getPageTitle()}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {getPageDescription()}
-            </p>
-          </div>
-          {currentView === 'dashboard' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setCurrentView('method-select')}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              New Budget
-            </Button>
-          )}
-        </div>
-      </header>
+      <PageHeader 
+        title={getPageTitle()}
+        subtitle={getPageDescription()}
+        backTo="/app"
+        actions={currentView === 'dashboard' ? (
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setCurrentView('method-select')}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            New Budget
+          </Button>
+        ) : undefined}
+      />
 
       <main className="p-4 max-w-2xl mx-auto">
         {isLoading ? (

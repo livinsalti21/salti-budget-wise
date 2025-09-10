@@ -13,11 +13,11 @@ export function FloatingSaveButton() {
       >
         <Button
           size="lg"
-          className="h-14 w-14 rounded-full shadow-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 animate-pulse hover:animate-none transition-all duration-300 active:scale-95"
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 transition-all duration-300 hover:scale-105 active:scale-95 group"
         >
-          <div className="flex flex-col items-center">
-            <Plus className="h-5 w-5 text-white" />
-            <PiggyBank className="h-3 w-3 text-white/80 -mt-1" />
+          <div className="flex flex-col items-center group-hover:scale-110 transition-transform duration-200">
+            <Plus className="h-5 w-5 text-white drop-shadow-sm" />
+            <PiggyBank className="h-3 w-3 text-white/90 -mt-1" />
           </div>
         </Button>
       </Link>

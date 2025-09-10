@@ -214,12 +214,12 @@ export default function MobileDashboard() {
       )}
 
       {/* Hero Stats - 2x2 Grid for Mobile */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <Link to="/save-history">
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-            <CardContent className="p-3">
+          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
+            <CardContent className="p-4">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex items-center justify-center gap-1 mb-2">
                   <PiggyBank className="h-5 w-5 text-primary" />
                   <ChevronRight className="h-3 w-3 text-primary/60" />
                 </div>
@@ -233,10 +233,10 @@ export default function MobileDashboard() {
         </Link>
 
         <Link to="/budget">
-          <Card className={`bg-gradient-to-br ${isPositiveBalance ? 'from-success/10 to-success/5 border-success/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'} hover:shadow-md transition-all duration-200 active:scale-[0.98]`}>
-            <CardContent className="p-3">
+          <Card className={`bg-gradient-to-br ${isPositiveBalance ? 'from-success/10 to-success/5 border-success/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'} hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch`}>
+            <CardContent className="p-4">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex items-center justify-center gap-1 mb-2">
                   {isPositiveBalance ? 
                     <TrendingUp className="h-5 w-5 text-success" /> :
                     <TrendingDown className="h-5 w-5 text-destructive" />
@@ -253,10 +253,10 @@ export default function MobileDashboard() {
         </Link>
 
         <Link to="/goals">
-          <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-            <CardContent className="p-3">
+          <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
+            <CardContent className="p-4">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex items-center justify-center gap-1 mb-2">
                   <Calendar className="h-5 w-5 text-accent" />
                   <ChevronRight className="h-3 w-3 text-accent/60" />
                 </div>
@@ -270,10 +270,10 @@ export default function MobileDashboard() {
         </Link>
 
         <Link to="/net-worth">
-          <Card className="bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-            <CardContent className="p-3">
+          <Card className="bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
+            <CardContent className="p-4">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-1">
+                <div className="flex items-center justify-center gap-1 mb-2">
                   <Target className="h-5 w-5 text-warning" />
                   <ChevronRight className="h-3 w-3 text-warning/60" />
                 </div>
@@ -289,16 +289,16 @@ export default function MobileDashboard() {
 
       {/* Quick Save Section */}
       <div className="mb-4">
-        <Card className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-green-500/30">
+        <Card className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-orange-500/30 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <PiggyBank className="h-5 w-5 text-green-600" />
-                <h3 className="text-base font-bold text-green-700 dark:text-green-300">Quick Save</h3>
+                <PiggyBank className="h-5 w-5 text-orange-600" />
+                <h3 className="text-base font-bold text-orange-700 dark:text-orange-300">Quick Save</h3>
               </div>
               <Link 
                 to="/app/save/choose" 
-                className="text-sm text-green-600 dark:text-green-400 font-medium hover:text-green-700 dark:hover:text-green-300 transition-colors"
+                className="text-sm text-orange-600 dark:text-orange-400 font-medium hover:text-orange-700 dark:hover:text-orange-300 transition-colors"
                 onClick={() => track(EVENTS.save_started, { source: 'quick_save_custom' })}
               >
                 Custom →
@@ -315,7 +315,7 @@ export default function MobileDashboard() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full bg-green-50/50 dark:bg-green-900/20 border-green-200 dark:border-green-800 hover:bg-green-100/80 dark:hover:bg-green-900/40 text-green-700 dark:text-green-300 font-semibold transition-all active:scale-95"
+                    className="w-full min-h-touch bg-orange-50/50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800 hover:bg-orange-100/80 dark:hover:bg-orange-900/40 text-orange-700 dark:text-orange-300 font-semibold transition-all active:scale-95 hover:shadow-sm"
                   >
                     ${(cents / 100).toFixed(0)}
                   </Button>
@@ -323,7 +323,7 @@ export default function MobileDashboard() {
               ))}
             </div>
             
-            <p className="text-xs text-green-600/80 dark:text-green-400/80 text-center mt-2">
+            <p className="text-xs text-orange-600/80 dark:text-orange-400/80 text-center mt-2">
               💡 Tap to save instantly or customize amount
             </p>
           </CardContent>

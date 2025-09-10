@@ -11,6 +11,7 @@ import { quickProjection } from '@/simulation/futureValue';
 import BudgetProgress from '@/components/BudgetProgress';
 import MobileMatchSection from './MobileMatchSection';
 import { Link } from 'react-router-dom';
+import { track, EVENTS } from '@/analytics/analytics';
 
 interface DashboardData {
   totalSaved: number;
@@ -230,20 +231,25 @@ export default function MobileDashboard() {
           </Card>
         </Link>
 
-        <Card className={`bg-gradient-to-br ${isPositiveBalance ? 'from-success/10 to-success/5 border-success/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'}`}>
-          <CardContent className="p-3">
-            <div className="text-center">
-              {isPositiveBalance ? 
-                <TrendingUp className="h-5 w-5 text-success mx-auto mb-1" /> :
-                <TrendingDown className="h-5 w-5 text-destructive mx-auto mb-1" />
-              }
-              <p className="text-xs text-muted-foreground font-medium">Weekly Balance</p>
-              <p className={`text-lg font-bold ${isPositiveBalance ? 'text-success' : 'text-destructive'}`}>
-                ${formatCurrency(getWeeklyBalance())}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <Link to="/budget">
+          <Card className={`bg-gradient-to-br ${isPositiveBalance ? 'from-success/10 to-success/5 border-success/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'} hover:shadow-md transition-all duration-200 active:scale-[0.98]`}>
+            <CardContent className="p-3">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  {isPositiveBalance ? 
+                    <TrendingUp className="h-5 w-5 text-success" /> :
+                    <TrendingDown className="h-5 w-5 text-destructive" />
+                  }
+                  <ChevronRight className={`h-3 w-3 ${isPositiveBalance ? 'text-success/60' : 'text-destructive/60'}`} />
+                </div>
+                <p className="text-xs text-muted-foreground font-medium">Weekly Balance</p>
+                <p className={`text-lg font-bold ${isPositiveBalance ? 'text-success' : 'text-destructive'}`}>
+                  ${formatCurrency(getWeeklyBalance())}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link to="/goals">
           <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">

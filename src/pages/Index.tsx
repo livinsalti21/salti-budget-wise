@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield } from 'lucide-react';
@@ -21,10 +21,12 @@ import NotificationCenter from '@/components/NotificationCenter';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
 import SaveHistory from '@/components/SaveHistory';
 import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
+import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
@@ -54,6 +56,7 @@ const Index = () => {
         <div className="space-y-6">
           <MobileDashboard />
         </div>
+        {location.pathname === '/app' && <FloatingSaveButton />}
       </MobileLayout>
     );
   }

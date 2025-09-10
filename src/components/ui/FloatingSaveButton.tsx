@@ -13,7 +13,7 @@ export function FloatingSaveButton() {
       >
         <Button
           size="lg"
-          className="h-14 w-14 rounded-full shadow-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 border-0 animate-pulse hover:animate-none transition-all duration-300 active:scale-95"
+          className="h-14 w-14 rounded-full shadow-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 animate-pulse hover:animate-none transition-all duration-300 active:scale-95"
         >
           <div className="flex flex-col items-center">
             <Plus className="h-5 w-5 text-white" />

@@ -108,7 +108,7 @@ export default function SavePage() {
   const futureValue = calculateFutureValue(displayAmount);
 
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Save n Stack" 
         subtitle="Save, track, and grow your wealth"

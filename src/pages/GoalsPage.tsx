@@ -65,7 +65,7 @@ export default function GoalsPage() {
   const progressPercentage = (stats.weeklyTotal / stats.weeklyGoal) * 100;
 
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Goals & Projections" 
         subtitle="Track your progress"

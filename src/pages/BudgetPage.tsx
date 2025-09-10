@@ -94,7 +94,7 @@ export default function BudgetPage() {
   };
 
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title={getPageTitle()}
         subtitle={getPageDescription()}

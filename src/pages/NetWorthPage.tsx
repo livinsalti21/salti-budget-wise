@@ -29,7 +29,7 @@ export default function NetWorthPage() {
   };
 
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Net Worth Projection" 
         subtitle="Plan your financial future"

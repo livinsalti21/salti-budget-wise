@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import AppWrapper from "./components/mobile/AppWrapper";
 import Index from "./pages/Index";
 import InteractiveLanding from "./pages/InteractiveLanding";
 import Landing from "./pages/Landing";
@@ -76,39 +77,41 @@ const AppContent = () => {
         } />
 
         {/* Auth-required hub */}
-        <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-        <Route path="/home" element={<RequireAuth><HomeHub /></RequireAuth>} />
-        <Route path="/app" element={<RequireAuth><Index /></RequireAuth>} />
+        <Route path="/dashboard" element={<RequireAuth><AppWrapper><Dashboard /></AppWrapper></RequireAuth>} />
+        <Route path="/home" element={<RequireAuth><AppWrapper><HomeHub /></AppWrapper></RequireAuth>} />
+        <Route path="/app" element={<RequireAuth><AppWrapper><Index /></AppWrapper></RequireAuth>} />
 
         {/* Money & goals */}
-        <Route path="/budget" element={<RequireAuth><BudgetPage /></RequireAuth>} />
-        <Route path="/save" element={<RequireAuth><SavePage /></RequireAuth>} />
-        <Route path="/save/choose" element={<RequireAuth><SaveChoose /></RequireAuth>} />
-        <Route path="/save/confirm" element={<RequireAuth><SaveConfirm /></RequireAuth>} />
-        <Route path="/save-history" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></RequireAuth>} />
-        <Route path="/goals" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></RequireAuth>} />
-        <Route path="/net-worth" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></RequireAuth>} />
+        <Route path="/budget" element={<RequireAuth><AppWrapper><BudgetPage /></AppWrapper></RequireAuth>} />
+        <Route path="/save" element={<RequireAuth><AppWrapper><SavePage /></AppWrapper></RequireAuth>} />
+        <Route path="/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />
+        <Route path="/save/confirm" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveConfirm /></AppWrapper></RequireAuth>} />
+        <Route path="/save-history" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></AppWrapper></RequireAuth>} />
+        <Route path="/goals" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></AppWrapper></RequireAuth>} />
+        <Route path="/net-worth" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></AppWrapper></RequireAuth>} />
 
         {/* Engagement */}
-        <Route path="/streaks" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense></RequireAuth>} />
+        <Route path="/streaks" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/rewards" element={
           <RequireAuth>
-            <FeatureGate flag="REWARDS" fallback={<Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense>}>
-              <RewardsPage />
-            </FeatureGate>
+            <AppWrapper>
+              <FeatureGate flag="REWARDS" fallback={<Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense>}>
+                <RewardsPage />
+              </FeatureGate>
+            </AppWrapper>
           </RequireAuth>
         } />
 
         {/* Account & sponsor */}
-        <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
-        <Route path="/account-delete" element={<RequireAuth><Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense></RequireAuth>} />
+        <Route path="/profile" element={<RequireAuth><AppWrapper><ProfilePage /></AppWrapper></RequireAuth>} />
+        <Route path="/account-delete" element={<RequireAuth><AppWrapper showBottomNav={false}><Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/sponsor/auth" element={<SponsorAuth />} />
         <Route path="/sponsor" element={<SponsorDashboard />} />
 
         {/* Utility routes */}
-        <Route path="/app/save/choose" element={<RequireAuth><SaveChoose /></RequireAuth>} />
-        <Route path="/app/notify/snooze" element={<RequireAuth><SnoozeConfirm /></RequireAuth>} />
-        <Route path="/app/match/accept" element={<RequireAuth><MatchAccept /></RequireAuth>} />
+        <Route path="/app/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />
+        <Route path="/app/notify/snooze" element={<RequireAuth><AppWrapper showBottomNav={false}><SnoozeConfirm /></AppWrapper></RequireAuth>} />
+        <Route path="/app/match/accept" element={<RequireAuth><AppWrapper showBottomNav={false}><MatchAccept /></AppWrapper></RequireAuth>} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

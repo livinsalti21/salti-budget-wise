@@ -4,7 +4,7 @@ import ProGate from "@/components/core/ProGate";
 
 export default function StreaksPage() {
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Streaks & Badges" 
         subtitle="Track your saving habits"

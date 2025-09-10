@@ -3,7 +3,7 @@ import SaveHistory from "@/components/SaveHistory";
 
 export default function SaveHistoryPage() {
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Save History" 
         subtitle="Your saving journey"

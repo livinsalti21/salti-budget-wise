@@ -67,7 +67,7 @@ export default function ProfilePage() {
   const hasPro = hasProAccess(profile);
 
   return (
-    <div className="pb-20 safe-area-top">
+    <div>
       <PageHeader 
         title="Profile" 
         subtitle="Account & settings"

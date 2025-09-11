@@ -48,8 +48,8 @@ export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
               <div className="w-16 h-16 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
                 <Banknote className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl">I'm 16+ (Standard Mode)</CardTitle>
-              <CardDescription>Full financial features with real accounts</CardDescription>
+              <CardTitle className="text-xl">Ready for Real Money</CardTitle>
+              <CardDescription>Full financial features with actual accounts</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
@@ -88,8 +88,8 @@ export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
               <div className="w-16 h-16 bg-gradient-to-r from-accent to-success rounded-full flex items-center justify-center mx-auto mb-4">
                 <GraduationCap className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl">I'm 12–15 (Educational Mode)</CardTitle>
-              <CardDescription>Practice with demo accounts to build habits</CardDescription>
+              <CardTitle className="text-xl">Practice & Learn First</CardTitle>
+              <CardDescription>Safe demo environment to build habits</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
@@ -132,10 +132,10 @@ export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
                     htmlFor="parent-consent" 
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                   >
-                    I have permission from a parent or guardian to use Livin Salti
+                    I have family support or permission to use Livin Salti
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Educational Mode uses simulated balances only. No real money moves.
+                    Practice Mode uses simulated balances only. No real money moves.
                   </p>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
           </Button>
           
           <p className="text-xs text-muted-foreground">
-            You can switch to Standard Mode later when you're ready.
+            You can switch to Real Money mode later when you're ready.
           </p>
           
           <p className="text-xs text-muted-foreground">

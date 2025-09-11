@@ -10,8 +10,6 @@ import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import MobileLanding from "./pages/MobileLanding";
 import AuthPage from "./components/auth/AuthPage";
-import Dashboard from "./pages/Dashboard";
-import HomeHub from "./pages/HomeHub";
 import BudgetPage from "./pages/BudgetPage";
 import SavePage from "./pages/SavePage";
 import SaveChoose from "./pages/SaveChoose";
@@ -79,8 +77,6 @@ const AppContent = () => {
         } />
 
         {/* Auth-required hub */}
-        <Route path="/dashboard" element={<RequireAuth><AppWrapper><Dashboard /></AppWrapper></RequireAuth>} />
-        <Route path="/home" element={<RequireAuth><AppWrapper><HomeHub /></AppWrapper></RequireAuth>} />
         <Route path="/app" element={<RequireAuth><AppWrapper><Index /></AppWrapper></RequireAuth>} />
 
         {/* Money & goals */}
@@ -110,7 +106,7 @@ const AppContent = () => {
         <Route path="/profile" element={<RequireAuth><AppWrapper><ProfilePage /></AppWrapper></RequireAuth>} />
         <Route path="/account-delete" element={<RequireAuth><AppWrapper showBottomNav={false}><Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/sponsor/auth" element={<SponsorAuth />} />
-        <Route path="/sponsor" element={<SponsorDashboard />} />
+        <Route path="/sponsor-dashboard" element={<SponsorDashboard />} />
 
         {/* Utility routes */}
         <Route path="/app/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />

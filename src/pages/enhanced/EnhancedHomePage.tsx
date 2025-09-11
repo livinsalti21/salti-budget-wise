@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileDashboard from '@/components/mobile/MobileDashboard';
 import MobileLayout from '@/components/mobile/MobileLayout';
-import Dashboard from '@/pages/Dashboard';
 import HabitTracker from '@/components/HabitTracker';
 import SuccessStories from '@/components/SuccessStories';
 import EducationalContent from '@/components/EducationalContent';
@@ -37,8 +36,12 @@ const EnhancedHomePage = () => {
         {/* Mission Clarity Header */}
         <MissionClarityBanner />
 
-        {/* Main Dashboard */}
-        <Dashboard />
+        {/* Enhanced Features - Focus on Content */}
+        <div className="space-y-6">
+          <p className="text-center text-muted-foreground">
+            Enhanced features and tools for your financial journey.
+          </p>
+        </div>
 
         {/* Enhanced Features Tabs */}
         <Tabs defaultValue="habits" className="space-y-6">

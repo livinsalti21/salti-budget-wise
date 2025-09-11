@@ -6,7 +6,6 @@ import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
-import Dashboard from '@/components/core/Dashboard';
 import MobileDashboard from '@/components/mobile/MobileDashboard';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import MatchASave from '@/components/MatchASave';
@@ -121,9 +120,11 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Main Dashboard - Always Visible */}
+        {/* Main Dashboard - Now Using Tabs */}
         <div className="space-y-6">
-          <Dashboard />
+          <p className="text-center text-muted-foreground">
+            Choose a category below to explore your financial tools and features.
+          </p>
         </div>
 
       <Tabs defaultValue="sponsors" className="space-y-6">

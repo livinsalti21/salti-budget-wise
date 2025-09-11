@@ -1,6 +1,6 @@
 // Security utilities for HMAC signature generation and verification
 
-const HMAC_SECRET = 'livin_salti_hmac_secret_2025'; // In production, store in env
+const HMAC_SECRET = import.meta.env.HMAC_SECRET_KEY || 'fallback_secret_for_dev';
 
 export const generateHMACSignature = async (
   amount_cents: number,

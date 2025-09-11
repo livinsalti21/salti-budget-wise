@@ -23,10 +23,15 @@ const encrypt = async (plaintext: string, key: CryptoKey): Promise<{encrypted: s
 };
 
 const getEncryptionKey = async (): Promise<CryptoKey> => {
-  // In production, retrieve from secure vault
+  // Retrieve encryption key from Supabase secrets
+  const encryptionSecret = Deno.env.get('ENCRYPTION_SECRET_KEY');
+  if (!encryptionSecret) {
+    throw new Error('ENCRYPTION_SECRET_KEY not configured');
+  }
+  
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode("secure_key_32_chars_long_12345"),
+    new TextEncoder().encode(encryptionSecret),
     { name: "AES-GCM" },
     false,
     ["encrypt", "decrypt"]

@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { PiggyBank, GraduationCap, Users, Banknote } from 'lucide-react';
+import { PiggyBank, GraduationCap, Banknote } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ModeSelectProps {
-  onModeSelect: (mode: 'standard' | 'educational', hasParentConsent?: boolean) => void;
+  onModeSelect: (mode: 'standard' | 'educational') => void;
 }
 
 export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
   const [selectedMode, setSelectedMode] = useState<'standard' | 'educational' | null>(null);
-  const [hasParentConsent, setHasParentConsent] = useState(false);
 
   const handleContinue = () => {
     if (selectedMode) {
-      onModeSelect(selectedMode, selectedMode === 'educational' ? hasParentConsent : undefined);
+      onModeSelect(selectedMode);
     }
   };
 
-  const canContinue = selectedMode && (selectedMode === 'standard' || hasParentConsent);
+  const canContinue = !!selectedMode;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center p-6">
@@ -117,31 +115,6 @@ export default function ModeSelect({ onModeSelect }: ModeSelectProps) {
             </CardContent>
           </Card>
         </div>
-
-        {selectedMode === 'educational' && (
-          <Card className="mb-6 border-accent/20 bg-accent/5">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Checkbox 
-                  id="parent-consent"
-                  checked={hasParentConsent}
-                  onCheckedChange={(checked) => setHasParentConsent(checked as boolean)}
-                />
-                <div className="space-y-2">
-                  <label 
-                    htmlFor="parent-consent" 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    I have family support or permission to use Livin Salti
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Practice Mode uses simulated balances only. No real money moves.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         <div className="text-center space-y-4">
           <Button 

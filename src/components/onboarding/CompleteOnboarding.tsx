@@ -15,7 +15,7 @@ export default function CompleteOnboarding({ onComplete }: CompleteOnboardingPro
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleModeSelect = async (mode: 'standard' | 'educational', hasParentConsent?: boolean) => {
+  const handleModeSelect = async (mode: 'standard' | 'educational') => {
     setSelectedMode(mode);
     
     // Save mode to user profile

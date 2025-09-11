@@ -2625,6 +2625,15 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      check_rate_limit: {
+        Args: {
+          action_type: string
+          max_attempts?: number
+          user_id_param: string
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       create_onboarding_suggestions: {
         Args: { target_user_id: string }
         Returns: undefined

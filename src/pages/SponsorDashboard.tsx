@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { MobileSafeArea } from '@/components/ui/mobile-safe-area';
 import { TouchTarget } from '@/components/ui/mobile-helpers';
 import { useIsMobile } from '@/hooks/use-mobile';
+import MobileSponsorDashboard from '@/components/sponsor/MobileSponsorDashboard';
 
 interface SponsorData {
   id: string;
@@ -233,6 +234,15 @@ const SponsorDashboard = () => {
             <div className="h-40 bg-muted/30 rounded-lg"></div>
           </div>
         </div>
+      </MobileSafeArea>
+    );
+  }
+
+  // Use mobile dashboard on mobile devices
+  if (isMobile) {
+    return (
+      <MobileSafeArea className="min-h-screen">
+        <MobileSponsorDashboard />
       </MobileSafeArea>
     );
   }

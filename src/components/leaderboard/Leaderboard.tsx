@@ -25,17 +25,38 @@ export default function Leaderboard() {
 
   const loadLeaderboards = async () => {
     try {
-      // Load weekly leaderboard using the view we created
-      const { data: weekly, error: weeklyError } = await supabase
-        .from('leaderboard_weekly')
-        .select('*')
-        .limit(10);
+      // Load weekly leaderboard - get saves from past week
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      
+      const { data: weeklySaves, error: weeklyError } = await supabase
+        .from('save_events')
+        .select('user_id, amount_cents')
+        .gte('created_at', weekAgo.toISOString())
+        .limit(1000);
 
       if (weeklyError) throw weeklyError;
 
+      // Process weekly data
+      const weeklyStats = new Map();
+      weeklySaves?.forEach(save => {
+        const userId = save.user_id;
+        const existing = weeklyStats.get(userId) || {
+          user_id: userId,
+          display_name: null,
+          saves_count: 0,
+          total_saved_cents: 0,
+          current_streak: 0
+        };
+        
+        existing.saves_count += 1;
+        existing.total_saved_cents += save.amount_cents;
+        weeklyStats.set(userId, existing);
+      });
+
       // Load monthly leaderboard - get saves and profiles separately
       const { data: monthly, error: monthlyError } = await supabase
-        .from('saves')
+        .from('save_events')
         .select('user_id, amount_cents')
         .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString());
 
@@ -58,27 +79,58 @@ export default function Leaderboard() {
         monthlyStats.set(userId, existing);
       });
 
-      // Get display names for monthly stats
-      const userIds = Array.from(monthlyStats.keys());
-      if (userIds.length > 0) {
+      // Get all user IDs for profile lookups
+      const allUserIds = Array.from(new Set([
+        ...Array.from(weeklyStats.keys()),
+        ...Array.from(monthlyStats.keys())
+      ]));
+
+      if (allUserIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, display_name')
-          .in('id', userIds);
+          .in('id', allUserIds);
 
+        const { data: streaks } = await supabase
+          .from('user_streaks')
+          .select('user_id, consecutive_days')
+          .in('user_id', allUserIds);
+
+        // Update weekly stats with profiles and streaks
         profiles?.forEach(profile => {
-          const stats = monthlyStats.get(profile.id);
-          if (stats) {
-            stats.display_name = profile.display_name;
+          const weeklyStats_item = weeklyStats.get(profile.id);
+          if (weeklyStats_item) {
+            weeklyStats_item.display_name = profile.display_name;
+          }
+          
+          const monthlyStats_item = monthlyStats.get(profile.id);
+          if (monthlyStats_item) {
+            monthlyStats_item.display_name = profile.display_name;
+          }
+        });
+
+        streaks?.forEach(streak => {
+          const weeklyStats_item = weeklyStats.get(streak.user_id);
+          if (weeklyStats_item) {
+            weeklyStats_item.current_streak = streak.consecutive_days;
+          }
+          
+          const monthlyStats_item = monthlyStats.get(streak.user_id);
+          if (monthlyStats_item) {
+            monthlyStats_item.current_streak = streak.consecutive_days;
           }
         });
       }
+
+      const weeklyArray = Array.from(weeklyStats.values())
+        .sort((a, b) => b.total_saved_cents - a.total_saved_cents)
+        .slice(0, 10);
 
       const monthlyArray = Array.from(monthlyStats.values())
         .sort((a, b) => b.total_saved_cents - a.total_saved_cents)
         .slice(0, 10);
 
-      setWeeklyLeaderboard(weekly || []);
+      setWeeklyLeaderboard(weeklyArray);
       setMonthlyLeaderboard(monthlyArray);
     } catch (error) {
       console.error('Error loading leaderboards:', error);

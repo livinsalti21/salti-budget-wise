@@ -1961,6 +1961,125 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_growth_tracking: {
+        Row: {
+          average_save_cents: number
+          created_at: string
+          growth_rate: number | null
+          id: string
+          match_rule_id: string
+          period_end: string
+          period_start: string
+          projected_value_cents: number
+          recipient_user_id: string
+          save_events_count: number
+          sponsor_id: string
+          streak_days: number
+          total_matched_cents: number
+          updated_at: string
+        }
+        Insert: {
+          average_save_cents?: number
+          created_at?: string
+          growth_rate?: number | null
+          id?: string
+          match_rule_id: string
+          period_end: string
+          period_start: string
+          projected_value_cents?: number
+          recipient_user_id: string
+          save_events_count?: number
+          sponsor_id: string
+          streak_days?: number
+          total_matched_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          average_save_cents?: number
+          created_at?: string
+          growth_rate?: number | null
+          id?: string
+          match_rule_id?: string
+          period_end?: string
+          period_start?: string
+          projected_value_cents?: number
+          recipient_user_id?: string
+          save_events_count?: number
+          sponsor_id?: string
+          streak_days?: number
+          total_matched_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_growth_tracking_match_rule_id_fkey"
+            columns: ["match_rule_id"]
+            isOneToOne: false
+            referencedRelation: "match_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_growth_tracking_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_metrics_snapshots: {
+        Row: {
+          active_sponsees: number
+          average_match_per_sponsee_cents: number
+          compound_growth_projection_10yr: number
+          compound_growth_projection_1yr: number
+          compound_growth_projection_5yr: number
+          created_at: string
+          id: string
+          snapshot_date: string
+          sponsor_id: string
+          total_matched_cents: number
+          total_saves_matched: number
+          total_sponsees: number
+        }
+        Insert: {
+          active_sponsees?: number
+          average_match_per_sponsee_cents?: number
+          compound_growth_projection_10yr?: number
+          compound_growth_projection_1yr?: number
+          compound_growth_projection_5yr?: number
+          created_at?: string
+          id?: string
+          snapshot_date: string
+          sponsor_id: string
+          total_matched_cents?: number
+          total_saves_matched?: number
+          total_sponsees?: number
+        }
+        Update: {
+          active_sponsees?: number
+          average_match_per_sponsee_cents?: number
+          compound_growth_projection_10yr?: number
+          compound_growth_projection_1yr?: number
+          compound_growth_projection_5yr?: number
+          created_at?: string
+          id?: string
+          snapshot_date?: string
+          sponsor_id?: string
+          total_matched_cents?: number
+          total_saves_matched?: number
+          total_sponsees?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_metrics_snapshots_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sponsors: {
         Row: {
           created_at: string
@@ -2465,6 +2584,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_sponsor_growth_metrics: {
+        Args: { target_sponsor_id: string }
+        Returns: undefined
+      }
       check_and_award_badges: {
         Args: { target_user_id: string }
         Returns: undefined

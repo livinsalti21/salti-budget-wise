@@ -51,13 +51,6 @@ export type Database = {
             foreignKeyName: "ai_messages_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "ai_messages_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -92,13 +85,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "ai_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "ai_sessions_user_id_fkey"
             columns: ["user_id"]
@@ -174,13 +160,6 @@ export type Database = {
             foreignKeyName: "analytics_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "analytics_events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -239,13 +218,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "budget_inputs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "budget_inputs_user_id_fkey"
             columns: ["user_id"]
@@ -427,13 +399,6 @@ export type Database = {
             foreignKeyName: "comments_author_id_fkey"
             columns: ["author_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -475,13 +440,6 @@ export type Database = {
           visibility?: Database["public"]["Enums"]["post_visibility"]
         }
         Relationships: [
-          {
-            foreignKeyName: "community_posts_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "community_posts_author_id_fkey"
             columns: ["author_id"]
@@ -545,13 +503,6 @@ export type Database = {
             foreignKeyName: "demo_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "demo_transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -574,13 +525,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "demo_wallets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "demo_wallets_user_id_fkey"
             columns: ["user_id"]
@@ -653,13 +597,6 @@ export type Database = {
             foreignKeyName: "encouragements_from_user_id_fkey"
             columns: ["from_user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "encouragements_from_user_id_fkey"
-            columns: ["from_user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -669,13 +606,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "family_groups"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "encouragements_to_user_id_fkey"
-            columns: ["to_user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "encouragements_to_user_id_fkey"
@@ -748,13 +678,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "events_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "events_user_id_fkey"
             columns: ["user_id"]
@@ -833,13 +756,6 @@ export type Database = {
             foreignKeyName: "family_group_members_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "family_group_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -865,13 +781,6 @@ export type Database = {
           owner_user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "family_groups_owner_user_id_fkey"
-            columns: ["owner_user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "family_groups_owner_user_id_fkey"
             columns: ["owner_user_id"]
@@ -916,13 +825,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "goals_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "goals_user_id_fkey"
             columns: ["user_id"]
@@ -1033,13 +935,6 @@ export type Database = {
             foreignKeyName: "invoices_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "invoices_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1116,13 +1011,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "community_posts"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "likes_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "likes_user_id_fkey"
@@ -1723,13 +1611,6 @@ export type Database = {
             foreignKeyName: "referral_events_referred_user_id_fkey"
             columns: ["referred_user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "referral_events_referred_user_id_fkey"
-            columns: ["referred_user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1764,13 +1645,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "referrals_referrer_id_fkey"
             columns: ["referrer_id"]
@@ -2015,13 +1889,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "save_streaks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "save_streaks_user_id_fkey"
             columns: ["user_id"]
@@ -2378,13 +2245,6 @@ export type Database = {
             foreignKeyName: "transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2595,13 +2455,6 @@ export type Database = {
             foreignKeyName: "weekly_budgets_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "leaderboard_weekly"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "weekly_budgets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2609,16 +2462,7 @@ export type Database = {
       }
     }
     Views: {
-      leaderboard_weekly: {
-        Row: {
-          current_streak: number | null
-          display_name: string | null
-          saves_count: number | null
-          total_saved_cents: number | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       check_and_award_badges: {

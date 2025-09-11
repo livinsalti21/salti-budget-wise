@@ -40,10 +40,8 @@ export default function MobileLanding() {
     }
   };
 
-  if (!isMobile) {
-    // Fallback to regular landing page for desktop
-    return null;
-  }
+  // This component is now integrated into the main Landing component
+  // and no longer needs to handle desktop fallback
 
   return (
     <MobileSafeArea className="min-h-screen bg-gradient-to-br from-background via-secondary/10 to-background">

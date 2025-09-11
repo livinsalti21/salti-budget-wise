@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AppWrapper from "./components/mobile/AppWrapper";
 import Index from "./pages/Index";
-import InteractiveLanding from "./pages/InteractiveLanding";
 import Landing from "./pages/Landing";
 import MobileLanding from "./pages/MobileLanding";
 import AuthPage from "./components/auth/AuthPage";
@@ -54,13 +53,16 @@ const AppContent = () => {
       <Sonner />
       <Routes>
         {/* Public */}
-        <Route path="/" element={<LandingRedirect><InteractiveLanding /></LandingRedirect>} />
-        <Route path="/landing" element={<Landing />} />
-        <Route path="/m" element={<MobileLanding />} />
+        <Route path="/" element={<Navigate to="/landing" replace />} />
+        <Route path="/landing" element={<LandingRedirect><Landing /></LandingRedirect>} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        
+        {/* Legacy redirects */}
+        <Route path="/m" element={<Navigate to="/landing" replace />} />
+        <Route path="/interactive" element={<Navigate to="/landing" replace />} />
 
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={

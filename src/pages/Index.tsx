@@ -5,21 +5,15 @@ import { Button } from '@/components/ui/button';
 import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import Onboarding from '@/components/core/Onboarding';
+import { supabase } from '@/integrations/supabase/client';
 import Dashboard from '@/components/core/Dashboard';
 import MobileDashboard from '@/components/mobile/MobileDashboard';
-import MobileSaveStack from '@/components/mobile/MobileSaveStack';
 import MobileLayout from '@/components/mobile/MobileLayout';
-import EnhancedBudgetInput from '@/components/EnhancedBudgetInput';
-import SaveStack from '@/components/core/SaveStack';
 import MatchASave from '@/components/MatchASave';
 import { BudgetUpload } from '@/components/BudgetUpload';
 import TemplateStore from '@/components/TemplateStore';
-import SettingsPanel from '@/components/SettingsPanel';
-import { ProjectionSettings } from '@/components/ProjectionSettings';
 import NotificationCenter from '@/components/NotificationCenter';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
-import SaveHistory from '@/components/SaveHistory';
 import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
 
@@ -27,13 +21,42 @@ const Index = () => {
   const { user, loading, signOut } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
+  const [onboardingStatus, setOnboardingStatus] = useState<'loading' | 'incomplete' | 'complete'>('loading');
 
 
-  // Redirect to auth if not logged in
-  if (loading) {
+  // Check onboarding status when user loads
+  useEffect(() => {
+    if (user && onboardingStatus === 'loading') {
+      checkOnboardingStatus();
+    }
+  }, [user, onboardingStatus]);
+
+  const checkOnboardingStatus = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('completed_onboarding')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking onboarding status:', error);
+        setOnboardingStatus('incomplete'); // Default to incomplete on error
+        return;
+      }
+
+      // If profile doesn't exist or onboarding not completed, redirect to onboarding
+      setOnboardingStatus(profile?.completed_onboarding ? 'complete' : 'incomplete');
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      setOnboardingStatus('incomplete');
+    }
+  };
+
+  // Loading states
+  if (loading || onboardingStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center">
         <div className="text-center">
@@ -44,8 +67,14 @@ const Index = () => {
     );
   }
 
+  // Redirect if not authenticated
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // Redirect to onboarding if not completed
+  if (onboardingStatus === 'incomplete') {
+    return <Navigate to="/onboarding" replace />;
   }
 
 

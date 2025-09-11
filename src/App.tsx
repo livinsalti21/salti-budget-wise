@@ -26,7 +26,8 @@ import ProfilePage from "./pages/ProfilePage";
 import SponsorAuth from "./pages/SponsorAuth";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import NotFound from "./pages/NotFound";
-import OnboardingFlow from "./components/onboarding/OnboardingFlow";
+import LandingRedirect from "./components/ui/LandingRedirect";
+import CompleteOnboarding from "./components/onboarding/CompleteOnboarding";
 import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
 import SnoozeConfirm from "./pages/SnoozeConfirm";
@@ -53,9 +54,8 @@ const AppContent = () => {
       <Sonner />
       <Routes>
         {/* Public */}
-        <Route path="/" element={<InteractiveLanding />} />
+        <Route path="/" element={<LandingRedirect><InteractiveLanding /></LandingRedirect>} />
         <Route path="/landing" element={<Landing />} />
-        <Route path="/index" element={<Index />} />
         <Route path="/m" element={<MobileLanding />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/pricing" element={<PricingPage />} />
@@ -65,12 +65,12 @@ const AppContent = () => {
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={
           <RequireAuth>
-            <OnboardingFlow onComplete={() => window.location.href = '/app'} />
+            <CompleteOnboarding onComplete={() => window.location.href = '/app'} />
           </RequireAuth>
         } />
         <Route path="/link" element={
           <RequireAuth>
-            <FeatureGate flag="ACCOUNT_LINKING" fallback={<OnboardingFlow onComplete={() => window.location.href = '/app'} />}>
+            <FeatureGate flag="ACCOUNT_LINKING" fallback={<CompleteOnboarding onComplete={() => window.location.href = '/app'} />}>
               <AccountLinking />
             </FeatureGate>
           </RequireAuth>
@@ -84,11 +84,13 @@ const AppContent = () => {
         {/* Money & goals */}
         <Route path="/budget" element={<RequireAuth><AppWrapper><BudgetPage /></AppWrapper></RequireAuth>} />
         <Route path="/save" element={<RequireAuth><AppWrapper><SavePage /></AppWrapper></RequireAuth>} />
-        <Route path="/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />
-        <Route path="/save/confirm" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveConfirm /></AppWrapper></RequireAuth>} />
         <Route path="/save-history" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/goals" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/net-worth" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></AppWrapper></RequireAuth>} />
+        
+        {/* Legacy redirects */}
+        <Route path="/save/choose" element={<Navigate to="/app/save/choose" replace />} />
+        <Route path="/save/confirm" element={<Navigate to="/app/save/confirm" replace />} />
 
         {/* Engagement */}
         <Route path="/streaks" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense></AppWrapper></RequireAuth>} />

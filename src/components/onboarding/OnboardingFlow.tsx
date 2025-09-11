@@ -46,9 +46,10 @@ const steps: OnboardingStep[] = [
 
 interface OnboardingFlowProps {
   onComplete: () => void;
+  mode?: 'standard' | 'educational';
 }
 
-export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+export default function OnboardingFlow({ onComplete, mode = 'standard' }: OnboardingFlowProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [goalName, setGoalName] = useState('Rainy Day Fund');
   const [goalAmount, setGoalAmount] = useState('1000');
@@ -224,6 +225,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             id: user.id,
             email: user.email || email,
             phone: phone || null,
+            mode: mode,
             completed_onboarding: true,
             onboarding_completed_at: new Date().toISOString()
           });
@@ -237,6 +239,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         const { error } = await supabase
           .from('profiles')
           .update({ 
+            mode: mode,
             completed_onboarding: true,
             onboarding_completed_at: new Date().toISOString()
           })
@@ -344,11 +347,11 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                     />
                   </div>
                 </div>
-                <div className="bg-primary/5 p-3 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    💡 Free plan allows 1 goal. Upgrade to Pro for unlimited goals!
-                  </p>
-                </div>
+              <div className="bg-primary/5 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  💡 {mode === 'educational' ? 'Educational mode uses demo accounts for learning' : 'Free plan allows 1 goal. Upgrade to Pro for unlimited goals!'}
+                </p>
+              </div>
               </div>
             </div>
           )}
@@ -381,7 +384,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </div>
               <div className="bg-primary/10 p-3 rounded-lg">
                 <p className="text-sm">
-                  💡 Choose any amount - every save counts toward your future!
+                  💡 {mode === 'educational' ? 'Perfect! Every practice save builds real habits for your future' : 'Choose any amount - every save counts toward your future!'}
                 </p>
               </div>
             </div>

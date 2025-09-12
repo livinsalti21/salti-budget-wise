@@ -24,6 +24,12 @@ interface SponsorData {
   name?: string;
   stripe_customer_id?: string;
   created_at: string;
+  onboarding_completed_at?: string;
+  sponsor_type?: string;
+  monthly_budget_cents?: number;
+  match_percentage?: number;
+  motivation?: string;
+  goals?: any; // Using any to handle Json type from Supabase
 }
 
 interface MatchRule {
@@ -69,6 +75,7 @@ export default function SponsorDashboard() {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [newSponsorship, setNewSponsorship] = useState({
     recipientEmail: "",
     matchPercentage: 50,
@@ -93,13 +100,18 @@ export default function SponsorDashboard() {
         .eq('email', user.email)
         .single();
       
-      if (!sponsor) {
+      if (!sponsor || !sponsor.onboarding_completed_at) {
+        setNeedsOnboarding(true);
         setShowOnboarding(true);
       } else {
         setHasCompletedOnboarding(true);
+        setNeedsOnboarding(false);
+        setSponsorData(sponsor);
       }
     } catch (error) {
       console.error('Error checking onboarding status:', error);
+      setNeedsOnboarding(true);
+      setShowOnboarding(true); // Default to showing onboarding if there's an error
     }
   };
 
@@ -225,26 +237,59 @@ export default function SponsorDashboard() {
     if (!user?.email) return;
 
     try {
-      // Update sponsor record with onboarding completion
-      await supabase
-        .from('sponsors')
-        .update({ 
-          email: user.email
-        })
-        .eq('email', user.email);
+      // Create or update sponsor record with full onboarding data
+      const sponsorRecord = {
+        email: user.email,
+        name: onboardingData.name || user.email.split('@')[0] || 'Anonymous Sponsor',
+        sponsor_type: onboardingData.sponsorType,
+        monthly_budget_cents: onboardingData.monthlyBudget * 100, // Convert to cents
+        match_percentage: onboardingData.matchPercentage,
+        motivation: onboardingData.motivation,
+        goals: onboardingData.goals,
+        onboarding_completed_at: new Date().toISOString(),
+        stripe_customer_id: sponsorData?.stripe_customer_id || null
+      };
 
+      const { data: sponsor, error } = await supabase
+        .from('sponsors')
+        .upsert(sponsorRecord, { 
+          onConflict: 'email',
+          ignoreDuplicates: false 
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating sponsor record:', error);
+        throw error;
+      }
+
+      setSponsorData(sponsor);
       setShowOnboarding(false);
       setHasCompletedOnboarding(true);
-      loadSponsorData();
-
-      toast({
-        title: "Welcome to Sponsoring! 🎉",
-        description: "Your sponsor journey begins now. Let's find you a sponsee!",
-      });
+      setNeedsOnboarding(false);
+      
+      // Handle specific onboarding actions
+      if (onboardingData.action === 'find_sponsee') {
+        toast({
+          title: "Let's find your first sponsee!",
+          description: "Browse available profiles to start your sponsorship journey.",
+        });
+        // TODO: Navigate to sponsee browser when implemented
+      } else {
+        toast({
+          title: "Welcome to Sponsoring! 🎉",
+          description: "Your sponsor dashboard is ready. Start making an impact!",
+        });
+      }
+      
+      // Load sponsor data after onboarding
+      await loadSponsorData();
     } catch (error: any) {
+      console.error('Error completing onboarding:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to complete onboarding. Please try again.",
         variant: "destructive",
       });
     }

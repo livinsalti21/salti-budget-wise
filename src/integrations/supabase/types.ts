@@ -2084,19 +2084,40 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          goals: Json | null
           id: string
+          match_percentage: number | null
+          monthly_budget_cents: number | null
+          motivation: string | null
+          name: string | null
+          onboarding_completed_at: string | null
+          sponsor_type: string | null
           stripe_customer_id: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          goals?: Json | null
           id?: string
+          match_percentage?: number | null
+          monthly_budget_cents?: number | null
+          motivation?: string | null
+          name?: string | null
+          onboarding_completed_at?: string | null
+          sponsor_type?: string | null
           stripe_customer_id?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          goals?: Json | null
           id?: string
+          match_percentage?: number | null
+          monthly_budget_cents?: number | null
+          motivation?: string | null
+          name?: string | null
+          onboarding_completed_at?: string | null
+          sponsor_type?: string | null
           stripe_customer_id?: string | null
         }
         Relationships: []

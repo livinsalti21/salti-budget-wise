@@ -418,13 +418,41 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
               </CardContent>
             </Card>
 
+            <div className="grid gap-4">
+              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-8 h-8 text-green-600" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-green-800">Find Your First Sponsee</h4>
+                      <p className="text-sm text-green-600">Browse profiles and start making impact today</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="w-8 h-8 text-blue-600" />
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-blue-800">Explore Your Dashboard</h4>
+                      <p className="text-sm text-blue-600">View analytics, track impact, and manage sponsorships</p>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
               <h4 className="font-semibold text-blue-800 mb-2">What happens next?</h4>
               <ul className="text-sm text-blue-600 space-y-1">
-                <li>• We'll help you find the perfect sponsee match</li>
-                <li>• You'll start seeing their progress in real-time</li>
+                <li>• Browse available sponsees and choose your match</li>
+                <li>• Set up your first sponsorship rule</li>
+                <li>• Start seeing their progress in real-time</li>
                 <li>• Watch your impact grow through detailed analytics</li>
-                <li>• Join our community of sponsors making a difference</li>
               </ul>
             </div>
           </div>
@@ -484,14 +512,47 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
           Back
         </Button>
 
-        <Button
-          onClick={handleNext}
-          disabled={!canProceed()}
-          className="flex items-center gap-2"
-        >
-          {currentStep === steps.length - 1 ? "Start Sponsoring!" : "Continue"}
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+        {currentStep === steps.length - 1 ? (
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                toast({
+                  title: "Dashboard Ready!",
+                  description: "Explore your sponsor dashboard and start making impact.",
+                });
+                onComplete(data);
+              }}
+              className="flex items-center gap-2"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Go to Dashboard
+            </Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: "Let's find your first sponsee!",
+                  description: "We'll help you find the perfect match.",
+                });
+                onComplete({ ...data, action: 'find_sponsee' });
+              }}
+              className="flex items-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Find Sponsees
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleNext}
+            disabled={!canProceed()}
+            className="flex items-center gap-2"
+          >
+            Continue
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

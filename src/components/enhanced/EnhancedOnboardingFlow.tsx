@@ -18,6 +18,7 @@ interface Habit {
   avgSaving: number;
   category: 'food' | 'transport' | 'entertainment' | 'shopping';
   description: string;
+  whyItWorks: string;
   selected: boolean;
 }
 
@@ -33,11 +34,12 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [goalData, setGoalData] = useState<GoalData>({
     name: '',
-    targetAmount: 0,
+    targetAmount: 5000,
     timeframe: 12,
     selectedHabits: [],
     motivation: ''
   });
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const [availableHabits, setAvailableHabits] = useState<Habit[]>([
     {
@@ -47,6 +49,7 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
       avgSaving: 5.50,
       category: 'food',
       description: 'Make coffee at home instead of buying daily',
+      whyItWorks: 'Small daily decisions compound. This habit alone saves $2,000+ annually and builds discipline.',
       selected: false
     },
     {
@@ -56,6 +59,7 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
       avgSaving: 15.00,
       category: 'food', 
       description: 'Cook meals instead of ordering takeout',
+      whyItWorks: 'Cooking builds two habits: saving money and eating healthier. Double win for your future self!',
       selected: false
     },
     {
@@ -65,6 +69,7 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
       avgSaving: 8.00,
       category: 'transport',
       description: 'Walk short distances instead of using Uber/Lyft',
+      whyItWorks: 'Exercise + savings + environmental impact. Triple benefit that compounds your health and wealth.',
       selected: false
     },
     {
@@ -74,41 +79,55 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
       avgSaving: 12.00,
       category: 'shopping',
       description: 'Think twice before unplanned purchases',
+      whyItWorks: 'The 24-hour rule prevents 80% of regrettable purchases. Your wallet and values will align.',
       selected: false
     },
     {
       id: '5',
-      name: 'Skip Subscription Services',
+      name: 'Cancel Unused Subscriptions',
       icon: <Gamepad2 className="h-5 w-5" />,
       avgSaving: 20.00,
       category: 'entertainment',
-      description: 'Cancel unused streaming/gaming subscriptions',
+      description: 'Audit and cancel unused streaming/gaming subscriptions',
+      whyItWorks: 'Most people have $273 in forgotten subscriptions. This is literally found money waiting for you!',
       selected: false
     }
   ]);
 
   const steps = [
     {
-      title: "What's Your Goal?",
-      description: "Let's start with your 'why' - what are you saving for?",
-      icon: <Target className="h-6 w-6" />
+      title: "What's Your Financial Dream?",
+      description: "Let's connect your savings to something that truly excites you",
+      icon: <Heart className="h-6 w-6" />,
+      whyMessage: "Goals with emotional connection are 42% more likely to be achieved. Your brain needs a clear, meaningful target."
     },
     {
-      title: "Choose Your Habits",
-      description: "Which daily decisions could become wealth-building habits?",
-      icon: <CheckCircle className="h-6 w-6" />
+      title: "Choose Your Wealth Habits",
+      description: "Which daily decisions will become your secret money-making superpowers?",
+      icon: <Zap className="h-6 w-6" />,
+      whyMessage: "Small, consistent actions compound exponentially. A $5 daily habit becomes $1.3M over 40 years."
     },
     {
-      title: "See Your Future",
-      description: "Watch your small habits transform into life-changing wealth",
-      icon: <Sparkles className="h-6 w-6" />
+      title: "See Your Financial Future",
+      description: "Watch how your small habits transform into life-changing wealth over time",
+      icon: <Sparkles className="h-6 w-6" />,
+      whyMessage: "Visualization activates the same brain patterns as actual achievement. Seeing your future motivates present action."
     },
     {
-      title: "Let's Start!",
-      description: "You're ready to begin building wealth through daily habits",
-      icon: <ArrowRight className="h-6 w-6" />
+      title: "Let's Launch Your Journey!",
+      description: "You're ready to join thousands building wealth through daily habits",
+      icon: <ArrowRight className="h-6 w-6" />,
+      whyMessage: "Starting today vs waiting 10 years could mean hundreds of thousands more dollars. Every moment counts."
     }
   ];
+
+  // Confetti animation trigger
+  useEffect(() => {
+    if (showConfetti) {
+      const timer = setTimeout(() => setShowConfetti(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showConfetti]);
 
   const toggleHabit = (habitId: string) => {
     setAvailableHabits(prev => prev.map(habit => 
@@ -129,11 +148,22 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
     const selectedHabitObjects = availableHabits.filter(h => h.selected);
     const dailySavings = selectedHabitObjects.reduce((sum, habit) => sum + habit.avgSaving, 0);
     const annualSavings = dailySavings * 365;
-    const futureValue = annualSavings * goalData.timeframe * 1.08; // Simple 8% return
+    
+    // Enhanced compound interest calculation
+    const years = goalData.timeframe / 12;
+    const monthlyReturn = 0.08 / 12; // 8% annual return
+    const months = goalData.timeframe;
+    
+    // Compound interest formula for monthly contributions
+    const futureValue = dailySavings * 30.44 * (((1 + monthlyReturn) ** months - 1) / monthlyReturn) * (1 + monthlyReturn);
+    
     return { dailySavings, annualSavings, futureValue };
   };
 
   const handleNext = () => {
+    // Celebration animation
+    setShowConfetti(true);
+    
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -154,9 +184,28 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background p-4">
+      {/* Confetti Effect */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="absolute inset-0">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-3 h-3 bg-primary rounded-full animate-ping"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 2}s`
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto">
         {/* Progress Header */}
-        <Card className="mb-6">
+        <Card className="mb-6 bg-gradient-to-r from-primary/5 to-accent/5">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -166,22 +215,32 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
                 </Badge>
               </div>
               <Progress value={progressPercentage} className="w-full" />
+              
+              {/* Why This Matters Section */}
+              <div className="bg-background/60 backdrop-blur p-4 rounded-lg border border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="h-4 w-4 text-primary" />
+                  <span className="font-semibold text-sm">Why This Step Matters</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{steps[currentStep].whyMessage}</p>
+              </div>
+              
               <p className="text-sm text-muted-foreground text-center">
-                Building wealth through small daily habits
+                Building wealth through small daily habits - every decision counts
               </p>
             </div>
           </CardContent>
         </Card>
 
         {/* Main Content */}
-        <Card className="mb-6">
+        <Card className="mb-6 shadow-xl hover:shadow-2xl transition-all duration-500">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary/10 rounded-full">
+              <div className="p-4 bg-primary/10 rounded-full animate-pulse">
                 {steps[currentStep].icon}
               </div>
               <div>
-                <CardTitle className="text-lg">{steps[currentStep].title}</CardTitle>
+                <CardTitle className="text-xl">{steps[currentStep].title}</CardTitle>
                 <p className="text-sm text-muted-foreground">{steps[currentStep].description}</p>
               </div>
             </div>
@@ -190,84 +249,151 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
             
             {/* Step 0: Goal Setting */}
             {currentStep === 0 && (
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* Emotional Goal Selection */}
                 <div>
-                  <Label htmlFor="goalName">What are you saving for?</Label>
-                  <Input
-                    id="goalName"
-                    placeholder="e.g., Emergency fund, vacation, down payment"
-                    value={goalData.name}
-                    onChange={(e) => setGoalData(prev => ({ ...prev, name: e.target.value }))}
-                    className="mt-1"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="targetAmount">How much do you want to save?</Label>
-                  <div className="relative mt-1">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="targetAmount"
-                      type="number"
-                      placeholder="5000"
-                      value={goalData.targetAmount || ''}
-                      onChange={(e) => setGoalData(prev => ({ ...prev, targetAmount: parseFloat(e.target.value) || 0 }))}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>In how many months?</Label>
-                  <div className="flex gap-3 mt-2">
-                    {[6, 12, 18, 24].map((months) => (
+                  <Label className="text-base font-semibold mb-3 block">What financial dream keeps you up at night?</Label>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {[
+                      { name: 'Emergency Fund', emoji: '🛡️', description: 'Peace of mind', amount: 5000 },
+                      { name: 'Dream Vacation', emoji: '🏖️', description: 'Create memories', amount: 3000 },
+                      { name: 'New Car', emoji: '🚗', description: 'Reliable transport', amount: 15000 },
+                      { name: 'House Down Payment', emoji: '🏠', description: 'Build equity', amount: 50000 },
+                      { name: 'Investment Portfolio', emoji: '📈', description: 'Grow wealth', amount: 10000 },
+                      { name: 'Family Security', emoji: '👨‍👩‍👧‍👦', description: 'Protect loved ones', amount: 25000 }
+                    ].map((goal) => (
                       <Button
-                        key={months}
-                        variant={goalData.timeframe === months ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setGoalData(prev => ({ ...prev, timeframe: months }))}
+                        key={goal.name}
+                        variant={goalData.name === goal.name ? "default" : "outline"}
+                        className="h-auto p-4 text-left hover:scale-105 transition-transform"
+                        onClick={() => {
+                          setGoalData(prev => ({ ...prev, name: goal.name, targetAmount: goal.amount }));
+                        }}
                       >
-                        {months} months
+                        <div className="space-y-1">
+                          <div className="text-xl">{goal.emoji}</div>
+                          <div className="font-medium text-sm">{goal.name}</div>
+                          <div className="text-xs text-muted-foreground">{goal.description}</div>
+                          <div className="text-xs font-bold text-success">${goal.amount.toLocaleString()}</div>
+                        </div>
                       </Button>
                     ))}
                   </div>
                 </div>
 
-                {/* Real-world examples */}
-                <Card className="bg-accent/10 border-accent/20">
-                  <CardContent className="p-4">
-                    <h4 className="font-semibold text-sm mb-2">💡 Popular Goals</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div>• Emergency Fund: $5,000</div>
-                      <div>• Vacation: $3,000</div>
-                      <div>• Car Down Payment: $8,000</div>
-                      <div>• Wedding: $15,000</div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Custom Goal Input */}
+                <div>
+                  <Label htmlFor="goalName">Or describe your custom dream:</Label>
+                  <Input
+                    id="goalName"
+                    placeholder="e.g., Kids college fund, wedding, business startup..."
+                    value={goalData.name}
+                    onChange={(e) => setGoalData(prev => ({ ...prev, name: e.target.value }))}
+                    className="mt-2"
+                  />
+                </div>
+                
+                {/* Interactive Amount Slider */}
+                <div>
+                  <Label className="flex items-center gap-2 mb-3">
+                    <DollarSign className="h-4 w-4" />
+                    Target Amount: ${goalData.targetAmount.toLocaleString()}
+                  </Label>
+                  <Slider
+                    value={[goalData.targetAmount]}
+                    onValueChange={(value) => setGoalData(prev => ({ ...prev, targetAmount: value[0] }))}
+                    max={100000}
+                    min={1000}
+                    step={1000}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>$1,000</span>
+                    <span>$100,000+</span>
+                  </div>
+                </div>
+
+                {/* Timeline Slider */}
+                <div>
+                  <Label className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-4 w-4" />
+                    Timeline: {goalData.timeframe} months ({Math.round(goalData.timeframe / 12 * 10) / 10} years)
+                  </Label>
+                  <Slider
+                    value={[goalData.timeframe]}
+                    onValueChange={(value) => setGoalData(prev => ({ ...prev, timeframe: value[0] }))}
+                    max={60}
+                    min={6}
+                    step={6}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>6 months</span>
+                    <span>5 years</span>
+                  </div>
+                </div>
+
+                {/* Success Preview */}
+                {goalData.name && goalData.targetAmount > 0 && (
+                  <Card className="bg-gradient-to-r from-success/10 to-primary/10 border-success/30 animate-fade-in">
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl mb-2">🎯</div>
+                      <p className="font-semibold text-success">
+                        {goalData.name}: ${goalData.targetAmount.toLocaleString()} in {goalData.timeframe} months
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        That's ${Math.round(goalData.targetAmount / goalData.timeframe).toLocaleString()} per month
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
 
-            {/* Step 1: Habit Selection */}
+            {/* Step 1: Enhanced Habit Selection */}
             {currentStep === 1 && (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Select the habits you're willing to change. Each represents real money over time.
-                </p>
+              <div className="space-y-6">
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-4">
+                    Select habits you're willing to change. <strong>Each one is a money-making machine!</strong>
+                  </p>
+                  
+                  {/* Live Calculator Preview */}
+                  {goalData.selectedHabits.length > 0 && (
+                    <Card className="bg-gradient-to-r from-success/10 to-primary/10 border-success/30 mb-4 animate-scale-in">
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-success mb-1">
+                            ${calculateProjection().dailySavings.toFixed(2)}/day
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            = ${calculateProjection().annualSavings.toLocaleString()}/year
+                          </div>
+                          <div className="flex items-center justify-center gap-1 text-xs text-success mt-2">
+                            <Trophy className="h-3 w-3" />
+                            Projected wealth in {goalData.timeframe} months: ${Math.round(calculateProjection().futureValue).toLocaleString()}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
                 
                 <div className="space-y-3">
                   {availableHabits.map((habit) => (
                     <Card 
                       key={habit.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${
-                        habit.selected ? 'border-primary/30 bg-primary/5' : 'hover:bg-muted/50'
+                      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-102 ${
+                        habit.selected ? 'border-primary bg-primary/5 shadow-md' : 'hover:border-primary/50'
                       }`}
                       onClick={() => toggleHabit(habit.id)}
                     >
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-full ${habit.selected ? 'bg-primary/20' : 'bg-muted/20'}`}>
+                            <div className={`p-2 rounded-full transition-all ${
+                              habit.selected ? 'bg-primary/20 scale-110' : 'bg-muted/20'
+                            }`}>
                               {habit.icon}
                             </div>
                             <div>
@@ -276,29 +402,52 @@ const EnhancedOnboardingFlow = ({ onComplete }: OnboardingProps) => {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-bold text-success">${habit.avgSaving}/day</p>
-                            <p className="text-xs text-muted-foreground">
+                            <div className="text-lg font-bold text-success">${habit.avgSaving}/day</div>
+                            <div className="text-xs text-muted-foreground">
                               ${(habit.avgSaving * 365).toLocaleString()}/year
-                            </p>
+                            </div>
                           </div>
                         </div>
+                        
+                        {habit.selected && (
+                          <div className="mt-3 p-3 bg-success/10 rounded-lg border border-success/20 animate-fade-in">
+                            <div className="flex items-center gap-2 mb-2">
+                              <CheckCircle className="h-4 w-4 text-success" />
+                              <span className="text-sm font-medium text-success">Added to your wealth plan!</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{habit.whyItWorks}</p>
+                            
+                            {/* Individual habit compound projection */}
+                            <div className="mt-2 pt-2 border-t border-success/20">
+                              <p className="text-xs text-success font-medium">
+                                This habit alone becomes ${Math.round(habit.avgSaving * 365 * (goalData.timeframe / 12) * 1.08).toLocaleString()} in {goalData.timeframe} months
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
                 </div>
 
-                {goalData.selectedHabits.length > 0 && (
-                  <Card className="bg-success/10 border-success/20">
-                    <CardContent className="p-4 text-center">
-                      <p className="font-semibold text-success">
-                        Selected habits could save you ${calculateProjection().dailySavings.toFixed(2)}/day
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        That's ${calculateProjection().annualSavings.toLocaleString()}/year!
-                      </p>
+                {/* Habit Categories Summary */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+                    <CardContent className="p-3 text-center">
+                      <div className="text-xs text-muted-foreground">Selected Habits</div>
+                      <div className="text-lg font-bold text-blue-600">{goalData.selectedHabits.length}</div>
                     </CardContent>
                   </Card>
-                )}
+                  
+                  <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
+                    <CardContent className="p-3 text-center">
+                      <div className="text-xs text-muted-foreground">Monthly Savings</div>
+                      <div className="text-lg font-bold text-green-600">
+                        ${Math.round(calculateProjection().dailySavings * 30.44).toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             )}
 

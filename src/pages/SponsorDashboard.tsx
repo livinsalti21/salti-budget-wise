@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DollarSign, Users, TrendingUp, Plus, Calendar, Mail, LogOut, Heart, Gift } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import MobileSponsorDashboard from "@/components/sponsor/MobileSponsorDashboard";
+// import MobileSponsorDashboard from "@/components/sponsor/MobileSponsorDashboard";
 import { SponsorOnboardingFlow } from "@/components/sponsor/SponsorOnboardingFlow";
 import { SponsorImpactStory } from "@/components/sponsor/SponsorImpactStory";
 import { SponsorGameification } from "@/components/sponsor/SponsorGameification";
@@ -302,7 +302,19 @@ export default function SponsorDashboard() {
   }
 
   if (isMobile) {
-    return <MobileSponsorDashboard />;
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Mobile Dashboard</h3>
+            <p className="text-muted-foreground">
+              Mobile sponsor dashboard coming soon!
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

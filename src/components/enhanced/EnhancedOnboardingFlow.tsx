@@ -1,11 +1,12 @@
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Coffee, Utensils, ShoppingCart, Car, Gamepad2, Target, DollarSign, Calendar, CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { Slider } from '@/components/ui/slider';
+import { Coffee, Utensils, ShoppingCart, Car, Gamepad2, Target, DollarSign, Calendar, CheckCircle, ArrowRight, Sparkles, Heart, Zap, Brain, Trophy } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: () => void;

@@ -98,7 +98,7 @@ export default function SponsorDashboard() {
         .from('sponsors')
         .select('*')
         .eq('email', user.email)
-        .single();
+        .maybeSingle();
       
       if (!sponsor || !sponsor.onboarding_completed_at) {
         setNeedsOnboarding(true);
@@ -272,10 +272,11 @@ export default function SponsorDashboard() {
       // Handle specific onboarding actions
       if (onboardingData.action === 'find_sponsee') {
         toast({
-          title: "Let's find your first sponsee!",
-          description: "Browse available profiles to start your sponsorship journey.",
+          title: "Ready to create your first sponsorship!",
+          description: "Set up your sponsorship rules to start matching with users.",
         });
-        // TODO: Navigate to sponsee browser when implemented
+        // Open the add sponsorship dialog
+        setTimeout(() => setShowAddDialog(true), 500);
       } else {
         toast({
           title: "Welcome to Sponsoring! 🎉",

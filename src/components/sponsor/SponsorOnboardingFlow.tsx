@@ -368,6 +368,15 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
                   </Button>
                 ))}
               </div>
+              <div className="mt-4 text-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => setCurrentStep(4)}
+                  className="text-sm text-muted-foreground"
+                >
+                  Skip for now
+                </Button>
+              </div>
             </div>
           </div>
         );
@@ -419,7 +428,16 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
             </Card>
 
             <div className="grid gap-4">
-              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+              <Card 
+                className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => {
+                  toast({
+                    title: "Let's find your first sponsee!",
+                    description: "We'll help you find the perfect match.",
+                  });
+                  onComplete({ ...data, action: 'find_sponsee' });
+                }}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <Users className="w-8 h-8 text-green-600" />
@@ -432,7 +450,16 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
                 </CardContent>
               </Card>
 
-              <Card className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200">
+              <Card 
+                className="bg-gradient-to-r from-blue-50 to-sky-50 border-blue-200 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => {
+                  toast({
+                    title: "Dashboard Ready!",
+                    description: "Explore your sponsor dashboard and start making impact.",
+                  });
+                  onComplete(data);
+                }}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <TrendingUp className="w-8 h-8 text-blue-600" />
@@ -464,7 +491,7 @@ export function SponsorOnboardingFlow({ onComplete, onSkip }: SponsorOnboardingF
     switch (currentStep) {
       case 1: return data.sponsorType !== "";
       case 2: return data.monthlyBudget > 0 && data.matchPercentage > 0;
-      case 3: return data.motivation.trim().length > 10 && data.goals.length > 0;
+      case 3: return data.motivation.trim().length > 3 || data.goals.length > 0; // Either motivation OR goals is enough
       default: return true;
     }
   };

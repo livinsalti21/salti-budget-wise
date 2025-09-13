@@ -1,6 +1,7 @@
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileLayout from './MobileLayout';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 
 interface AppWrapperProps {
   children: React.ReactNode;
@@ -14,6 +15,7 @@ export default function AppWrapper({ children, showBottomNav = true }: AppWrappe
     return (
       <MobileLayout showBottomNav={showBottomNav}>
         {children}
+        <ChatWidget />
       </MobileLayout>
     );
   }
@@ -24,6 +26,7 @@ export default function AppWrapper({ children, showBottomNav = true }: AppWrappe
       <div className="container mx-auto px-4 py-4 max-w-4xl">
         {children}
       </div>
+      <ChatWidget />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, X, Clock } from 'lucide-react';
+import ProGate from '@/components/core/ProGate';
 
 interface InsightCardProps {
   title: string;
@@ -58,36 +59,38 @@ export default function InsightCard({
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div>
-          <h4 className="font-medium text-sm">{title}</h4>
-          <p className="text-sm text-muted-foreground mt-1">{description}</p>
-          {impact && (
-            <Badge variant="secondary" className="mt-2 text-xs">
-              Impact: {impact}
-            </Badge>
-          )}
-        </div>
-        
-        <div className="flex gap-2 pt-2">
-          {onAccept && (
-            <Button onClick={onAccept} size="sm" className="text-xs">
-              {actionLabel}
-            </Button>
-          )}
-          {onSnooze && (
-            <Button onClick={onSnooze} variant="outline" size="sm" className="text-xs">
-              <Clock className="mr-1 h-3 w-3" />
-              Later
-            </Button>
-          )}
-          {onDismiss && (
-            <Button onClick={onDismiss} variant="ghost" size="sm" className="text-xs">
-              Never
-            </Button>
-          )}
-        </div>
-      </CardContent>
+      <ProGate feature="ai_insights">
+        <CardContent className="space-y-3">
+          <div>
+            <h4 className="font-medium text-sm">{title}</h4>
+            <p className="text-sm text-muted-foreground mt-1">{description}</p>
+            {impact && (
+              <Badge variant="secondary" className="mt-2 text-xs">
+                Impact: {impact}
+              </Badge>
+            )}
+          </div>
+          
+          <div className="flex gap-2 pt-2">
+            {onAccept && (
+              <Button onClick={onAccept} size="sm" className="text-xs">
+                {actionLabel}
+              </Button>
+            )}
+            {onSnooze && (
+              <Button onClick={onSnooze} variant="outline" size="sm" className="text-xs">
+                <Clock className="mr-1 h-3 w-3" />
+                Later
+              </Button>
+            )}
+            {onDismiss && (
+              <Button onClick={onDismiss} variant="ghost" size="sm" className="text-xs">
+                Never
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </ProGate>
     </Card>
   );
 }

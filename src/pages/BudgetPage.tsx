@@ -127,11 +127,7 @@ export default function BudgetPage() {
         )}
         
         {currentView === 'ai' && (
-          <FeatureGate flag="AI_INSIGHTS" fallback={
-            <ProGate feature="ai_budget_input">
-              <AiBudgetInput onBudgetExtracted={handleBudgetCreated} />
-            </ProGate>
-          }>
+          <FeatureGate flag="AI_INSIGHTS">
             <AiBudgetInput onBudgetExtracted={handleBudgetCreated} />
           </FeatureGate>
         )}

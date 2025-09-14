@@ -19,7 +19,6 @@ import { useToast } from '@/hooks/use-toast';
 import { hasProAccess } from '@/lib/permissions/hasProAccess';
 import type { BudgetInput, WeeklyBudgetResult, UserPlan } from '@/lib/budgetUtils';
 import { computeWeeklyBudget, formatCurrency } from '@/lib/budgetUtils';
-import UpgradeModal from '@/components/ui/UpgradeModal';
 import { saveBudgetToDatabase } from '@/lib/budgetStorage';
 
 interface WeeklyBudgetDashboardProps {
@@ -32,7 +31,6 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
   const [result, setResult] = useState<WeeklyBudgetResult | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan>('free');
   const [isLoading, setIsLoading] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -232,14 +230,11 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-success" />
             Income Sources
-            {userPlan === 'free' && budgetData.incomes.length >= 1 && (
-              <Badge variant="outline" className="text-xs">Free: 1 source</Badge>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {budgetData.incomes.slice(0, userPlan === 'free' ? 1 : undefined).map((income, index) => (
+            {budgetData.incomes.map((income, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-success/10 rounded-lg border border-success/20">
                 <div>
                   <p className="font-medium">{income.source || `Income ${index + 1}`}</p>
@@ -248,19 +243,6 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
                 <p className="font-bold text-success">${income.amount}</p>
               </div>
             ))}
-            
-            {userPlan === 'free' && budgetData.incomes.length > 1 && (
-              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {budgetData.incomes.length - 1} more income source{budgetData.incomes.length > 2 ? 's' : ''} (Pro feature)
-                  </p>
-                  <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
-                    Upgrade
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -271,14 +253,11 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-muted-foreground" />
             Fixed Expenses
-            {userPlan === 'free' && budgetData.fixed_expenses.length >= 4 && (
-              <Badge variant="outline" className="text-xs">Free: 4 expenses</Badge>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {budgetData.fixed_expenses.slice(0, userPlan === 'free' ? 4 : undefined).map((expense, index) => (
+            {budgetData.fixed_expenses.map((expense, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg border">
                 <div>
                   <p className="font-medium">{expense.name}</p>
@@ -287,19 +266,6 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
                 <p className="font-bold text-muted-foreground">${expense.amount}</p>
               </div>
             ))}
-            
-            {userPlan === 'free' && budgetData.fixed_expenses.length > 4 && (
-              <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {budgetData.fixed_expenses.length - 4} more expense{budgetData.fixed_expenses.length > 5 ? 's' : ''} (Pro feature)
-                  </p>
-                  <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
-                    Upgrade
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -310,9 +276,6 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5 text-primary" />
             Weekly Spending Plan
-            {userPlan === 'free' && (
-              <Badge variant="secondary" className="text-xs">Free: Default categories</Badge>
-            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -330,19 +293,6 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
               </div>
             ))}
           </div>
-          
-          {userPlan === 'free' && (
-            <div className="mt-4 p-3 bg-muted/50 rounded-lg border border-dashed">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Customize spending categories and percentages
-                </p>
-                <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
-                  Upgrade for Custom Categories
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -353,14 +303,11 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5 text-warning" />
               Savings Goals
-              {userPlan === 'free' && budgetData.goals.length >= 1 && (
-                <Badge variant="outline" className="text-xs">Free: 1 goal</Badge>
-              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {budgetData.goals.slice(0, userPlan === 'free' ? 1 : undefined).map((goal, index) => (
+              {budgetData.goals.map((goal, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg border border-warning/20">
                   <div>
                     <p className="font-medium">{goal.name}</p>
@@ -369,29 +316,10 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
                   <p className="font-bold text-warning">${goal.target_amount}</p>
                 </div>
               ))}
-              
-              {userPlan === 'free' && budgetData.goals.length > 1 && (
-                <div className="p-3 bg-muted/50 rounded-lg border border-dashed">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {budgetData.goals.length - 1} more goal{budgetData.goals.length > 2 ? 's' : ''} (Pro feature)
-                    </p>
-                    <Button size="sm" variant="outline" onClick={() => setShowUpgradeModal(true)}>
-                      Upgrade
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
       )}
-
-      <UpgradeModal 
-        isOpen={showUpgradeModal} 
-        onClose={() => setShowUpgradeModal(false)}
-        feature="unlimited budget items"
-      />
     </div>
   );
 };

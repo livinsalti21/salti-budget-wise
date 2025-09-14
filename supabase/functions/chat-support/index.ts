@@ -24,28 +24,42 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user } } = await supabaseClient.auth.getUser(authHeader.replace('Bearer ', ''));
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No authorization header provided');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     
-    if (!user) {
-      throw new Error('Unauthorized');
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError?.message || 'No user found'}`);
     }
 
     const { message, sessionId } = await req.json();
     
+    if (!message) {
+      throw new Error('No message provided');
+    }
+    
     // Get or create session
     let session;
     if (sessionId) {
-      const { data } = await supabaseClient
+      const { data, error } = await supabaseClient
         .from('ai_sessions')
         .select('*')
         .eq('id', sessionId)
+        .eq('user_id', user.id) // Ensure session belongs to user
         .single();
-      session = data;
+      
+      if (!error) {
+        session = data;
+      }
     }
     
     if (!session) {
-      const { data: newSession } = await supabaseClient
+      const { data: newSession, error: sessionError } = await supabaseClient
         .from('ai_sessions')
         .insert({
           user_id: user.id,
@@ -53,6 +67,11 @@ serve(async (req) => {
         })
         .select()
         .single();
+      
+      if (sessionError) {
+        console.error('Session creation error:', sessionError);
+        throw new Error('Failed to create session');
+      }
       session = newSession;
     }
 

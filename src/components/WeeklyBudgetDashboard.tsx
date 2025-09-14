@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -11,12 +12,16 @@ import {
   AlertTriangle,
   CheckCircle,
   Download,
-  RefreshCw
+  RefreshCw,
+  BarChart3,
+  Wallet,
+  PiggyBank
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { hasProAccess } from '@/lib/permissions/hasProAccess';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { BudgetInput, WeeklyBudgetResult, UserPlan } from '@/lib/budgetUtils';
 import { computeWeeklyBudget, formatCurrency } from '@/lib/budgetUtils';
 import { saveBudgetToDatabase } from '@/lib/budgetStorage';
@@ -31,8 +36,10 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
   const [result, setResult] = useState<WeeklyBudgetResult | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan>('free');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (user && budgetData) {
@@ -159,7 +166,53 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
     }
   };
 
-  return (
+  // Mobile Overview Component
+  const MobileOverview = () => (
+    <div className="space-y-4">
+      {/* Compact Status Card */}
+      <Card className={`${getStatusColor(result.status)}`}>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              {getStatusIcon(result.status)}
+              <span className="font-semibold capitalize">{result.status}</span>
+            </div>
+          </div>
+          
+          {/* Key Metrics Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-background/80 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Income</p>
+              <p className="text-lg font-bold text-success">${result.weekly.income}</p>
+            </div>
+            <div className="bg-background/80 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Expenses</p>
+              <p className="text-lg font-bold text-muted-foreground">${result.weekly.fixed}</p>
+            </div>
+            <div className="bg-background/80 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Savings</p>
+              <p className="text-lg font-bold text-primary">${result.weekly.save_n_stack}</p>
+            </div>
+            <div className="bg-background/80 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground mb-1">Spending</p>
+              <p className="text-lg font-bold text-info">${result.weekly.variable_total}</p>
+            </div>
+          </div>
+
+          {/* Top Tips */}
+          {result.tips.length > 0 && (
+            <div className="bg-background/80 rounded-lg p-3">
+              <p className="text-sm text-muted-foreground mb-2">💡 Top Tip</p>
+              <p className="text-sm">{result.tips[0]}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  // Desktop Layout
+  const DesktopLayout = () => (
     <div className="space-y-6">
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
@@ -320,6 +373,171 @@ const WeeklyBudgetDashboard = ({ budgetData, budgetId, onBudgetSaved }: WeeklyBu
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+
+  // Mobile Tabbed Layout
+  const MobileLayout = () => (
+    <div className="space-y-4">
+      {/* Mobile Header */}
+      <div className="flex flex-col space-y-3">
+        <div>
+          <h2 className="text-xl font-bold">Budget Dashboard</h2>
+          <p className="text-sm text-muted-foreground">Your weekly financial plan</p>
+        </div>
+        
+        {/* Action Buttons - Sticky on mobile */}
+        <div className="flex gap-2 w-full">
+          {budgetId && (
+            <Button variant="outline" size="sm" onClick={exportBudget} className="flex-1">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          )}
+          <Button onClick={saveBudget} disabled={isLoading} className="flex-1">
+            {isLoading ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Target className="h-4 w-4 mr-2" />
+            )}
+            {budgetId ? 'Update' : 'Save'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Tabbed Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsTrigger value="overview" className="text-xs">
+            <BarChart3 className="h-4 w-4 mr-1" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="income" className="text-xs">
+            <TrendingUp className="h-4 w-4 mr-1" />
+            Income
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="text-xs">
+            <DollarSign className="h-4 w-4 mr-1" />
+            Expenses
+          </TabsTrigger>
+          <TabsTrigger value="spending" className="text-xs">
+            <Wallet className="h-4 w-4 mr-1" />
+            Spending
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          <MobileOverview />
+        </TabsContent>
+
+        <TabsContent value="income">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <TrendingUp className="h-5 w-5 text-success" />
+                Income Sources
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {budgetData.incomes.map((income, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-success/10 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{income.source || `Income ${index + 1}`}</p>
+                      <p className="text-xs text-muted-foreground">{income.cadence}</p>
+                    </div>
+                    <p className="font-bold text-success">${income.amount}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="expenses">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <DollarSign className="h-5 w-5 text-muted-foreground" />
+                Fixed Expenses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {budgetData.fixed_expenses.map((expense, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{expense.name}</p>
+                      <p className="text-xs text-muted-foreground">{expense.cadence}</p>
+                    </div>
+                    <p className="font-bold text-muted-foreground">${expense.amount}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="spending">
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Wallet className="h-5 w-5 text-primary" />
+                  Weekly Spending
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {result.weekly.allocations.map((allocation, index) => (
+                    <div key={index} className="p-3 bg-primary/10 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-sm">{allocation.name}</p>
+                        <p className="font-bold text-primary">${allocation.weekly_amount}</p>
+                      </div>
+                      <Progress 
+                        value={(allocation.weekly_amount / result.weekly.variable_total) * 100} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Goals */}
+            {budgetData.goals && budgetData.goals.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <PiggyBank className="h-5 w-5 text-warning" />
+                    Savings Goals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {budgetData.goals.map((goal, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-warning/10 rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{goal.name}</p>
+                          <p className="text-xs text-muted-foreground">Due: {goal.due_date}</p>
+                        </div>
+                        <p className="font-bold text-warning">${goal.target_amount}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+
+  return (
+    <div>
+      {isMobile ? <MobileLayout /> : <DesktopLayout />}
     </div>
   );
 };

@@ -11,6 +11,8 @@ import { Heart, Plus, DollarSign, Pause, Play, Users, CreditCard, Gift } from 'l
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
+import { FeatureTooltip } from '@/components/ui/FeatureTooltip';
 
 interface MatchRule {
   id: string;
@@ -40,6 +42,7 @@ const MatchASave = () => {
   const [matchRules, setMatchRules] = useState<MatchRule[]>([]);
   const [recentMatches, setRecentMatches] = useState<MatchEvent[]>([]);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [showExplainer, setShowExplainer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   
@@ -84,7 +87,14 @@ const MatchASave = () => {
 
   useEffect(() => {
     loadMatchData();
-  }, [user]);
+    // Show explainer for first-time users or when no match rules exist
+    if (matchRules.length === 0) {
+      const hasSeenMatchExplainer = localStorage.getItem('hasSeenMatchExplainer');
+      if (!hasSeenMatchExplainer) {
+        setShowExplainer(true);
+      }
+    }
+  }, [user, matchRules.length]);
 
   const handleInviteSponsor = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,11 +133,34 @@ const MatchASave = () => {
 
   return (
     <div className="space-y-6">
+      {/* Feature Explainer */}
+      {showExplainer && (
+        <MatchExplainer
+          variant="full"
+          onDismiss={() => {
+            setShowExplainer(false);
+            localStorage.setItem('hasSeenMatchExplainer', 'true');
+          }}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Match-a-Save</h2>
-          <p className="text-muted-foreground">Family & friends can match your saves automatically</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              Match-a-Save
+              <FeatureTooltip
+                title="How Match-a-Save Works"
+                description="Family and friends can automatically match your saves. When you save money, they're instantly charged their percentage and the match is added to your stacklet."
+              >
+                <div className="text-xs text-muted-foreground mt-1">
+                  <p><strong>Example:</strong> You save $5, Grandma matches 50% = $2.50 extra!</p>
+                </div>
+              </FeatureTooltip>
+            </h2>
+            <p className="text-muted-foreground">Family & friends can match your saves automatically</p>
+          </div>
         </div>
         
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
@@ -278,18 +311,11 @@ const MatchASave = () => {
       )}
 
       {/* Empty State */}
-      {matchRules.length === 0 && (
-        <Card className="p-8 text-center">
-          <Heart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No sponsors yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Invite family or friends to automatically match your saves and help you reach your goals faster
-          </p>
-          <Button onClick={() => setShowInviteDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Invite Your First Sponsor
-          </Button>
-        </Card>
+      {matchRules.length === 0 && !showExplainer && (
+        <MatchExplainer
+          variant="first-time"
+          onDismiss={() => setShowInviteDialog(true)}
+        />
       )}
 
       {/* How it Works */}

@@ -8,6 +8,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import InsightCard from '@/components/ai/InsightCard';
 import { useToast } from '@/hooks/use-toast';
+import { StreaksExplainer } from '@/components/onboarding/StreaksExplainer';
+import { FeatureTooltip } from '@/components/ui/FeatureTooltip';
 
 interface StreakData {
   streak_type: 'self' | 'friends' | 'community' | 'sponsors';
@@ -51,14 +53,23 @@ const EnhancedStreaksDashboard = () => {
   const [sponsors, setSponsors] = useState<SponsorMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [milestoneAchieved, setMilestoneAchieved] = useState<string | null>(null);
+  const [showExplainer, setShowExplainer] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       loadAllStreakData();
+      
+      // Show explainer for users who haven't seen it or have low streaks
+      const personalStreak = streaks.find(s => s.streak_type === 'self');
+      const hasSeenStreakExplainer = localStorage.getItem('hasSeenStreakExplainer');
+      
+      if (!hasSeenStreakExplainer || (personalStreak && personalStreak.current_streak === 0)) {
+        setShowExplainer(true);
+      }
     }
-  }, [user]);
+  }, [user, streaks]);
 
   const loadAllStreakData = async () => {
     if (!user) return;
@@ -216,6 +227,17 @@ const EnhancedStreaksDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Streaks Explainer */}
+      {showExplainer && (
+        <StreaksExplainer
+          variant="full"
+          onDismiss={() => {
+            setShowExplainer(false);
+            localStorage.setItem('hasSeenStreakExplainer', 'true');
+          }}
+        />
+      )}
+
       {/* Milestone Celebration */}
       {milestoneAchieved && (
         <InsightCard
@@ -235,13 +257,37 @@ const EnhancedStreaksDashboard = () => {
       )}
 
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold">Enhanced Streaks Dashboard</h2>
-        <p className="text-muted-foreground">Track your streaks across different dimensions</p>
+      <div className="flex items-center gap-3">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            Enhanced Streaks Dashboard
+            <FeatureTooltip
+              title="How Streaks Work"
+              description="Streaks track consecutive days of saving. Even $1 counts! Building consistent habits is more powerful than occasional large saves."
+            >
+              <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                <p><strong>Personal:</strong> Your individual streak</p>
+                <p><strong>Friends:</strong> Compete with friends</p>
+                <p><strong>Community:</strong> Group challenges</p>
+                <p><strong>Sponsors:</strong> Extra rewards for consistency</p>
+              </div>
+            </FeatureTooltip>
+          </h2>
+          <p className="text-muted-foreground">Track your streaks across different dimensions</p>
+        </div>
       </div>
 
       {/* Streak Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {streaks.length === 0 && !showExplainer && (
+          <div className="col-span-full">
+            <StreaksExplainer
+              variant="first-time"
+              onDismiss={() => setShowExplainer(false)}
+            />
+          </div>
+        )}
+        
         {streaks.map((streak) => {
           const Icon = getStreakIcon(streak.streak_type);
           const colorClass = getStreakColor(streak.streak_type);

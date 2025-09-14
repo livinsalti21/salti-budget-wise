@@ -11,6 +11,7 @@ import InsightCard from '@/components/ai/InsightCard';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 
 interface ImpactProjection {
   oneYear: number;
@@ -394,6 +395,11 @@ const EnhancedSaveStack = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Quick Match Explainer */}
+            <div className="mb-4">
+              <MatchExplainer variant="compact" />
+            </div>
+            
             <div className="p-4 bg-primary/10 rounded-lg">
               <h4 className="font-medium">Your Save: ${amount}</h4>
               <p className="text-sm text-muted-foreground">Reason: {reason}</p>

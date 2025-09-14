@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { PiggyBank, TrendingUp, Zap, Share2, Target, Users, Award, Flame, Calendar } from 'lucide-react';
+import InsightCard from '@/components/ai/InsightCard';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -49,6 +50,7 @@ const EnhancedSaveStack = () => {
   const [recentSaves, setRecentSaves] = useState<SaveData[]>([]);
   const [totalSaved, setTotalSaved] = useState(0);
   const [showMatchDialog, setShowMatchDialog] = useState(false);
+  const [showSavingsInsight, setShowSavingsInsight] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -81,6 +83,11 @@ const EnhancedSaveStack = () => {
         setRecentSaves(saves);
         const total = saves.reduce((sum, save) => sum + save.amount_cents, 0);
         setTotalSaved(total);
+        
+        // Show insight if user has saved recently
+        if (saves.length >= 2) {
+          setShowSavingsInsight(true);
+        }
       }
 
       // Mock badges and streaks for now until database is set up
@@ -167,6 +174,26 @@ const EnhancedSaveStack = () => {
 
   return (
     <div className="space-y-6">
+      {/* AI Savings Insight */}
+      {showSavingsInsight && totalSaved > 0 && (
+        <InsightCard
+          title="Supercharge Your Savings"
+          description={`You've saved $${(totalSaved/100).toFixed(2)} so far! Set up a weekly auto-save to 3x your momentum and build consistent wealth-building habits.`}
+          impact={`+$${((totalSaved/100) * 3 * 12).toFixed(0)}/year potential`}
+          actionLabel="Set Up Auto-Save"
+          variant="success"
+          onAccept={() => {
+            toast({
+              title: "Auto-save coming soon! 🚀",
+              description: "We'll notify you when this feature is ready."
+            });
+            setShowSavingsInsight(false);
+          }}
+          onSnooze={() => setShowSavingsInsight(false)}
+          onDismiss={() => setShowSavingsInsight(false)}
+        />
+      )}
+      
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-r from-primary/10 to-primary/5">

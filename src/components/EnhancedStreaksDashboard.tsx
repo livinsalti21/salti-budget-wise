@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Flame, Users, Building, Heart, TrendingUp, Calendar, Star } from 'lucide-react';
+import { Flame, Users, Building, Heart, TrendingUp, Calendar, Star, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import InsightCard from '@/components/ai/InsightCard';
+import { useToast } from '@/hooks/use-toast';
 
 interface StreakData {
   streak_type: 'self' | 'friends' | 'community' | 'sponsors';
@@ -48,7 +50,9 @@ const EnhancedStreaksDashboard = () => {
   const [challenges, setChallenges] = useState<CommunityChallenge[]>([]);
   const [sponsors, setSponsors] = useState<SponsorMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [milestoneAchieved, setMilestoneAchieved] = useState<string | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -93,6 +97,12 @@ const EnhancedStreaksDashboard = () => {
 
     if (data) {
       setStreaks(data as StreakData[]);
+      
+      // Check for milestone achievements
+      const personalStreak = data.find(s => s.streak_type === 'self');
+      if (personalStreak && personalStreak.current_streak > 0) {
+        checkMilestone(personalStreak.current_streak);
+      }
     }
   };
 
@@ -160,6 +170,22 @@ const EnhancedStreaksDashboard = () => {
     setSponsors(Array.from(sponsorMap.values()));
   };
 
+  const checkMilestone = (currentStreak: number) => {
+    const milestones = [7, 14, 30, 50, 100];
+    const reachedMilestone = milestones.find(m => currentStreak === m);
+    
+    if (reachedMilestone) {
+      const messages = {
+        7: "🔥 One week streak! You're building momentum – small actions lead to big results!",
+        14: "🚀 Two weeks strong! Your consistency is paying off. This habit is becoming second nature.",
+        30: "🏆 30-day milestone! You've proven your commitment. This is where transformation happens!",
+        50: "⭐ 50 days! You're in the top 5% of savers. Your future self is cheering!",
+        100: "🎉 100-DAY LEGEND! You've mastered the art of consistent saving. You're unstoppable!"
+      };
+      setMilestoneAchieved(messages[reachedMilestone] || `Amazing ${reachedMilestone}-day streak!`);
+    }
+  };
+
   const getStreakIcon = (type: string) => {
     switch (type) {
       case 'self': return Flame;
@@ -190,6 +216,24 @@ const EnhancedStreaksDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Milestone Celebration */}
+      {milestoneAchieved && (
+        <InsightCard
+          title="🎉 Milestone Achievement!"
+          description={milestoneAchieved}
+          actionLabel="Share Achievement"
+          variant="success"
+          onAccept={() => {
+            toast({
+              title: "Achievement shared! 🎊",
+              description: "Your milestone has been shared with your network."
+            });
+            setMilestoneAchieved(null);
+          }}
+          onDismiss={() => setMilestoneAchieved(null)}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold">Enhanced Streaks Dashboard</h2>

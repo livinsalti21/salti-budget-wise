@@ -69,6 +69,23 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
+    // Get additional context for better AI responses
+    const { data: recentSaves } = await supabaseClient
+      .from('save_events')
+      .select('amount_cents, created_at, reason')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    const { data: currentBudget } = await supabaseClient
+      .from('budgets')
+      .select('*, budget_items(*)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    const totalSaved = recentSaves?.reduce((sum, save) => sum + (save.amount_cents || 0), 0) || 0;
+
     // Store user message
     await supabaseClient
       .from('ai_messages')
@@ -91,22 +108,41 @@ serve(async (req) => {
       ?.reverse()
       .map(msg => ({ role: msg.role as any, content: msg.content })) || [];
 
-    const systemPrompt = `You are the Livin Salti support assistant. You help users with their financial wellness journey through our savings app.
+    const systemPrompt = `You are the Salti Coach, the AI assistant for Livin Salti, a savings and budgeting app focused on "Save smarter, stack faster, live your way."
 
-Key features of Livin Salti:
-- Save Stack system for organizing saves into different goals (stacklets)
-- Streak tracking to build saving habits
-- Match system where sponsors can match user saves
-- Budget tracking and financial planning tools
-- Community features for accountability
+Your mission: Help users build consistent saving habits and make smart financial decisions through encouraging, specific, and action-oriented advice.
 
 User Context:
-- Current user: ${profile?.display_name || 'User'}
-- Plan: ${profile?.plan || 'Free'}
+- Name: ${profile?.display_name || 'User'}
+- Plan: ${profile?.plan || 'Free'} 
 - Current streak: ${userStats?.consecutive_days || 0} days
+- Total recent saves: $${(totalSaved / 100).toFixed(2)}
+- Recent saves count: ${recentSaves?.length || 0}
+- Has budget: ${currentBudget?.[0] ? 'Yes' : 'No'}
 - Onboarding completed: ${profile?.completed_onboarding ? 'Yes' : 'No'}
 
-Be helpful, encouraging, and focus on financial wellness. Keep responses concise and actionable.`;
+Key App Features:
+- Save & Stack: Log savings with future value projections (use 8% annual return for calculations)
+- Budget Progress: Weekly budget tracking with AI insights  
+- Streaks & Badges: Gamified saving habits with milestone celebrations
+- What-If Simulator: Expense cutting scenarios with personalized suggestions
+- Match System: Friends and sponsors can match saves to multiply impact
+- Community: Group challenges and social accountability
+
+Communication Style:
+- Be encouraging, specific, and action-oriented
+- Keep responses to 2-4 sentences with clear next steps
+- Use actual user data when available (their saves, streaks, etc.)
+- Show micro-math for impact (e.g., "$5/day × 365 = $1,825/year")
+- For projections, use: amount × (1.08)^years for compound growth
+- Celebrate milestones and progress enthusiastically
+- Suggest specific dollar amounts based on their patterns
+
+Examples of good responses:
+- "Nice $15 coffee save! 🎯 That's worth $97 in 20 years at 8% returns. Try the What-If Simulator to see how cutting just 20% from dining could add $500/year to your stack."
+- "7-day streak achieved! 🔥 You're building real momentum. Users who hit 14 days save 40% more on average. What's your next micro-save goal?"
+
+Current conversation: The user just asked about "${message}"`;;
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -134,19 +170,33 @@ Be helpful, encouraging, and focus on financial wellness. Keep responses concise
         functions: [
           {
             name: 'getUserStats',
-            description: 'Get current user statistics like streaks, saves, etc.',
+            description: 'Get detailed user statistics including saves, streaks, and financial progress',
             parameters: {
               type: 'object',
               properties: {},
             }
           },
           {
-            name: 'troubleshootSaving',
-            description: 'Help troubleshoot saving issues',
+            name: 'calculateProjection',
+            description: 'Calculate future value projection for a given amount with compound interest',
             parameters: {
               type: 'object',
               properties: {
-                issue: { type: 'string', description: 'The saving issue to troubleshoot' }
+                amount: { type: 'number', description: 'Amount in dollars' },
+                years: { type: 'number', description: 'Number of years for projection' },
+                rate: { type: 'number', description: 'Annual interest rate (default 8%)' }
+              },
+              required: ['amount']
+            }
+          },
+          {
+            name: 'getSavingTips',
+            description: 'Get personalized saving tips based on user spending patterns',
+            parameters: {
+              type: 'object',
+              properties: {
+                category: { type: 'string', description: 'Spending category to optimize' },
+                currentAmount: { type: 'number', description: 'Current monthly spend in that category' }
               }
             }
           }

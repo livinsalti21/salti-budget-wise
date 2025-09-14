@@ -18,6 +18,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentWeekStart, getCurrentWeekEnd, formatCurrency } from '@/lib/budgetUtils';
+import InsightCard from '@/components/ai/InsightCard';
 
 interface BudgetProgressData {
   weeklyIncome: number;
@@ -36,6 +37,7 @@ export default function BudgetProgress() {
   const { user } = useAuth();
   const [budgetData, setBudgetData] = useState<BudgetProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showInsight, setShowInsight] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -137,6 +139,11 @@ export default function BudgetProgress() {
         currentSavings: currentSavings / 100
       });
 
+      // Show insight card for certain conditions
+      if (status === 'behind' || (actualSpent > 0 && daysIntoWeek > 2)) {
+        setShowInsight(true);
+      }
+
     } catch (error) {
       console.error('Error loading budget progress:', error);
     } finally {
@@ -203,7 +210,40 @@ export default function BudgetProgress() {
   const spendingProgress = Math.min(100, (budgetData.actualSpent / budgetData.totalBudgeted) * 100);
   const timeProgress = (budgetData.daysIntoWeek / 7) * 100;
 
+  const generateInsightContent = () => {
+    if (budgetData.status === 'behind') {
+      const dailyRemaining = budgetData.remainingBudget / Math.max(1, budgetData.daysLeftInWeek);
+      return {
+        title: "Budget Alert: Pace Adjustment Needed",
+        description: `You're spending faster than planned. Try to keep daily spending under $${dailyRemaining.toFixed(2)} for the rest of the week.`,
+        impact: `Save $${Math.abs(budgetData.remainingBudget * 0.1).toFixed(2)}/week`,
+        variant: 'warning' as const
+      };
+    }
+    
+    const potentialSaving = budgetData.actualSpent * 0.15;
+    return {
+      title: "Smart Savings Opportunity",
+      description: `Based on your spending pattern, you could save an extra $${potentialSaving.toFixed(2)} by optimizing your largest expense categories.`,
+      impact: `+$${(potentialSaving * 52).toFixed(0)}/year`,
+      variant: 'info' as const
+    };
+  };
+
   return (
+    <div className="space-y-4">
+      {/* AI Insight Card */}
+      {showInsight && (
+        <InsightCard
+          {...generateInsightContent()}
+          onAccept={() => {
+            // Navigate to budget optimization
+            window.location.href = '/budget';
+          }}
+          onSnooze={() => setShowInsight(false)}
+          onDismiss={() => setShowInsight(false)}
+        />
+      )}
     <Card className={`border-${getStatusColor()}/20 bg-${getStatusColor()}/5`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -272,5 +312,6 @@ export default function BudgetProgress() {
         </Link>
       </CardContent>
     </Card>
+    </div>
   );
 }

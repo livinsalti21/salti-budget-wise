@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
+import { TrendingUp, Calculator, Target, DollarSign, MessageCircle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import WhatIfSimulator from '@/components/ai/WhatIfSimulator';
 
 interface ProjectionData {
   year: number;
@@ -30,6 +31,7 @@ export const EnhancedProjections: React.FC<ScenarioProps> = ({ currentSavings, o
     moderate: { rate: 8, label: 'Moderate (8%)' },
     aggressive: { rate: 12, label: 'Aggressive (12%)' }
   });
+  const [showWhatIf, setShowWhatIf] = useState(false);
 
   useEffect(() => {
     calculateProjections();
@@ -300,6 +302,31 @@ export const EnhancedProjections: React.FC<ScenarioProps> = ({ currentSavings, o
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* AI What-If Simulator */}
+      {!showWhatIf && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Want to optimize your savings plan?</h3>
+              <p className="text-muted-foreground mb-4">
+                Use our AI What-If Simulator to explore different scenarios and get personalized suggestions
+              </p>
+              <Button onClick={() => setShowWhatIf(true)} className="gap-2">
+                <MessageCircle className="h-4 w-4" />
+                Run AI What-If Analysis
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showWhatIf && (
+        <WhatIfSimulator 
+          currentBalance={currentSavings} 
+          onClose={() => setShowWhatIf(false)}
+        />
       )}
     </div>
   );

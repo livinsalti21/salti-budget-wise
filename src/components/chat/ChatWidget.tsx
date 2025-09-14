@@ -29,11 +29,11 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Add welcome message
+      // Add contextual welcome message
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: "Hi! I'm your Livin Salti support assistant. How can I help you with your savings journey today?",
+        content: "Hi! I'm your Salti Coach 🎯 Ask me about budgets, savings tips, or future projections. I'm here to help you stack smarter!",
         timestamp: new Date()
       }]);
     }
@@ -163,11 +163,11 @@ export function ChatWidget() {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-20 right-4 z-40">
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
-          className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 animate-pulse"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>
@@ -176,12 +176,12 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-80 h-96">
+    <div className="fixed bottom-20 right-4 z-40 w-80 h-96">
       <Card className="h-full flex flex-col shadow-xl border-border/50">
-        <CardHeader className="flex-row items-center justify-between space-y-0 p-4 bg-muted/30">
+        <CardHeader className="flex-row items-center justify-between space-y-0 p-4 bg-gradient-to-r from-primary/10 to-accent/5">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-sm">Livin Salti Support</h3>
+            <h3 className="font-semibold text-sm">Salti Coach</h3>
           </div>
           <Button
             variant="ghost"

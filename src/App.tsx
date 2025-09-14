@@ -29,6 +29,7 @@ import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
 import SnoozeConfirm from "./pages/SnoozeConfirm";
 import { FeatureGate } from "./components/core/FeatureGate";
+import { ChatWidget } from "./components/chat/ChatWidget";
 
 const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
 const StreaksPage = lazy(() => import("./pages/StreaksPage"));
@@ -116,6 +117,9 @@ const AppContent = () => {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Global AI Chat Widget */}
+      <ChatWidget />
     </>
   );
 };

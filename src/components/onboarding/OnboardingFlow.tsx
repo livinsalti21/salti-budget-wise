@@ -511,20 +511,46 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
                 </div>
               </div>
               
-              <div className="space-y-4">
-                <p className="text-lg font-medium">Ready to save with friends and family?</p>
+              <div className="bg-primary/5 p-6 rounded-lg text-left space-y-4">
+                <h4 className="font-semibold text-center mb-4">What happens next?</h4>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full">
-                    <Users className="mr-2 h-4 w-4" />
-                    Join a Group
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    Invite Friends
-                  </Button>
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">1</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Meet Your Salti Coach 💬</p>
+                      <p className="text-sm text-muted-foreground">Look for the chat bubble in the corner - ask anything about budgets, savings, or projections!</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">2</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Start Your Daily Stack</p>
+                      <p className="text-sm text-muted-foreground">Make saving a daily habit with our simple interface</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">3</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Build Your Streak & Get Smart Insights</p>
+                      <p className="text-sm text-muted-foreground">Each consecutive day builds momentum, and AI helps optimize your habits</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">4</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">Watch Your Wealth Grow</p>
+                      <p className="text-sm text-muted-foreground">Track progress and see compound interest in action with AI-powered projections</p>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Or skip for now - you can always join later in the Community tab
-                </p>
               </div>
               
               <div className="bg-primary/5 p-4 rounded-lg">

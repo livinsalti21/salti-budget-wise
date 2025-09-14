@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { FirstUsePrompt } from '@/components/ai/FirstUsePrompt';
 
 interface Message {
   id: string;
@@ -15,7 +16,11 @@ interface Message {
   timestamp: Date;
 }
 
-export function ChatWidget() {
+interface ChatWidgetProps {
+  triggerFirstUse?: 'csv_upload' | 'first_budget' | 'first_save' | 'streak_milestone' | null;
+}
+
+export function ChatWidget({ triggerFirstUse }: ChatWidgetProps = {}) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -24,20 +29,20 @@ export function ChatWidget() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Don't show chat widget if user is not authenticated
-  if (!user) return null;
-
+  // Initialize welcome message when chat opens
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Add contextual welcome message
       setMessages([{
         id: 'welcome',
         role: 'assistant',
-        content: "Hi! I'm your Salti Coach 🎯 Ask me about budgets, savings tips, or future projections. I'm here to help you stack smarter!",
+        content: "Hi! I'm your Salti Coach 🎯\n\nTry asking:\n• \"How can I save $100 more per month?\"\n• \"What if I saved $5 daily for 10 years?\"\n• \"Analyze my spending patterns\"\n\nI'm here to help you stack smarter!",
         timestamp: new Date()
       }]);
     }
-  }, [isOpen]);
+  }, [isOpen, messages.length]);
+
+  // Don't show chat widget if user is not authenticated
+  if (!user) return null;
 
   const sendMessage = async () => {
     if (!currentMessage.trim() || isLoading) return;
@@ -55,18 +60,10 @@ export function ChatWidget() {
     setIsTyping(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-support', {
-        body: {
-          message: currentMessage,
-          sessionId
-        }
-      });
-
-      if (error) throw error;
-
-      // Handle streaming response
+      // Use simplified Supabase function invoke with streaming
       const { data: { session } } = await supabase.auth.getSession();
-      const response = await fetch(`https://vmpnajdvcipfuusnjnfr.functions.supabase.co/chat-support`, {
+      
+      const response = await fetch(`https://vmpnajdvcipfuusnjnfr.supabase.co/functions/v1/chat-support`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
@@ -85,6 +82,14 @@ export function ChatWidget() {
 
       let assistantMessage = '';
       let currentSessionId = sessionId;
+
+      // Add placeholder for streaming response
+      setMessages(prev => [...prev, {
+        id: 'streaming',
+        role: 'assistant',
+        content: '',
+        timestamp: new Date()
+      }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -106,15 +111,8 @@ export function ChatWidget() {
                   const newMessages = [...prev];
                   const lastMessage = newMessages[newMessages.length - 1];
                   
-                  if (lastMessage?.role === 'assistant' && lastMessage.id === 'streaming') {
+                  if (lastMessage?.id === 'streaming') {
                     lastMessage.content = assistantMessage;
-                  } else {
-                    newMessages.push({
-                      id: 'streaming',
-                      role: 'assistant',
-                      content: assistantMessage,
-                      timestamp: new Date()
-                    });
                   }
                   return newMessages;
                 });
@@ -145,7 +143,7 @@ export function ChatWidget() {
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment. Make sure you've set up your OpenAI API key in the Supabase secrets.",
         timestamp: new Date()
       }]);
     } finally {
@@ -234,7 +232,7 @@ export function ChatWidget() {
                 value={currentMessage}
                 onChange={(e) => setCurrentMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask me anything..."
+                placeholder={messages.length <= 1 ? "Try: 'How can I save $100 more per month?'" : "Ask me anything..."}
                 className="flex-1"
                 disabled={isLoading}
               />

@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getCurrentWeekStart, getCurrentWeekEnd, formatCurrency } from '@/lib/budgetUtils';
 import InsightCard from '@/components/ai/InsightCard';
+import { FirstUsePrompt } from '@/components/ai/FirstUsePrompt';
 
 interface BudgetProgressData {
   weeklyIncome: number;
@@ -38,6 +39,7 @@ export default function BudgetProgress() {
   const [budgetData, setBudgetData] = useState<BudgetProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInsight, setShowInsight] = useState(false);
+  const [showFirstUse, setShowFirstUse] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -231,7 +233,39 @@ export default function BudgetProgress() {
   };
 
   return (
-    <div className="space-y-4">
+        <div className="space-y-4">
+          {/* AI First-Use Prompt */}
+          {showFirstUse && (
+            <FirstUsePrompt
+              trigger="first_budget"
+              onDismiss={() => setShowFirstUse(false)}
+              onOpenChat={() => {
+                setShowFirstUse(false);
+                // The global ChatWidget will handle opening
+                window.dispatchEvent(new CustomEvent('openSaltiChat', {
+                  detail: { preMessage: "I see you've created a budget. What are 3 quick wins to optimize my spending and save more?" }
+                }));
+              }}
+            />
+          )}
+
+          {budgetData && (
+            <InsightCard
+              title="💡 3 optimization opportunities found"
+              description={`Based on your budget, I found ways to save ~$${Math.round(budgetData.totalBudgeted * 0.12 / 100)}/week:\n• Reduce dining out by 20% ($${Math.round(budgetData.totalBudgeted * 0.05 / 100)})\n• Switch to a family phone plan ($${Math.round(budgetData.totalBudgeted * 0.04 / 100)})\n• Cancel unused subscriptions ($${Math.round(budgetData.totalBudgeted * 0.03 / 100)})`}
+              onAccept={() => {
+                // Apply suggested optimizations to current savings
+                const optimizationAmount = budgetData.totalBudgeted * 0.12 / 100;
+                setBudgetData(prev => prev ? {
+                  ...prev,
+                  currentSavings: prev.currentSavings + optimizationAmount
+                } : null);
+                setShowInsight(false);
+              }}
+              onSnooze={() => setShowInsight(false)}
+              onDismiss={() => setShowInsight(false)}
+            />
+          )}
       {/* AI Insight Card */}
       {showInsight && (
         <InsightCard

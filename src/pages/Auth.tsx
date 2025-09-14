@@ -9,6 +9,7 @@ import { PiggyBank, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import EnhancedSocialAuth from '@/components/auth/EnhancedSocialAuth';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -161,6 +162,10 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            
+            <div className="mt-6">
+              <EnhancedSocialAuth onSuccess={() => navigate('/app')} />
+            </div>
           </CardContent>
         </Card>
       </div>

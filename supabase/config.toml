@@ -75,3 +75,9 @@ verify_jwt = false
 
 [functions.rate-limiter]
 verify_jwt = false
+
+[functions.create-link-token]
+verify_jwt = true
+
+[functions.link-account]
+verify_jwt = true

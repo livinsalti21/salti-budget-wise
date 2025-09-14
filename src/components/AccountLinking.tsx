@@ -85,8 +85,8 @@ export const AccountLinking: React.FC = () => {
         .insert({
           user_id: user.id,
           account_id: `demo_${Date.now()}`,
-          access_token: 'demo_token', // Legacy field - will be migrated
-          encrypted_access_token: btoa('demo_token_encrypted'), // Demo encrypted token
+          access_token: 'demo_token_placeholder', // Required for backwards compatibility
+          encrypted_access_token: btoa('demo_encrypted_token'),
           token_iv: btoa('demo_iv'),
           institution_name: 'Demo Bank',
           account_name: 'Demo Checking',

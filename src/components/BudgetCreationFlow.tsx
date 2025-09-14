@@ -121,7 +121,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
           Create Your Weekly Budget
         </h2>
         <p className="text-muted-foreground max-w-md mx-auto">
-          Choose the method that works best for you. All methods are free and create comprehensive budgets.
+          Choose the method that works best for you. All methods create the same comprehensive budget.
         </p>
       </div>
 

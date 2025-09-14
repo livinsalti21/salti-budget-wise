@@ -142,10 +142,6 @@ const Index = () => {
               <Store className="h-4 w-4 mr-2" />
               Templates
             </TabsTrigger>
-            <TabsTrigger value="streaks" className="scroll-snap-child shrink-0">
-              <Users className="h-4 w-4 mr-2" />
-              Streaks
-            </TabsTrigger>
             <TabsTrigger value="notifications" className="scroll-snap-child shrink-0">
               <Bell className="h-4 w-4 mr-2" />
               Notifications
@@ -169,9 +165,6 @@ const Index = () => {
           <TemplateStore />
         </TabsContent>
 
-        <TabsContent value="streaks">
-          <EnhancedStreaksDashboard />
-        </TabsContent>
 
         <TabsContent value="notifications">
           <NotificationCenter />

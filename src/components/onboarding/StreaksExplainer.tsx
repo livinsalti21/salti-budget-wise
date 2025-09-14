@@ -31,8 +31,8 @@ export function StreaksExplainer({ variant = 'full', onDismiss, className }: Str
     {
       icon: <Users className="h-6 w-6 text-blue-500" />,
       title: "Different Streak Types",
-      description: "Track personal streaks, friend challenges, community goals, and sponsor bonuses.",
-      detail: "Each streak type motivates you differently - compete with friends or work toward sponsor rewards!"
+      description: "Track personal streaks, friend matches, community goals, and sponsor bonuses.",
+      detail: "Friend streaks happen when you save AND friends 'match' by saving to their own accounts - it's social motivation, not money transfer!"
     }
   ];
 
@@ -212,8 +212,8 @@ export function StreaksExplainer({ variant = 'full', onDismiss, className }: Str
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                 <Users className="h-5 w-5 text-blue-500" />
                 <div className="flex-1">
-                  <h5 className="text-sm font-medium">Friend Streaks</h5>
-                  <p className="text-xs text-muted-foreground">Compete and support friends</p>
+                  <h5 className="text-sm font-medium">Friend Match Streaks</h5>
+                  <p className="text-xs text-muted-foreground">When you save AND friends match by saving too</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">

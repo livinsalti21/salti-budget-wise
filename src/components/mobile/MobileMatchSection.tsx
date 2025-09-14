@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FeatureTooltip } from '@/components/ui/FeatureTooltip';
 import { MatchHero } from '@/components/match/MatchHero';
 import { MatchOnboarding } from '@/components/match/MatchOnboarding';
+import FriendMatchSection from '@/components/friends/FriendMatchSection';
 
 interface MatchRule {
   id: string;
@@ -196,25 +197,33 @@ const MobileMatchSection = () => {
       {matchRules.length === 0 && isFirstTime ? (
         <MatchHero onInviteClick={handleInviteClick} />
       ) : (
-        <Card className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/10 border-primary/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center justify-between text-lg">
-              <div className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-primary" />
-                Match
-                <FeatureTooltip
-                  title="Match-a-Save"
-                  description="Invite sponsors to match your savings! They'll match a percentage of each save you make, helping you grow your money faster."
-                >
-                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                </FeatureTooltip>
-              </div>
-              <Button size="sm" className="h-8" onClick={handleInviteClick}>
-                <Plus className="h-3 w-3 mr-1" />
-                Invite
-              </Button>
-            </CardTitle>
-          </CardHeader>
+        <div className="space-y-4">
+          {/* Friend Matches Section */}
+          <FriendMatchSection />
+
+          {/* Sponsor Matches Section */}
+          <Card className="bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/10 border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center justify-between text-lg">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-primary" />
+                  Sponsor Matches
+                  <Badge variant="outline" className="text-xs bg-green-50 border-green-200">
+                    Money Transfer
+                  </Badge>
+                  <FeatureTooltip
+                    title="Sponsor Matches vs Friend Matches"
+                    description="Sponsor matches transfer real money to your account. Friend matches are social - friends save to their own accounts to 'match' you and build streaks together!"
+                  >
+                    <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                  </FeatureTooltip>
+                </div>
+                <Button size="sm" className="h-8" onClick={handleInviteClick}>
+                  <Plus className="h-3 w-3 mr-1" />
+                  Invite Sponsor
+                </Button>
+              </CardTitle>
+            </CardHeader>
           <CardContent className="space-y-3">
             {matchRules.length > 0 ? (
               <>
@@ -295,8 +304,9 @@ const MobileMatchSection = () => {
                 </Button>
               </div>
             )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </>
   );

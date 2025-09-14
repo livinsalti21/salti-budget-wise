@@ -790,6 +790,66 @@ export type Database = {
           },
         ]
       }
+      friend_connections: {
+        Row: {
+          created_at: string
+          friend_user_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_user_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_user_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      friend_matches: {
+        Row: {
+          created_at: string
+          id: string
+          matching_amount_cents: number
+          matching_save_event_id: string
+          matching_user_id: string
+          original_amount_cents: number
+          original_save_event_id: string
+          original_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          matching_amount_cents: number
+          matching_save_event_id: string
+          matching_user_id: string
+          original_amount_cents: number
+          original_save_event_id: string
+          original_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          matching_amount_cents?: number
+          matching_save_event_id?: string
+          matching_user_id?: string
+          original_amount_cents?: number
+          original_save_event_id?: string
+          original_user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -2671,6 +2731,10 @@ export type Database = {
       is_parent_of: {
         Args: { child: string }
         Returns: boolean
+      }
+      update_friend_streaks: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
       update_user_streak: {
         Args: { target_user_id: string }

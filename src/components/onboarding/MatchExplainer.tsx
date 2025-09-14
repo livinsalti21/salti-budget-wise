@@ -16,22 +16,38 @@ export function MatchExplainer({ variant = 'full', onDismiss, className }: Match
 
   const steps = [
     {
-      icon: <Heart className="h-6 w-6 text-red-500" />,
-      title: "What is Match-a-Save?",
-      description: "Family and friends can automatically match your saves to help you reach your goals faster.",
-      detail: "When you save $5, a sponsor might match it with another $5, doubling your progress!"
+      icon: <Heart className="h-6 w-6 text-primary" />,
+      title: "Two Types of Matching",
+      description: "There are Sponsor Matches (money to your account) and Friend Matches (social motivation).",
+      detail: "Sponsor matches give you real money. Friend matches are when friends save to their own accounts to 'match' you - building streaks together!",
+      visual: (
+        <div className="space-y-3">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-200">
+            <h4 className="font-semibold text-sm text-green-900 mb-2">💰 Sponsor Match (Money Transfer)</h4>
+            <div className="flex items-center justify-center space-x-2 text-xs">
+              <span>You save $5</span> <ArrowRight className="h-3 w-3" /> <span>Sponsor sends $5</span> <ArrowRight className="h-3 w-3" /> <span className="font-bold text-green-600">You get $10</span>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-sm text-blue-900 mb-2">🤝 Friend Match (Social Motivation)</h4>
+            <div className="flex items-center justify-center space-x-2 text-xs">
+              <span>You save $5</span> <ArrowRight className="h-3 w-3" /> <span>Friend saves $5</span> <ArrowRight className="h-3 w-3" /> <span className="font-bold text-blue-600">Friend Streak!</span>
+            </div>
+          </div>
+        </div>
+      )
     },
     {
       icon: <Users className="h-6 w-6 text-blue-500" />,
-      title: "Who Can Be a Sponsor?",
-      description: "Parents, grandparents, friends, or anyone who wants to support your financial journey.",
-      detail: "They set their own rules - maybe 50% match up to $20/week, or 100% match for the first save of each day."
+      title: "Sponsor Matches vs Friend Matches", 
+      description: "Sponsors send money to your account. Friends save to their own accounts for social motivation.",
+      detail: "Both help you succeed, but in different ways - financial support vs social accountability!"
     },
     {
       icon: <Zap className="h-6 w-6 text-green-500" />,
-      title: "How It Works",
-      description: "It's automatic! When you save, sponsors are charged their match amount instantly.",
-      detail: "No extra steps for you - just save like normal and watch your stacklets grow faster!"
+      title: "How Both Work",
+      description: "Sponsor matches are automatic money transfers. Friend matches happen when friends choose to save too.",
+      detail: "You get the best of both worlds - financial boosts from sponsors and social motivation from friends!"
     }
   ];
 

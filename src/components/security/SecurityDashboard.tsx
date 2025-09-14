@@ -69,8 +69,10 @@ export default function SecurityDashboard() {
 
       setEvents((eventsData || []).map(event => ({
         ...event,
-        ip_address: (event.ip_address as string) || 'unknown'
-      })));
+        ip_address: typeof event.ip_address === 'string' ? event.ip_address : (event.ip_address as string | null) || 'unknown',
+        event_details: event.event_details,
+        user_agent: event.user_agent
+      })) as SecurityEvent[]);
 
       // Calculate metrics
       const totalEvents = eventsData?.length || 0;

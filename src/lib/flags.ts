@@ -8,6 +8,7 @@ export const FLAGS = {
   GROUPS: import.meta.env.VITE_FEATURE_GROUPS_ENABLED !== 'false',
   PERKS: import.meta.env.VITE_FEATURE_PERKS_ENABLED === 'true',
   PRO: import.meta.env.VITE_FEATURE_PRO_ENABLED === 'true',
+  TEMPLATE_PURCHASING: import.meta.env.VITE_FEATURE_TEMPLATE_PURCHASING_ENABLED === 'true',
 };
 
 export function featureEnabled(key: keyof typeof FLAGS) {

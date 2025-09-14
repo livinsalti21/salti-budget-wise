@@ -25,6 +25,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
 
   const isFallbackEnabled = import.meta.env.VITE_FEATURE_BUDGET_FALLBACK_ENABLED !== "false";
   const isAIEnabled = import.meta.env.VITE_FEATURE_AI_BUDGET_ENABLED === "true";
+  const isTemplatePurchasingEnabled = import.meta.env.VITE_FEATURE_TEMPLATE_PURCHASING_ENABLED === "true";
 
   const methods = [
     ...(isFallbackEnabled ? [{
@@ -75,7 +76,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
         'Google Sheets data'
       ]
     },
-    {
+    ...(isTemplatePurchasingEnabled ? [{
       id: 'template' as const,
       title: 'Buy Template',
       description: 'Professional budget templates',
@@ -90,7 +91,7 @@ const BudgetCreationFlow = ({ onMethodSelected, onBudgetCreated }: BudgetCreatio
         'Family templates from $19.99',
         'Professional budgets from $9.99'
       ]
-    },
+    }] : []),
     {
       id: 'manual' as const,
       title: 'Manual Entry',

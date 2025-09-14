@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { featureEnabled } from '@/lib/flags';
 import type { BudgetInput } from '@/lib/budgetUtils';
 
 interface Template {
@@ -49,7 +50,7 @@ const EnhancedTemplateStore = ({ onTemplateSelected, onBack }: EnhancedTemplateS
 
   const loadTemplates = () => {
     // Enhanced mock templates with actual BudgetInput data
-    const mockTemplates: Template[] = [
+    const allTemplates: Template[] = [
       {
         id: 'student-basic',
         name: 'College Student',
@@ -187,7 +188,12 @@ const EnhancedTemplateStore = ({ onTemplateSelected, onBack }: EnhancedTemplateS
       }
     ];
 
-    setTemplates(mockTemplates);
+    // Filter templates based on feature flag - only show free templates if purchasing is disabled
+    const filteredTemplates = featureEnabled('TEMPLATE_PURCHASING') 
+      ? allTemplates 
+      : allTemplates.filter(template => template.price_cents === 0);
+
+    setTemplates(filteredTemplates);
   };
 
   const getTemplateIcon = (category: string) => {

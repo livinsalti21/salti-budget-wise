@@ -8,6 +8,7 @@ import { ShoppingCart, Download, Check, FileText, DollarSign, Users, Home, Plus 
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { featureEnabled } from '@/lib/flags';
 import TemplateCreator from './TemplateCreator';
 
 interface Template {
@@ -36,7 +37,7 @@ const TemplateStore = () => {
 
   const loadTemplates = async () => {
     // TODO: Remove mock data once templates table is created
-    const mockTemplates: Template[] = [
+    const allTemplates: Template[] = [
       {
         id: '1',
         name: 'Student Budget',
@@ -68,7 +69,12 @@ const TemplateStore = () => {
       }
     ];
     
-    setTemplates(mockTemplates);
+    // Filter templates based on feature flag - only show free templates if purchasing is disabled
+    const filteredTemplates = featureEnabled('TEMPLATE_PURCHASING') 
+      ? allTemplates 
+      : allTemplates.filter(template => template.price_cents === 0);
+      
+    setTemplates(filteredTemplates);
   };
 
   const loadPurchases = async () => {

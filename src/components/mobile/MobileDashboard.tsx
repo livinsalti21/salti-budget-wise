@@ -194,7 +194,7 @@ export default function MobileDashboard() {
       </div>
 
       {/* Enhanced Streak Display */}
-      {data.savingStreak > 0 && (
+      {data.savingStreak > 0 ? (
         <Link to="/streaks">
           <Card className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
             <CardContent className="p-4 text-center">
@@ -208,6 +208,22 @@ export default function MobileDashboard() {
                 <ChevronRight className="h-4 w-4 text-orange-500/60" />
               </div>
               <p className="text-xs text-orange-700">Keep the momentum going! 🚀</p>
+            </CardContent>
+          </Card>
+        </Link>
+      ) : (
+        <Link to="/streaks">
+          <Card className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+            <CardContent className="p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Flame className="h-6 w-6 text-orange-400" />
+                <div>
+                  <p className="text-lg font-semibold text-orange-600">Start Your Streak!</p>
+                  <p className="text-xs text-orange-500">Save daily to build momentum</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-orange-500/60" />
+              </div>
+              <p className="text-xs text-orange-600">Tap to learn about streaks 🔥</p>
             </CardContent>
           </Card>
         </Link>

@@ -5,10 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Plus, DollarSign, Gift, Users } from 'lucide-react';
+import { Heart, Plus, DollarSign, Gift, Users, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { FeatureTooltip } from '@/components/ui/FeatureTooltip';
+import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 
 interface MatchRule {
   id: string;
@@ -113,6 +115,12 @@ const MobileMatchSection = () => {
           <div className="flex items-center gap-2">
             <Heart className="h-5 w-5 text-primary" />
             Match
+            <FeatureTooltip
+              title="Match-a-Save"
+              description="Invite sponsors to match your savings! They'll match a percentage of each save you make, helping you grow your money faster."
+            >
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            </FeatureTooltip>
           </div>
           <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
             <DialogTrigger asChild>
@@ -220,6 +228,12 @@ const MobileMatchSection = () => {
             <p className="text-xs text-muted-foreground mb-3">
               Invite family to match your saves
             </p>
+            
+            {/* Compact explainer for first-time users */}
+            <div className="mb-4">
+              <MatchExplainer variant="compact" />
+            </div>
+            
             <Button 
               size="sm" 
               onClick={() => setShowInviteDialog(true)}

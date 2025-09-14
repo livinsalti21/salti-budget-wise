@@ -32,6 +32,7 @@ import { FeatureGate } from "./components/core/FeatureGate";
 import { ChatWidget } from "./components/chat/ChatWidget";
 
 const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
+const MatchPage = lazy(() => import("./pages/MatchPage"));
 const StreaksPage = lazy(() => import("./pages/StreaksPage"));
 const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
 const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
@@ -92,6 +93,7 @@ const AppContent = () => {
         <Route path="/save/confirm" element={<Navigate to="/app/save/confirm" replace />} />
 
         {/* Engagement */}
+        <Route path="/match" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><MatchPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/streaks" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><StreaksPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/rewards" element={
           <RequireAuth>

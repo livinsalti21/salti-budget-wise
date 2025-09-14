@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useRateLimit } from '@/hooks/useRateLimit';
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { checkRateLimit, recordAttempt } = useRateLimit();
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -39,6 +41,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
+    // Check rate limit for signup attempts
+    const rateCheck = await checkRateLimit(email, 'signup_attempt');
+    if (!rateCheck.allowed) {
+      await recordAttempt(email, 'signup_attempt');
+      return { 
+        error: rateCheck.blocked 
+          ? { message: 'Too many signup attempts. Please try again later.' }
+          : { message: 'Rate limit exceeded. Please wait before trying again.' }
+      };
+    }
+
     const redirectUrl = `${window.location.origin}/app`;
     
     const { error } = await supabase.auth.signUp({
@@ -48,14 +61,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         emailRedirectTo: redirectUrl
       }
     });
+
+    // Record the attempt
+    await recordAttempt(email, 'signup_attempt');
+    
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
+    // Check rate limit for login attempts
+    const rateCheck = await checkRateLimit(email, 'login_attempt');
+    if (!rateCheck.allowed) {
+      await recordAttempt(email, 'login_attempt');
+      return { 
+        error: rateCheck.blocked 
+          ? { message: 'Account temporarily locked due to too many failed login attempts. Please try again later.' }
+          : { message: 'Too many login attempts. Please wait before trying again.' }
+      };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // Record the attempt (both successful and failed)
+    await recordAttempt(email, 'login_attempt');
+    
     return { error };
   };
 

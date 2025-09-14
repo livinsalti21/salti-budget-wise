@@ -2728,6 +2728,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_family_group_member: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { target_group_id: string; target_user_id: string }
+        Returns: boolean
+      }
       is_parent_of: {
         Args: { child: string }
         Returns: boolean

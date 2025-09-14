@@ -69,3 +69,9 @@ verify_jwt = false
 
 [functions.btc-auto-buy]
 verify_jwt = false
+
+[functions.generate-secure-deeplink]
+verify_jwt = false
+
+[functions.rate-limiter]
+verify_jwt = false

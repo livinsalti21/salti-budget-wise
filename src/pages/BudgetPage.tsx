@@ -12,7 +12,7 @@ import AiBudgetInput from "@/components/AiBudgetInput";
 import CSVUploadProcessor from "@/components/CSVUploadProcessor";
 import EnhancedTemplateStore from "@/components/EnhancedTemplateStore";
 import EnhancedManualInput from "@/components/EnhancedManualInput";
-import FallbackBudgetForm from "@/components/FallbackBudgetForm";
+import SaveNStackBudget from "@/components/SaveNStackBudget";
 import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
 import ProGate from "@/components/core/ProGate";
 import { FeatureGate } from "@/components/core/FeatureGate";
@@ -171,7 +171,7 @@ export default function BudgetPage() {
         )}
         
         {currentView === 'fallback' && (
-          <FallbackBudgetForm 
+          <SaveNStackBudget
             onBudgetCreated={handleBudgetCreated}
             onBack={handleBackToMethodSelect}
           />

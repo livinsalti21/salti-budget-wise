@@ -305,56 +305,114 @@ Talk soon!`;
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-3">
-                  {contacts.map((contact) => (
-                    <Card key={contact.id} className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback>
-                              {contact.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="flex items-center gap-2">
+                <div className="space-y-4">
+                  {/* Summary Header */}
+                  <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium text-sm">
+                        {contacts.length} contacts found
+                      </span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={syncContacts}
+                      disabled={syncing}
+                    >
+                      {syncing ? 'Refreshing...' : 'Refresh'}
+                    </Button>
+                  </div>
+
+                  {/* Friends Already on App */}
+                  {contacts.filter(c => c.isOnApp).length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <p className="text-sm font-medium text-green-700">
+                          Already on Livin Salti ({contacts.filter(c => c.isOnApp).length})
+                        </p>
+                      </div>
+                      <div className="grid gap-2">
+                        {contacts.filter(c => c.isOnApp).map((contact) => (
+                          <div key={contact.id} className="flex items-center gap-3 p-3 bg-green-50/50 rounded-lg border border-green-200">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-green-100 text-green-700 text-xs">
+                                {contact.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
                               <p className="font-medium text-sm">{contact.name}</p>
-                              {contact.isOnApp && (
-                                <Badge variant="secondary" className="text-xs">
-                                  On App
-                                </Badge>
+                              <p className="text-xs text-muted-foreground">
+                                {contact.email || contact.phone}
+                              </p>
+                            </div>
+                            <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-300">
+                              ✓ Connected
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Friends to Invite */}
+                  {contacts.filter(c => !c.isOnApp).length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                        <p className="text-sm font-medium text-orange-700">
+                          Ready to Invite ({contacts.filter(c => !c.isOnApp).length})
+                        </p>
+                      </div>
+                      <div className="grid gap-2">
+                        {contacts.filter(c => !c.isOnApp).map((contact) => (
+                          <div key={contact.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-orange-100 text-orange-700 text-xs">
+                                {contact.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{contact.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {contact.email || contact.phone}
+                              </p>
+                            </div>
+                            <div className="flex gap-1">
+                              {contact.phone && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => inviteByPhone(contact.phone!, contact.name)}
+                                  className="h-7 px-2"
+                                >
+                                  <MessageCircle className="h-3 w-3" />
+                                </Button>
+                              )}
+                              {contact.email && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => inviteByEmail(contact.email!, contact.name)}
+                                  className="h-7 px-2"
+                                >
+                                  <Mail className="h-3 w-3" />
+                                </Button>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {contact.phone} • {contact.email}
-                            </p>
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          {contact.phone && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => inviteByPhone(contact.phone!, contact.name)}
-                              disabled={contact.isOnApp}
-                            >
-                              <MessageCircle className="h-3 w-3 mr-1" />
-                              SMS
-                            </Button>
-                          )}
-                          {contact.email && (
-                            <Button
-                              size="sm"
-                              onClick={() => inviteByEmail(contact.email!, contact.name)}
-                              disabled={contact.isOnApp}
-                            >
-                              <Mail className="h-3 w-3 mr-1" />
-                              Email
-                            </Button>
-                          )}
-                        </div>
+                        ))}
                       </div>
-                    </Card>
-                  ))}
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {contacts.length === 0 && (
+                    <div className="text-center py-6">
+                      <Users className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">No contacts found</p>
+                    </div>
+                  )}
                 </div>
               )}
             </TabsContent>

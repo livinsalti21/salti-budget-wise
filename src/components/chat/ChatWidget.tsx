@@ -165,7 +165,7 @@ export function ChatWidget({ triggerFirstUse }: ChatWidgetProps = {}) {
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
-          className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 animate-pulse"
+          className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200"
         >
           <MessageCircle className="h-6 w-6" />
         </Button>

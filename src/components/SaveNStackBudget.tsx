@@ -482,15 +482,28 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Saving ${monthlySavings}/month for 35 years</p>
                       <div className="grid grid-cols-3 gap-4 mt-4">
-                        {scenarios.map((scenario) => (
-                          <div key={scenario.name} className="text-center">
-                            <div className="text-xs text-muted-foreground">{scenario.name}</div>
-                            <div className="text-lg font-bold text-success">
-                              ${scenario.result.finalAmount.toLocaleString()}
+                        {scenarios.map((scenario) => {
+                          const amount = scenario.result.finalAmount;
+                          const formatAmount = (num: number) => {
+                            if (num >= 1000000) {
+                              return `$${(num / 1000000).toFixed(1)}M`;
+                            } else if (num >= 1000) {
+                              return `$${Math.round(num / 1000)}K`;
+                            } else {
+                              return `$${Math.round(num)}`;
+                            }
+                          };
+                          
+                          return (
+                            <div key={scenario.name} className="text-center">
+                              <div className="text-xs text-muted-foreground">{scenario.name}</div>
+                              <div className="text-xl font-bold text-success">
+                                {formatAmount(amount)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">{Math.round(scenario.rate * 100)}% return</div>
                             </div>
-                            <div className="text-xs text-muted-foreground">{Math.round(scenario.rate * 100)}% return</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>
@@ -504,7 +517,7 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {[10, 20, 35].map((years) => {
                         const projection = calculateFutureValue({
                           principal: 0,
@@ -512,10 +525,21 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
                           annualRate: 0.07,
                           years
                         });
+                        
+                        const formatAmount = (num: number) => {
+                          if (num >= 1000000) {
+                            return `$${(num / 1000000).toFixed(1)}M`;
+                          } else if (num >= 1000) {
+                            return `$${Math.round(num / 1000)}K`;
+                          } else {
+                            return `$${Math.round(num)}`;
+                          }
+                        };
+                        
                         return (
-                          <div key={years} className="flex justify-between">
-                            <span>After {years} years:</span>
-                            <span className="font-bold">${projection.finalAmount.toLocaleString()}</span>
+                          <div key={years} className="flex justify-between items-center">
+                            <span className="text-muted-foreground">After {years} years:</span>
+                            <span className="font-bold text-lg">{formatAmount(projection.finalAmount)}</span>
                           </div>
                         );
                       })}

@@ -22,13 +22,17 @@ import {
   Gamepad2,
   Smartphone,
   Shield,
-  PlusCircle
+  PlusCircle,
+  Sliders,
+  Calendar
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { BudgetInput } from '@/lib/budgetUtils';
 import { saveBudgetToDatabase } from '@/lib/budgetStorage';
 import { computeWeeklyBudget } from '@/lib/budgetUtils';
+import { calculateFutureValue, generateScenarios } from '@/simulation/futureValue';
+import { Slider } from '@/components/ui/slider';
 
 interface SaveNStackBudgetProps {
   onBudgetCreated: (data: BudgetInput) => void;
@@ -36,7 +40,7 @@ interface SaveNStackBudgetProps {
 }
 
 const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) => {
-  const [currentStep, setCurrentStep] = useState<'income' | 'bills' | 'goal' | 'review'>('income');
+  const [currentStep, setCurrentStep] = useState<'income' | 'bills' | 'categories' | 'goal' | 'review'>('income');
   const [budgetData, setBudgetData] = useState<BudgetInput>({
     incomes: [{ amount: 0, cadence: 'weekly', source: 'Primary Income' }],
     fixed_expenses: [],
@@ -52,6 +56,8 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
     },
     goals: []
   });
+  const [customAmounts, setCustomAmounts] = useState<{[key: string]: string}>({});
+  const [monthlySavings, setMonthlySavings] = useState(0);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -59,7 +65,8 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
   const steps = [
     { id: 'income', title: 'Income', description: 'How much do you make?', emoji: '💰' },
     { id: 'bills', title: 'Bills', description: 'What do you pay regularly?', emoji: '📄' },
-    { id: 'goal', title: 'Goals', description: 'What are you saving for?', emoji: '🎯' },
+    { id: 'categories', title: 'Categories', description: 'How do you like to spend?', emoji: '🛒' },
+    { id: 'goal', title: 'Savings', description: 'Build your future wealth', emoji: '🎯' },
     { id: 'review', title: 'Review', description: 'Looks good!', emoji: '✨' }
   ];
 
@@ -83,6 +90,8 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
       case 'income':
         return budgetData.incomes[0]?.amount > 0;
       case 'bills':
+        return true; // Optional step
+      case 'categories':
         return true; // Optional step
       case 'goal':
         return true; // Optional step  
@@ -126,6 +135,16 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
         cadence: 'weekly' 
       }]
     }));
+    
+    // Clear custom amount for this bill
+    setCustomAmounts(prev => ({ ...prev, [name]: '' }));
+  };
+
+  const handleBillCustomAdd = (name: string) => {
+    const amount = parseFloat(customAmounts[name]) || 0;
+    if (amount > 0) {
+      handleBillAdd(name, amount);
+    }
   };
 
   const handleBillRemove = (name: string) => {
@@ -135,14 +154,29 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
     }));
   };
 
-  const handleGoalSet = (amount: number) => {
+  const handleCategorySplit = (category: string, percentage: number) => {
     setBudgetData(prev => ({
       ...prev,
-      goals: [{ 
-        name: 'My Savings Goal', 
-        target_amount: amount,
-        due_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
-      }]
+      variable_preferences: {
+        ...prev.variable_preferences,
+        splits: {
+          ...prev.variable_preferences.splits,
+          [category]: percentage / 100
+        }
+      }
+    }));
+  };
+
+  const handleGoalSet = (monthlyAmount: number) => {
+    setMonthlySavings(monthlyAmount);
+    // Convert monthly to weekly for internal storage
+    const weeklyAmount = monthlyAmount * 12 / 52;
+    setBudgetData(prev => ({
+      ...prev,
+      variable_preferences: {
+        ...prev.variable_preferences,
+        save_rate: Math.min(weeklyAmount / Math.max(remaining, 1), 0.5) // Cap at 50%
+      }
     }));
   };
 
@@ -254,19 +288,41 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
                         <span className="font-medium">{category.name}</span>
                         {isAdded && <Badge variant="secondary" className="ml-auto">Added</Badge>}
                       </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {category.amounts.map((amount) => (
-                          <Button
-                            key={amount}
-                            variant="outline"
-                            size="sm"
-                            disabled={isAdded}
-                            onClick={() => handleBillAdd(category.name, amount)}
-                          >
-                            ${amount}
-                          </Button>
-                        ))}
-                      </div>
+                       <div className="grid grid-cols-4 gap-2 mb-3">
+                         {category.amounts.map((amount) => (
+                           <Button
+                             key={amount}
+                             variant="outline"
+                             size="sm"
+                             disabled={isAdded}
+                             onClick={() => handleBillAdd(category.name, amount)}
+                           >
+                             ${amount}
+                           </Button>
+                         ))}
+                       </div>
+                       {!isAdded && (
+                         <div className="flex gap-2">
+                           <Input
+                             type="number"
+                             placeholder="Custom amount"
+                             value={customAmounts[category.name] || ''}
+                             onChange={(e) => setCustomAmounts(prev => ({
+                               ...prev,
+                               [category.name]: e.target.value
+                             }))}
+                             className="flex-1"
+                           />
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => handleBillCustomAdd(category.name)}
+                             disabled={!customAmounts[category.name] || parseFloat(customAmounts[category.name]) <= 0}
+                           >
+                             Add
+                           </Button>
+                         </div>
+                       )}
                     </CardContent>
                   </Card>
                 );
@@ -319,52 +375,154 @@ const SaveNStackBudget = ({ onBudgetCreated, onBack }: SaveNStackBudgetProps) =>
           </div>
         );
 
+      case 'categories':
+        const currentSplits = budgetData.variable_preferences.splits;
+        const categories = [
+          { key: 'groceries', name: 'Food & Groceries', icon: ShoppingBag, color: 'text-green-600' },
+          { key: 'eating_out', name: 'Dining Out', icon: Coffee, color: 'text-orange-600' },
+          { key: 'fun', name: 'Entertainment', icon: Gamepad2, color: 'text-purple-600' },
+          { key: 'gas', name: 'Transportation', icon: Car, color: 'text-blue-600' },
+          { key: 'misc', name: 'Everything Else', icon: Smartphone, color: 'text-gray-600' }
+        ];
+
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🛒</div>
+              <h2 className="text-2xl font-bold mb-2">How do you like to spend?</h2>
+              <p className="text-muted-foreground">Adjust these categories to match your lifestyle</p>
+            </div>
+
+            <div className="space-y-4">
+              {categories.map((category) => {
+                const Icon = category.icon;
+                const currentPercentage = Math.round(currentSplits[category.key] * 100);
+                const weeklyAmount = remaining > 0 ? Math.round(remaining * 0.8 * currentSplits[category.key]) : 0;
+                
+                return (
+                  <Card key={category.key}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`h-5 w-5 ${category.color}`} />
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">{currentPercentage}%</div>
+                          <div className="text-sm text-muted-foreground">${weeklyAmount}/week</div>
+                        </div>
+                      </div>
+                      <Slider
+                        value={[currentPercentage]}
+                        onValueChange={([value]) => handleCategorySplit(category.key, value)}
+                        max={50}
+                        min={5}
+                        step={5}
+                        className="w-full"
+                      />
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">Total spending money per week</p>
+                  <p className="text-2xl font-bold text-primary">${Math.round(remaining * 0.8)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Plus ${Math.round(remaining * 0.2)} for saving</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
       case 'goal':
-        const goalAmounts = [500, 1000, 2500, 5000, 10000];
+        const monthlySavingsOptions = [50, 100, 200, 300, 500];
+        const scenarios = monthlySavings > 0 ? generateScenarios(0, monthlySavings, 35) : [];
         
         return (
           <div className="space-y-6">
             <div className="text-center">
               <div className="text-6xl mb-4">🎯</div>
-              <h2 className="text-2xl font-bold mb-2">What's your savings goal?</h2>
-              <p className="text-muted-foreground">Pick a target that excites you</p>
+              <h2 className="text-2xl font-bold mb-2">Build Your Future Wealth</h2>
+              <p className="text-muted-foreground">How much can you save each month?</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {goalAmounts.map((amount) => (
+              {monthlySavingsOptions.map((amount) => (
                 <Button
                   key={amount}
-                  variant={budgetData.goals[0]?.target_amount === amount ? "default" : "outline"}
+                  variant={monthlySavings === amount ? "default" : "outline"}
                   className="h-16 flex-col gap-1"
                   onClick={() => handleGoalSet(amount)}
                 >
-                  <span className="text-lg font-bold">${amount.toLocaleString()}</span>
-                  {savingsAmount > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {Math.ceil(amount / (savingsAmount * 52))} years
-                    </span>
-                  )}
+                  <span className="text-lg font-bold">${amount}</span>
+                  <span className="text-xs text-muted-foreground">/month</span>
                 </Button>
               ))}
             </div>
 
-            {budgetData.goals.length > 0 && savingsAmount > 0 && (
-              <Card className="bg-gradient-to-r from-success/10 to-success/5 border-success/20">
-                <CardContent className="pt-6">
-                  <div className="text-center">
-                    <p className="text-sm text-muted-foreground">At ${savingsAmount.toFixed(0)}/week, you'll save</p>
-                    <p className="text-2xl font-bold text-success">
-                      ${(savingsAmount * 52).toFixed(0)} per year
-                    </p>
-                    <div className="mt-3 flex items-center justify-center gap-2">
-                      <Target className="h-4 w-4 text-success" />
-                      <span className="text-sm">
-                        Goal reached in {Math.ceil(budgetData.goals[0].target_amount / (savingsAmount * 52))} years
-                      </span>
+            <div className="relative">
+              <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <Input
+                type="number"
+                placeholder="Custom monthly amount"
+                className="pl-10 h-14 text-lg text-center"
+                value={monthlySavings || ''}
+                onChange={(e) => handleGoalSet(parseFloat(e.target.value) || 0)}
+              />
+            </div>
+
+            {monthlySavings > 0 && (
+              <div className="space-y-4">
+                <Card className="bg-gradient-to-r from-success/10 to-success/5 border-success/20">
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Saving ${monthlySavings}/month for 35 years</p>
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        {scenarios.map((scenario) => (
+                          <div key={scenario.name} className="text-center">
+                            <div className="text-xs text-muted-foreground">{scenario.name}</div>
+                            <div className="text-lg font-bold text-success">
+                              ${scenario.result.finalAmount.toLocaleString()}
+                            </div>
+                            <div className="text-xs text-muted-foreground">{Math.round(scenario.rate * 100)}% return</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Milestone Timeline
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {[10, 20, 35].map((years) => {
+                        const projection = calculateFutureValue({
+                          principal: 0,
+                          monthlyContribution: monthlySavings,
+                          annualRate: 0.07,
+                          years
+                        });
+                        return (
+                          <div key={years} className="flex justify-between">
+                            <span>After {years} years:</span>
+                            <span className="font-bold">${projection.finalAmount.toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
         );

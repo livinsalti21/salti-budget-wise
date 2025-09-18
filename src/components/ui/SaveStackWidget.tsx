@@ -27,9 +27,6 @@ export function SaveStackWidget() {
   const [recentSaves, setRecentSaves] = useState<SaveData[]>([]);
   const [totalSaved, setTotalSaved] = useState(0);
 
-  // Don't show widget if user is not authenticated
-  if (!user) return null;
-
   const loadRecentSaves = async () => {
     if (!user) return;
 
@@ -56,6 +53,9 @@ export function SaveStackWidget() {
       loadRecentSaves();
     }
   }, [user]);
+
+  // Don't show widget if user is not authenticated
+  if (!user) return null;
 
   const calculateFutureValue = (amountCents: number, years: number = 10): number => {
     const principal = amountCents / 100;

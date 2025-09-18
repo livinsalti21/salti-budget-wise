@@ -7,14 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Eye, EyeOff, Mail, Lock, User, TrendingUp, Users, Flame, 
-  PiggyBank, Crown, Shield, CheckCircle, ArrowRight, Zap,
-  Star, Target, Calendar
-} from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, TrendingUp, Users, Flame, PiggyBank, Crown, Shield, CheckCircle, ArrowRight, Zap, Star, Target, Calendar } from 'lucide-react';
 import SocialAuth from './SocialAuth';
 import FutureValueChart from '@/features/edu/FutureValueChart';
-
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,9 +25,13 @@ export default function AuthPage() {
     activeUsers: 12847,
     dailySavings: 2547
   });
-  
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
+  const {
+    signIn,
+    signUp
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
 
   // Animate stats for engagement
   useEffect(() => {
@@ -45,46 +44,45 @@ export default function AuthPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      const { error } = isSignUp 
-        ? await signUp(formData.email, formData.password)
-        : await signIn(formData.email, formData.password);
-
+      const {
+        error
+      } = isSignUp ? await signUp(formData.email, formData.password) : await signIn(formData.email, formData.password);
       if (error) {
         toast({
           title: "Authentication Error",
           description: error.message,
-          variant: "destructive",
+          variant: "destructive"
         });
       } else {
         toast({
           title: "Success!",
-          description: isSignUp ? "Account created! Check your email to verify." : "Welcome back!",
+          description: isSignUp ? "Account created! Check your email to verify." : "Welcome back!"
         });
       }
     } catch (err) {
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 relative overflow-hidden">
+  return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-accent/5 to-primary/10 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-1/3 -left-10 w-24 h-24 bg-gradient-to-br from-accent/20 to-primary/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-20 right-1/4 w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/3 -left-10 w-24 h-24 bg-gradient-to-br from-accent/20 to-primary/20 rounded-full blur-2xl animate-pulse" style={{
+        animationDelay: '1s'
+      }}></div>
+        <div className="absolute bottom-20 right-1/4 w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-xl animate-pulse" style={{
+        animationDelay: '2s'
+      }}></div>
       </div>
 
       <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
@@ -134,13 +132,8 @@ export default function AuthPage() {
 
             {/* Social proof and excitement builder */}
             <div className="space-y-2">
-              <Badge variant="secondary" className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-                <Star className="w-3 h-3 mr-1" />
-                New users save $247 avg in first month
-              </Badge>
-              <p className="text-sm text-muted-foreground">
-                🚀 Join thousands building wealth together
-              </p>
+              
+              
             </div>
           </div>
 
@@ -162,56 +155,38 @@ export default function AuthPage() {
                 {isSignUp ? 'Create Your Account' : 'Welcome Back'}
               </CardTitle>
               <CardDescription className="flex items-center justify-center gap-2">
-                {isSignUp 
-                  ? (
-                    <>
+                {isSignUp ? <>
                       <Target className="w-4 h-4" />
                       Set your first goal in 2 minutes
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <Calendar className="w-4 h-4" />
                       Continue your wealth journey
-                    </>
-                  )
-                }
+                    </>}
               </CardDescription>
             </CardHeader>
             
             <CardContent className="space-y-4">
               <form onSubmit={handleSubmit} className="space-y-4">
-                {isSignUp && (
-                  <div className="space-y-2">
+                {isSignUp && <div className="space-y-2">
                     <Label htmlFor="name" className="flex items-center gap-2">
                       <User className="h-4 w-4" />
                       Full Name
                     </Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="Enter your name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="pl-10"
-                      required={isSignUp}
-                    />
-                  </div>
-                )}
+                    <Input id="name" type="text" placeholder="Enter your name" value={formData.name} onChange={e => setFormData(prev => ({
+                  ...prev,
+                  name: e.target.value
+                }))} className="pl-10" required={isSignUp} />
+                  </div>}
                 
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     Email
                   </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                    className="pl-10"
-                    required
-                  />
+                  <Input id="email" type="email" placeholder="Enter your email" value={formData.email} onChange={e => setFormData(prev => ({
+                  ...prev,
+                  email: e.target.value
+                }))} className="pl-10" required />
                 </div>
                 
                 <div className="space-y-2">
@@ -220,60 +195,33 @@ export default function AuthPage() {
                     Password
                   </Label>
                   <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={formData.password}
-                      onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="pl-10 pr-10"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
+                    <Input id="password" type={showPassword ? "text" : "password"} placeholder="Enter your password" value={formData.password} onChange={e => setFormData(prev => ({
+                    ...prev,
+                    password: e.target.value
+                  }))} className="pl-10 pr-10" required />
+                    <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" onClick={() => setShowPassword(!showPassword)}>
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
 
-                {!isSignUp && (
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="remember" 
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked === true)}
-                    />
+                {!isSignUp && <div className="flex items-center space-x-2">
+                    <Checkbox id="remember" checked={rememberMe} onCheckedChange={checked => setRememberMe(checked === true)} />
                     <Label htmlFor="remember" className="text-sm">
                       Remember me
                     </Label>
-                  </div>
-                )}
+                  </div>}
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-lg transition-all duration-300 text-white" 
-                  disabled={loading}
-                  size="lg"
-                >
-                  {loading ? (
-                    'Please wait...'
-                  ) : (
-                    <>
+                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-lg transition-all duration-300 text-white" disabled={loading} size="lg">
+                  {loading ? 'Please wait...' : <>
                       {isSignUp ? 'Create Account' : 'Sign In'}
                       <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
+                    </>}
                 </Button>
               </form>
 
               {/* Progress teaser for sign up */}
-              {isSignUp && (
-                <div className="bg-gradient-to-r from-primary/5 to-accent/5 p-4 rounded-lg border border-primary/20">
+              {isSignUp && <div className="bg-gradient-to-r from-primary/5 to-accent/5 p-4 rounded-lg border border-primary/20">
                   <div className="text-center space-y-2">
                     <Zap className="h-5 w-5 text-primary mx-auto" />
                     <p className="text-sm font-medium">What happens next?</p>
@@ -281,19 +229,11 @@ export default function AuthPage() {
                       <div>Step 1: Verify email → Step 2: Set first goal → Step 3: Start saving!</div>
                     </div>
                   </div>
-                </div>
-              )}
+                </div>}
 
               <div className="text-center">
-                <Button
-                  variant="link"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm"
-                >
-                  {isSignUp 
-                    ? 'Already have an account? Sign in' 
-                    : "Don't have an account? Sign up"
-                  }
+                <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="text-sm">
+                  {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
                 </Button>
               </div>
             </CardContent>
@@ -323,6 +263,5 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }

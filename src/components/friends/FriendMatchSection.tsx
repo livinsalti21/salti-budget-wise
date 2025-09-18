@@ -6,6 +6,7 @@ import { Users, Heart, Plus, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import FriendInviteModal from './FriendInviteModal';
 
 interface FriendConnection {
   id: string;
@@ -46,6 +47,7 @@ export default function FriendMatchSection() {
   const [recentMatches, setRecentMatches] = useState<FriendMatch[]>([]);
   const [friendSaves, setFriendSaves] = useState<RecentSave[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -345,7 +347,11 @@ export default function FriendMatchSection() {
             <p className="text-sm text-muted-foreground mb-4">
               Connect with friends to start matching each other's saves and building friend streaks!
             </p>
-            <Button size="sm" variant="outline">
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => setShowInviteModal(true)}
+            >
               <Plus className="h-4 w-4 mr-2" />
               Add Friends
             </Button>
@@ -364,6 +370,12 @@ export default function FriendMatchSection() {
           </CardContent>
         </Card>
       )}
+
+      {/* Friend Invite Modal */}
+      <FriendInviteModal 
+        open={showInviteModal} 
+        onOpenChange={setShowInviteModal}
+      />
     </div>
   );
 }

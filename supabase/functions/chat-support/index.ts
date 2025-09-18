@@ -174,7 +174,7 @@ Current conversation: The user just asked about "${message}"`;;
       throw new Error('OpenAI API key not configured');
     }
 
-    // Use GPT-5 if available, fallback to GPT-4o
+    // Use GPT-4o for reliable budget coaching
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -182,9 +182,10 @@ Current conversation: The user just asked about "${message}"`;;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-mini',
         messages,
-        max_completion_tokens: 500,
+        max_tokens: 500,
+        temperature: 0.7,
         stream: true,
         functions: [
           {
@@ -202,7 +203,7 @@ Current conversation: The user just asked about "${message}"`;;
               type: 'object',
               properties: {
                 amount: { type: 'number', description: 'Amount in dollars' },
-                years: { type: 'number', description: 'Number of years for projection' },
+                years: { type: 'number', description: 'Number of years for projection' },  
                 rate: { type: 'number', description: 'Annual interest rate (default 8%)' }
               },
               required: ['amount']

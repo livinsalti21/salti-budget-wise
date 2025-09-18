@@ -29,7 +29,8 @@ import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
 import SnoozeConfirm from "./pages/SnoozeConfirm";
 import { FeatureGate } from "./components/core/FeatureGate";
-import { ChatWidget } from "./components/chat/ChatWidget";
+import CoachPage from "./pages/CoachPage";
+import { SaveStackWidget } from "./components/ui/SaveStackWidget";
 
 const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
 const MatchPage = lazy(() => import("./pages/MatchPage"));
@@ -87,6 +88,7 @@ const AppContent = () => {
         <Route path="/save-history" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/goals" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/net-worth" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></AppWrapper></RequireAuth>} />
+        <Route path="/coach" element={<RequireAuth><AppWrapper><CoachPage /></AppWrapper></RequireAuth>} />
         
         {/* Legacy redirects */}
         <Route path="/save/choose" element={<Navigate to="/app/save/choose" replace />} />
@@ -120,8 +122,8 @@ const AppContent = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Global AI Chat Widget */}
-      <ChatWidget />
+      {/* Global Save & Stack Widget */}
+      <SaveStackWidget />
     </>
   );
 };

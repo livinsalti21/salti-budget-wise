@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, PiggyBank, Calculator, Users, User, Heart } from "lucide-react";
+import { Home, PiggyBank, Calculator, MessageCircle, User } from "lucide-react";
 
 export default function BottomNav() {
   const item = "flex-1 flex flex-col items-center justify-center text-xs py-2 gap-1 min-h-touch";
@@ -20,9 +20,9 @@ export default function BottomNav() {
           <Calculator className="h-5 w-5" />
           Budget
         </NavLink>
-        <NavLink to="/match" className={(s) => `${item} ${active(s)}`}>
-          <Heart className="h-5 w-5" />
-          Match
+        <NavLink to="/coach" className={(s) => `${item} ${active(s)}`}>
+          <MessageCircle className="h-5 w-5" />
+          Coach
         </NavLink>
         <NavLink to="/profile" className={(s) => `${item} ${active(s)}`}>
           <User className="h-5 w-5" />

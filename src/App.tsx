@@ -29,7 +29,7 @@ import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
 import SnoozeConfirm from "./pages/SnoozeConfirm";
 import { FeatureGate } from "./components/core/FeatureGate";
-import { ChatWidget } from "./components/chat/ChatWidget";
+import { SaveStackWidget } from "./components/ui/SaveStackWidget";
 
 const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
 const MatchPage = lazy(() => import("./pages/MatchPage"));
@@ -120,8 +120,8 @@ const AppContent = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       
-      {/* Global AI Chat Widget */}
-      <ChatWidget />
+      {/* Global Save & Stack Widget */}
+      <SaveStackWidget />
     </>
   );
 };

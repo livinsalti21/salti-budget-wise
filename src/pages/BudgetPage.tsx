@@ -1,4 +1,4 @@
-import { BarChart3 } from "lucide-react";
+import { BarChart3, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
 import { useState, useEffect } from "react";
@@ -16,12 +16,15 @@ import FallbackBudgetForm from "@/components/FallbackBudgetForm";
 import WeeklyBudgetDashboard from "@/components/WeeklyBudgetDashboard";
 import ProGate from "@/components/core/ProGate";
 import { FeatureGate } from "@/components/core/FeatureGate";
+import { ChatWidget } from "@/components/chat/ChatWidget";
+import { MessageCircle } from "lucide-react";
 
 export default function BudgetPage() {
   const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'fallback' | 'dashboard'>('method-select');
   const [budgetData, setBudgetData] = useState<BudgetInput | null>(null);
   const [budgetId, setBudgetId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [showCoach, setShowCoach] = useState(false);
   const { user } = useAuth();
 
   // Load existing budget on component mount
@@ -100,14 +103,24 @@ export default function BudgetPage() {
         subtitle={getPageDescription()}
         backTo="/app"
         actions={currentView === 'dashboard' ? (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setCurrentView('method-select')}
-          >
-            <BarChart3 className="h-4 w-4 mr-2" />
-            New Budget
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCoach(true)}
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Ask Coach
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setCurrentView('method-select')}
+            >
+              <BarChart3 className="h-4 w-4 mr-2" />
+              New Budget
+            </Button>
+          </div>
         ) : undefined}
       />
 
@@ -172,6 +185,30 @@ export default function BudgetPage() {
           />
         )}
       </main>
+
+      {/* Budget Coach Modal */}
+      {showCoach && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg w-full max-w-2xl h-[600px] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                <h2 className="font-semibold">Budget Coach</h2>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCoach(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="flex-1 relative">
+              <ChatWidget triggerFirstUse="first_budget" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

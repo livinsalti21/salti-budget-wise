@@ -29,14 +29,29 @@ export default function EnhancedSocialAuth({ onSuccess, showBiometric = true }: 
       });
 
       if (error) {
-        toast({
-          title: "Authentication Error",
-          description: error.message,
-          variant: "destructive",
-        });
+        console.error(`${provider} login error:`, error);
+        
+        // Handle specific OAuth errors
+        if (error.message?.includes('invalid_client') || error.message?.includes('Unauthorized')) {
+          toast({
+            title: "Configuration Error",
+            description: `${provider} authentication is not properly configured. Please contact support or try email/password login.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Authentication Error",
+            description: error.message || `Failed to sign in with ${provider}`,
+            variant: "destructive",
+          });
+        }
       } else {
         // Success will be handled by the auth state change
-        if (onSuccess) onSuccess();
+        // Don't call onSuccess here as it can cause routing conflicts
+        toast({
+          title: "Welcome!",
+          description: `Successfully signed in with ${provider}`,
+        });
       }
     } catch (error) {
       toast({
@@ -80,7 +95,7 @@ export default function EnhancedSocialAuth({ onSuccess, showBiometric = true }: 
         
         // Here you would typically validate the biometric credential
         // and then sign in the user or proceed with the auth flow
-        if (onSuccess) onSuccess();
+        // Don't call onSuccess here as it can cause routing conflicts
       }
     } catch (error: any) {
       if (error.name === 'NotAllowedError') {

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ModeSelect from '@/features/onboarding/ModeSelect';
 import InteractiveOnboardingFlow from './InteractiveOnboardingFlow';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface CompleteOnboardingProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
 export default function CompleteOnboarding({ onComplete }: CompleteOnboardingProps) {
@@ -14,6 +15,7 @@ export default function CompleteOnboarding({ onComplete }: CompleteOnboardingPro
   const [selectedMode, setSelectedMode] = useState<'standard' | 'educational'>('standard');
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleModeSelect = async (mode: 'standard' | 'educational') => {
     setSelectedMode(mode);
@@ -49,8 +51,11 @@ export default function CompleteOnboarding({ onComplete }: CompleteOnboardingPro
 
   const handleOnboardingComplete = async () => {
     // The OnboardingFlow component already handles completion
-    // Just call the parent's onComplete
-    onComplete();
+    if (onComplete) {
+      onComplete();
+    } else {
+      navigate('/app');
+    }
   };
 
   if (currentStep === 'mode') {

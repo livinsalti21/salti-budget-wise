@@ -13,10 +13,12 @@ export default function LandingRedirect({ children }: { children: React.ReactNod
   const [onboardingStatus, setOnboardingStatus] = React.useState<'loading' | 'incomplete' | 'complete'>('loading');
 
   useEffect(() => {
-    if (user && onboardingStatus === 'loading') {
+    if (user) {
       checkOnboardingStatus();
+    } else {
+      setOnboardingStatus('loading');
     }
-  }, [user, onboardingStatus]);
+  }, [user]);
 
   const checkOnboardingStatus = async () => {
     if (!user) return;

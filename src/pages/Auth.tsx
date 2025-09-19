@@ -19,11 +19,7 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      navigate('/app');
-    }
-  }, [user, navigate]);
+  // Remove automatic redirect - let routing handle it
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +38,7 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You have successfully signed in.",
       });
-      navigate('/app');
+      // Let the auth context and routing handle navigation
     }
     
     setIsLoading(false);
@@ -164,7 +160,7 @@ const Auth = () => {
             </Tabs>
             
             <div className="mt-6">
-              <EnhancedSocialAuth onSuccess={() => navigate('/app')} />
+              <EnhancedSocialAuth />
             </div>
           </CardContent>
         </Card>

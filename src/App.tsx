@@ -67,12 +67,12 @@ const AppContent = () => {
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={
           <RequireAuth>
-            <CompleteOnboarding onComplete={() => window.location.href = '/app'} />
+            <CompleteOnboarding />
           </RequireAuth>
         } />
         <Route path="/link" element={
           <RequireAuth>
-            <FeatureGate flag="ACCOUNT_LINKING" fallback={<CompleteOnboarding onComplete={() => window.location.href = '/app'} />}>
+            <FeatureGate flag="ACCOUNT_LINKING" fallback={<CompleteOnboarding />}>
               <AccountLinking />
             </FeatureGate>
           </RequireAuth>

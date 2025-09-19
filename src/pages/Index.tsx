@@ -17,64 +17,9 @@ import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
 
 const Index = () => {
-  const { user, loading, signOut } = useAuth();
+  const { signOut } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
-  const [onboardingStatus, setOnboardingStatus] = useState<'loading' | 'incomplete' | 'complete'>('loading');
-
-
-  // Check onboarding status when user loads
-  useEffect(() => {
-    if (user && onboardingStatus === 'loading') {
-      checkOnboardingStatus();
-    }
-  }, [user, onboardingStatus]);
-
-  const checkOnboardingStatus = async () => {
-    if (!user) return;
-    
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('completed_onboarding')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking onboarding status:', error);
-        setOnboardingStatus('incomplete'); // Default to incomplete on error
-        return;
-      }
-
-      // If profile doesn't exist or onboarding not completed, redirect to onboarding
-      setOnboardingStatus(profile?.completed_onboarding ? 'complete' : 'incomplete');
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      setOnboardingStatus('incomplete');
-    }
-  };
-
-  // Loading states
-  if (loading || onboardingStatus === 'loading') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center">
-        <div className="text-center">
-          <PiggyBank className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Redirect to onboarding if not completed
-  if (onboardingStatus === 'incomplete') {
-    return <Navigate to="/onboarding" replace />;
-  }
 
 
   // Mobile-optimized layout

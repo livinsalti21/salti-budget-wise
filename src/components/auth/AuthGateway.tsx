@@ -1,24 +1,20 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { PiggyBank } from 'lucide-react';
 
-/**
- * Smart landing redirect component that handles authenticated users
- * by checking their onboarding status and redirecting appropriately
- */
-export default function LandingRedirect({ children }: { children: React.ReactNode }) {
+export default function AuthGateway({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  const [onboardingStatus, setOnboardingStatus] = React.useState<'loading' | 'incomplete' | 'complete'>('loading');
+  const [onboardingStatus, setOnboardingStatus] = useState<'loading' | 'incomplete' | 'complete'>('loading');
 
   useEffect(() => {
-    if (user) {
+    if (user && onboardingStatus === 'loading') {
       checkOnboardingStatus();
-    } else {
-      setOnboardingStatus('loading');
+    } else if (!user) {
+      setOnboardingStatus('loading'); // Reset when user logs out
     }
-  }, [user]);
+  }, [user, onboardingStatus]);
 
   const checkOnboardingStatus = async () => {
     if (!user) return;
@@ -43,7 +39,7 @@ export default function LandingRedirect({ children }: { children: React.ReactNod
     }
   };
 
-  // Show loading while checking auth and onboarding status
+  // Show loading screen while checking auth and onboarding
   if (loading || (user && onboardingStatus === 'loading')) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center">
@@ -55,15 +51,16 @@ export default function LandingRedirect({ children }: { children: React.ReactNod
     );
   }
 
-  // Redirect authenticated users based on onboarding status
-  if (user) {
-    if (onboardingStatus === 'incomplete') {
-      return <Navigate to="/onboarding" replace />;
-    } else {
-      return <Navigate to="/app" replace />;
-    }
+  // User not authenticated - show landing page
+  if (!user) {
+    return <>{children}</>;
   }
 
-  // Show landing page for unauthenticated users
-  return <>{children}</>;
+  // User authenticated but onboarding incomplete - redirect to onboarding
+  if (onboardingStatus === 'incomplete') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // User authenticated and onboarding complete - redirect to app
+  return <Navigate to="/app" replace />;
 }

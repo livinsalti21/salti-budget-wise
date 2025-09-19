@@ -54,7 +54,7 @@ export default function CompleteOnboarding({ onComplete }: CompleteOnboardingPro
     if (onComplete) {
       onComplete();
     } else {
-      navigate('/app');
+      navigate('/');
     }
   };
 

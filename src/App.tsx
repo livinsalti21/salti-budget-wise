@@ -23,7 +23,7 @@ import ProfilePage from "./pages/ProfilePage";
 import SponsorAuth from "./pages/SponsorAuth";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import NotFound from "./pages/NotFound";
-import LandingRedirect from "./components/ui/LandingRedirect";
+import AuthGateway from "./components/auth/AuthGateway";
 import CompleteOnboarding from "./components/onboarding/CompleteOnboarding";
 import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
@@ -39,10 +39,10 @@ const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
 
 const queryClient = new QueryClient();
 
+// Simple auth check for routes that need authenticated users
 function RequireAuth({ children }: { children: JSX.Element }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div>Loading…</div>;
-  return user ? children : <Navigate to="/auth" replace />;
+  const { user } = useAuth();
+  return user ? children : <Navigate to="/" replace />;
 }
 
 const AppContent = () => {
@@ -52,17 +52,14 @@ const AppContent = () => {
       <Toaster />
       <Sonner />
       <Routes>
-        {/* Public */}
-        <Route path="/" element={<Navigate to="/landing" replace />} />
-        <Route path="/landing" element={<LandingRedirect><Landing /></LandingRedirect>} />
+        {/* Main gateway - handles all auth routing */}
+        <Route path="/" element={<AuthGateway><Landing /></AuthGateway>} />
+        
+        {/* Public routes */}
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
-        
-        {/* Legacy redirects */}
-        <Route path="/m" element={<Navigate to="/landing" replace />} />
-        <Route path="/interactive" element={<Navigate to="/landing" replace />} />
 
         {/* Onboarding (after auth) */}
         <Route path="/onboarding" element={
@@ -78,10 +75,8 @@ const AppContent = () => {
           </RequireAuth>
         } />
 
-        {/* Auth-required hub */}
+        {/* Authenticated app routes - no individual auth checks needed */}
         <Route path="/app" element={<RequireAuth><AppWrapper><Index /></AppWrapper></RequireAuth>} />
-
-        {/* Money & goals */}
         <Route path="/budget" element={<RequireAuth><AppWrapper><BudgetPage /></AppWrapper></RequireAuth>} />
         <Route path="/save" element={<RequireAuth><AppWrapper><SavePage /></AppWrapper></RequireAuth>} />
         <Route path="/save-history" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></AppWrapper></RequireAuth>} />

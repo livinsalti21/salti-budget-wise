@@ -1476,6 +1476,9 @@ export type Database = {
           onboarding_completed_at: string | null
           parent_email: string | null
           phone: string | null
+          phone_verification_code: string | null
+          phone_verification_expires_at: string | null
+          phone_verified: boolean | null
           plan: string | null
           pro_access_until: string | null
           stripe_customer_id: string | null
@@ -1502,6 +1505,9 @@ export type Database = {
           onboarding_completed_at?: string | null
           parent_email?: string | null
           phone?: string | null
+          phone_verification_code?: string | null
+          phone_verification_expires_at?: string | null
+          phone_verified?: boolean | null
           plan?: string | null
           pro_access_until?: string | null
           stripe_customer_id?: string | null
@@ -1528,6 +1534,9 @@ export type Database = {
           onboarding_completed_at?: string | null
           parent_email?: string | null
           phone?: string | null
+          phone_verification_code?: string | null
+          phone_verification_expires_at?: string | null
+          phone_verified?: boolean | null
           plan?: string | null
           pro_access_until?: string | null
           stripe_customer_id?: string | null

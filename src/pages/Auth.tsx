@@ -1,65 +1,36 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PiggyBank, Loader2 } from 'lucide-react';
+import { PiggyBank, Loader2, Mail, ArrowRight, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
-import EnhancedSocialAuth from '@/components/auth/EnhancedSocialAuth';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const { signIn, signUp, user } = useAuth();
+  const [emailSent, setEmailSent] = useState(false);
+  const { sendVerificationEmail } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  // Remove automatic redirect - let routing handle it
-
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await sendVerificationEmail(email);
     
     if (error) {
       toast({
-        title: "Error signing in",
+        title: "Error",
         description: error.message,
         variant: "destructive",
       });
     } else {
+      setEmailSent(true);
       toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
-      // Let the auth context and routing handle navigation
-    }
-    
-    setIsLoading(false);
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const { error } = await signUp(email, password);
-    
-    if (error) {
-      toast({
-        title: "Error creating account",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Account created!",
-        description: "Please check your email to verify your account.",
+        title: "Email Sent!",
+        description: "Check your inbox for the verification link.",
       });
     }
     
@@ -81,89 +52,91 @@ const Auth = () => {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>
-              Sign in to your account or create a new one to start saving and matching with friends & family.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
-                    <Input
-                      id="signin-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Account
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+        {emailSent ? (
+          <Card>
+            <CardHeader className="text-center pb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+              <CardTitle>Check Your Email</CardTitle>
+              <CardDescription>
+                We sent a verification link to <strong>{email}</strong>
+              </CardDescription>
+            </CardHeader>
             
-            <div className="mt-6">
-              <EnhancedSocialAuth />
-            </div>
-          </CardContent>
-        </Card>
+            <CardContent className="space-y-4">
+              <div className="bg-gradient-to-r from-primary/5 to-accent/5 p-4 rounded-lg border border-primary/20">
+                <div className="text-center space-y-2">
+                  <Mail className="h-5 w-5 text-primary mx-auto" />
+                  <p className="text-sm font-medium">What's Next?</p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>1. Check your email inbox</div>
+                    <div>2. Click the verification link</div>
+                    <div>3. Start your savings journey!</div>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                variant="outline" 
+                onClick={() => setEmailSent(false)}
+                className="w-full"
+              >
+                Use Different Email
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="text-center pb-4">
+              <CardTitle>Start Your Savings Journey</CardTitle>
+              <CardDescription>
+                Enter your email to get started. We'll send you a secure verification link.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email Address
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your preferred email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-lg transition-all duration-300 text-white" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      Send Verification Email
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <div className="bg-gradient-to-r from-primary/5 to-accent/5 p-4 rounded-lg border border-primary/20 mt-4">
+                <div className="text-center space-y-2">
+                  <CheckCircle className="h-5 w-5 text-primary mx-auto" />
+                  <p className="text-sm font-medium">Why Email Verification?</p>
+                  <div className="text-xs text-muted-foreground">
+                    We keep your account secure and send you important savings updates.
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

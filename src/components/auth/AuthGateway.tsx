@@ -5,39 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { PiggyBank } from 'lucide-react';
 
 export default function AuthGateway({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const [onboardingStatus, setOnboardingStatus] = useState<'loading' | 'incomplete' | 'complete'>('loading');
 
   useEffect(() => {
-    if (user && onboardingStatus === 'loading') {
-      checkOnboardingStatus();
+    if (user && profile && onboardingStatus === 'loading') {
+      // Use profile data directly from context instead of fetching again
+      setOnboardingStatus(profile.completed_onboarding ? 'complete' : 'incomplete');
     } else if (!user) {
       setOnboardingStatus('loading'); // Reset when user logs out
     }
-  }, [user, onboardingStatus]);
-
-  const checkOnboardingStatus = async () => {
-    if (!user) return;
-    
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('completed_onboarding')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking onboarding status:', error);
-        setOnboardingStatus('incomplete'); // Default to incomplete on error
-        return;
-      }
-
-      setOnboardingStatus(profile?.completed_onboarding ? 'complete' : 'incomplete');
-    } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      setOnboardingStatus('incomplete');
-    }
-  };
+  }, [user, profile, onboardingStatus]);
 
   // Show loading screen while checking auth and onboarding
   if (loading || (user && onboardingStatus === 'loading')) {

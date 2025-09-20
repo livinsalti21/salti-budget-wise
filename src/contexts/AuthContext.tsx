@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  profile: any | null;
   sendVerificationEmail: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const { checkRateLimit, recordAttempt } = useRateLimit();
 
@@ -39,9 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session) {
           setSession(session);
           setUser(session.user);
+          // Fetch or create user profile
+          fetchUserProfile(session.user.id);
         } else {
           setSession(null);
           setUser(null);
+          setProfile(null);
         }
         
         setLoading(false);
@@ -61,6 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         setSession(session);
         setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchUserProfile(session.user.id);
+        }
         setLoading(false);
       } catch (error) {
         console.error('Error in getSession:', error);
@@ -77,6 +85,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setProfile(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const sendVerificationEmail = async (email: string) => {
     // Check rate limit for email attempts
@@ -112,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     session,
+    profile,
     loading,
     sendVerificationEmail,
     signOut,

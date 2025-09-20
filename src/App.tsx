@@ -24,6 +24,7 @@ import SponsorAuth from "./pages/SponsorAuth";
 import SponsorDashboard from "./pages/SponsorDashboard";
 import NotFound from "./pages/NotFound";
 import AuthGateway from "./components/auth/AuthGateway";
+import AuthCallback from "./components/auth/AuthCallback";
 import CompleteOnboarding from "./components/onboarding/CompleteOnboarding";
 import { AccountLinking } from "./components/AccountLinking";
 import MatchAccept from "./pages/MatchAccept";
@@ -57,6 +58,7 @@ const AppContent = () => {
         
         {/* Public routes */}
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />

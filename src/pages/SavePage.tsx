@@ -6,12 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import SaveHistory from "@/components/SaveHistory";
 import { ProjectionSettings } from "@/components/ProjectionSettings";
+import SaveHistoryOnboarding from "@/components/save/SaveHistoryOnboarding";
+import ProjectionOnboarding from "@/components/save/ProjectionOnboarding";
 
 const skippedPurchases = [
   { id: 'coffee', name: 'Coffee', icon: Coffee, amount: 5.50 },
@@ -28,12 +30,79 @@ export default function SavePage() {
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
+  const [showHistoryOnboarding, setShowHistoryOnboarding] = useState(false);
+  const [showProjectionOnboarding, setShowProjectionOnboarding] = useState(false);
+  const [saveCount, setSaveCount] = useState(0);
+  const [hasCustomizedProjections, setHasCustomizedProjections] = useState(false);
+
+  // Check if user needs onboarding
+  useEffect(() => {
+    if (user) {
+      checkOnboardingNeeds();
+    }
+  }, [user]);
+
+  const checkOnboardingNeeds = async () => {
+    if (!user) return;
+
+    try {
+      // Check save count for history onboarding
+      const { count: saveCount } = await supabase
+        .from('save_events')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      setSaveCount(saveCount || 0);
+
+      // Check if user has customized projection settings
+      const savedSettings = localStorage.getItem('projectionSettings');
+      setHasCustomizedProjections(!!savedSettings);
+
+      // Show history onboarding if user has < 3 saves and hasn't seen it
+      const historyOnboardingSeen = localStorage.getItem(`historyOnboarding_${user.id}`);
+      if ((saveCount || 0) < 3 && !historyOnboardingSeen) {
+        setShowHistoryOnboarding(true);
+      }
+
+      // Show projection onboarding if user hasn't customized settings and hasn't seen it
+      const projectionOnboardingSeen = localStorage.getItem(`projectionOnboarding_${user.id}`);
+      if (!savedSettings && !projectionOnboardingSeen) {
+        setShowProjectionOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Error checking onboarding needs:', error);
+    }
+  };
 
   const calculateFutureValue = (amount: number) => {
     const annualRate = 0.08;
     const years = 30;
     const futureValue = amount * Math.pow(1 + annualRate, years);
     return futureValue;
+  };
+
+  const handleHistoryOnboardingComplete = () => {
+    setShowHistoryOnboarding(false);
+    if (user) {
+      localStorage.setItem(`historyOnboarding_${user.id}`, 'completed');
+    }
+  };
+
+  const handleProjectionOnboardingComplete = () => {
+    setShowProjectionOnboarding(false);
+    if (user) {
+      localStorage.setItem(`projectionOnboarding_${user.id}`, 'completed');
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    // Trigger onboarding based on tab selection and conditions
+    if (value === 'history' && saveCount < 5 && !localStorage.getItem(`historyOnboarding_${user?.id}`)) {
+      setShowHistoryOnboarding(true);
+    }
+    if (value === 'growth' && !hasCustomizedProjections && !localStorage.getItem(`projectionOnboarding_${user?.id}`)) {
+      setShowProjectionOnboarding(true);
+    }
   };
 
   const handleSave = async () => {
@@ -116,7 +185,7 @@ export default function SavePage() {
       />
 
       <main className="p-4 max-w-md mx-auto">
-        <Tabs defaultValue="save" className="space-y-6">
+        <Tabs defaultValue="save" className="space-y-6" onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="save">Save</TabsTrigger>
             <TabsTrigger value="history">
@@ -212,11 +281,25 @@ export default function SavePage() {
           </TabsContent>
 
           <TabsContent value="history">
-            <SaveHistory />
+            {showHistoryOnboarding ? (
+              <SaveHistoryOnboarding 
+                onComplete={handleHistoryOnboardingComplete}
+                onSkip={handleHistoryOnboardingComplete}
+              />
+            ) : (
+              <SaveHistory />
+            )}
           </TabsContent>
 
           <TabsContent value="growth">
-            <ProjectionSettings currentSavings={currentSavings} />
+            {showProjectionOnboarding ? (
+              <ProjectionOnboarding 
+                onComplete={handleProjectionOnboardingComplete}
+                onSkip={handleProjectionOnboardingComplete}
+              />
+            ) : (
+              <ProjectionSettings currentSavings={currentSavings} />
+            )}
           </TabsContent>
         </Tabs>
       </main>

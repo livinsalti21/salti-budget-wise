@@ -63,26 +63,32 @@ export default function FriendMatchSection() {
 
     setIsLoading(true);
     
-    // Load friend connections (simplified query)
+    // Load friend connections 
     const { data: friendsData } = await supabase
       .from('friend_connections')
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'accepted');
 
-    if (friendsData) {
-      // Add mock profile data for now
+    // Get profile data for friends
+    if (friendsData?.length) {
+      const friendIds = friendsData.map(f => f.friend_user_id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', friendIds);
+
+      // Join the data
       const friendsWithProfiles = friendsData.map(f => ({
         ...f,
-        profiles: {
-          email: `friend-${f.friend_user_id.slice(0, 8)}@example.com`,
-          display_name: `Friend ${f.friend_user_id.slice(0, 4)}`
-        }
+        profiles: profilesData?.find(p => p.id === f.friend_user_id)
       }));
       setFriends(friendsWithProfiles as FriendConnection[]);
+    } else {
+      setFriends([]);
     }
 
-    // Load recent friend matches (simplified)
+    // Load recent friend matches 
     const { data: matchesData } = await supabase
       .from('friend_matches')
       .select('*')
@@ -90,19 +96,27 @@ export default function FriendMatchSection() {
       .order('created_at', { ascending: false })
       .limit(5);
 
-    if (matchesData) {
-      // Add mock profile data
+    if (matchesData?.length) {
+      // Get profile data for match participants
+      const userIds = [...new Set(matchesData.flatMap(m => [m.original_user_id, m.matching_user_id]))];
+      const { data: matchProfilesData } = await supabase
+        .from('profiles')
+        .select('id, email, display_name')
+        .in('id', userIds);
+
+      // Join the data  
       const matchesWithProfiles = matchesData.map(m => ({
         ...m,
-        profiles: {
-          email: `friend-${m.matching_user_id.slice(0, 8)}@example.com`,
-          display_name: `Friend ${m.matching_user_id.slice(0, 4)}`
-        }
+        profiles: matchProfilesData?.find(p => 
+          p.id === (m.matching_user_id === user.id ? m.original_user_id : m.matching_user_id)
+        )
       }));
       setRecentMatches(matchesWithProfiles as FriendMatch[]);
+    } else {
+      setRecentMatches([]);
     }
 
-    // Load recent saves from friends (simplified)
+    // Load recent saves from friends 
     const friendIds = friendsData?.map(f => f.friend_user_id) || [];
     if (friendIds.length > 0) {
       const { data: savesData } = await supabase
@@ -113,17 +127,25 @@ export default function FriendMatchSection() {
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (savesData) {
-        // Add mock profile data
+      if (savesData?.length) {
+        // Get profile data for save authors
+        const saveUserIds = [...new Set(savesData.map(s => s.user_id))];
+        const { data: saveProfilesData } = await supabase
+          .from('profiles')
+          .select('id, email, display_name')
+          .in('id', saveUserIds);
+
+        // Join the data
         const savesWithProfiles = savesData.map(s => ({
           ...s,
-          profiles: {
-            email: `friend-${s.user_id.slice(0, 8)}@example.com`,
-            display_name: `Friend ${s.user_id.slice(0, 4)}`
-          }
+          profiles: saveProfilesData?.find(p => p.id === s.user_id)
         }));
         setFriendSaves(savesWithProfiles as RecentSave[]);
+      } else {
+        setFriendSaves([]);
       }
+    } else {
+      setFriendSaves([]);
     }
 
     setIsLoading(false);

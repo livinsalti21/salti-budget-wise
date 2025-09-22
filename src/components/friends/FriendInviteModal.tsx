@@ -207,23 +207,81 @@ Talk soon!`;
     }
   };
 
+  const sendFriendRequest = async (email: string, name?: string) => {
+    if (!user) return;
+
+    try {
+      // Check if user exists with this email
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (existingUser) {
+        // Check if friend connection already exists
+        const { data: existingConnection } = await supabase
+          .from('friend_connections')
+          .select('id, status')
+          .or(`and(user_id.eq.${user.id},friend_user_id.eq.${existingUser.id}),and(user_id.eq.${existingUser.id},friend_user_id.eq.${user.id})`)
+          .single();
+
+        if (existingConnection) {
+          toast({
+            title: "Already Connected",
+            description: `You're already friends with ${name || email}`,
+          });
+          return;
+        }
+
+        // Create friend connection request
+        const { error } = await supabase.from('friend_connections').insert({
+          user_id: user.id,
+          friend_user_id: existingUser.id,
+          status: 'pending'
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Friend Request Sent! 🎉",
+          description: `Sent friend request to ${name || email}`,
+        });
+      } else {
+        // User not on platform, send invitation
+        toast({
+          title: "Invitation Sent! 📧",
+          description: `${name || email} will receive an invitation to join`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send friend request",
+        variant: "destructive",
+      });
+    }
+  };
+
   const trackInvitation = async (method: string, contact: string) => {
     if (!user) return;
     
     try {
-      await supabase.from('referral_events').insert({
-        referral_id: user.id, // Simplified for demo
-        event_type: 'sent',
-        metadata: { method, contact }
+      // Track invitation analytics
+      await supabase.from('analytics_events').insert({
+        user_id: user.id,
+        event_name: 'friend_invitation_sent',
+        properties: { method, contact }
       });
     } catch (error) {
       console.error('Failed to track invitation:', error);
     }
   };
 
-  const handleManualInvite = () => {
+  const handleManualInvite = async () => {
     if (manualEmail) {
-      inviteByEmail(manualEmail);
+      await sendFriendRequest(manualEmail);
+      await inviteByEmail(manualEmail);
       setManualEmail('');
     } else if (manualPhone) {
       inviteByPhone(manualPhone);
@@ -390,15 +448,18 @@ Talk soon!`;
                                   <MessageCircle className="h-3 w-3" />
                                 </Button>
                               )}
-                              {contact.email && (
-                                <Button
-                                  size="sm"
-                                  onClick={() => inviteByEmail(contact.email!, contact.name)}
-                                  className="h-7 px-2"
-                                >
-                                  <Mail className="h-3 w-3" />
-                                </Button>
-                              )}
+                               {contact.email && (
+                                 <Button
+                                   size="sm"
+                                   onClick={async () => {
+                                     await sendFriendRequest(contact.email!, contact.name);
+                                     await inviteByEmail(contact.email!, contact.name);
+                                   }}
+                                   className="h-7 px-2"
+                                 >
+                                   <Mail className="h-3 w-3" />
+                                 </Button>
+                               )}
                             </div>
                           </div>
                         ))}

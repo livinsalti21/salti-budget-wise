@@ -1,16 +1,64 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/PageHeader";
 import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
+import { MatchPageOnboarding } from '@/components/match/MatchPageOnboarding';
 import MobileMatchSection from '@/components/mobile/MobileMatchSection';
 import FriendMatchSection from '@/components/friends/FriendMatchSection';
 import StreakMatchSection from '@/components/match/StreakMatchSection';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Users, Heart, Flame } from 'lucide-react';
 
 export default function MatchPage() {
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("friends");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    checkFirstTimeVisit();
+  }, [user]);
+
+  const checkFirstTimeVisit = async () => {
+    if (!user) return;
+
+    // Check if user has seen match page onboarding
+    const hasSeenOnboarding = localStorage.getItem(`match-onboarding-${user.id}`);
+    
+    // Also check if user has any friend connections or match rules
+    const { data: friendConnections } = await supabase
+      .from('friend_connections')
+      .select('id')
+      .eq('user_id', user.id)
+      .limit(1);
+
+    const { data: matchRules } = await supabase
+      .from('match_rules')
+      .select('id')
+      .eq('recipient_user_id', user.id)
+      .limit(1);
+
+    // Show onboarding if they haven't seen it and have no connections
+    if (!hasSeenOnboarding && !friendConnections?.length && !matchRules?.length) {
+      setShowOnboarding(true);
+    }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    if (user) {
+      localStorage.setItem(`match-onboarding-${user.id}`, 'true');
+    }
+  };
+
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
+    if (user) {
+      localStorage.setItem(`match-onboarding-${user.id}`, 'true');
+    }
+  };
 
   if (isMobile) {
     return (
@@ -23,9 +71,11 @@ export default function MatchPage() {
 
         <div className="p-4 space-y-4">
           {/* Quick Explainer */}
-          <div className="mb-4">
-            <MatchExplainer variant="compact" />
-          </div>
+          {!showOnboarding && (
+            <div className="mb-4">
+              <MatchExplainer variant="compact" />
+            </div>
+          )}
           
           {/* Mobile Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -57,6 +107,14 @@ export default function MatchPage() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Match Page Onboarding Modal */}
+        {showOnboarding && (
+          <MatchPageOnboarding 
+            onComplete={handleOnboardingComplete}
+            onSkip={handleOnboardingSkip}
+          />
+        )}
       </div>
     );
   }
@@ -71,9 +129,11 @@ export default function MatchPage() {
       />
 
       <main className="p-6 max-w-6xl mx-auto">
-        <div className="mb-6">
-          <MatchExplainer variant="full" />
-        </div>
+        {!showOnboarding && (
+          <div className="mb-6">
+            <MatchExplainer variant="full" />
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto">
@@ -104,6 +164,14 @@ export default function MatchPage() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Match Page Onboarding Modal */}
+      {showOnboarding && (
+        <MatchPageOnboarding 
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
     </div>
   );
 }

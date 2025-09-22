@@ -11,12 +11,14 @@ import { hasProAccess } from "@/lib/permissions/hasProAccess";
 import SettingsPanel from "@/components/SettingsPanel";
 import NotificationCenter from "@/components/NotificationCenter";
 import { SecurityDashboard } from "@/components/SecurityDashboard";
+import { ProfileOnboarding } from "@/components/profile/ProfileOnboarding";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [isSponsor, setIsSponsor] = useState<boolean>(false);
   const [sponsorLoading, setSponsorLoading] = useState<boolean>(true);
+  const [currentTab, setCurrentTab] = useState<string>('profile');
 
   useEffect(() => {
     if (user) {
@@ -75,7 +77,15 @@ export default function ProfilePage() {
       />
 
       <main className="p-4 max-w-md mx-auto">
-        <Tabs defaultValue="profile" className="space-y-6">
+        {/* Profile Onboarding Component */}
+        <ProfileOnboarding 
+          currentTab={currentTab}
+          onTabChange={setCurrentTab}
+          profile={profile}
+          isSponsor={isSponsor}
+        />
+
+        <Tabs defaultValue="profile" value={currentTab} onValueChange={setCurrentTab} className="space-y-6">
           <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="profile">Profile</TabsTrigger>
             <TabsTrigger value="settings">

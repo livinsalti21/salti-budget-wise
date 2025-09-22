@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,8 +12,6 @@ import { Progress } from '@/components/ui/progress';
 import { PiggyBank, TrendingUp, Zap, Share2, Target, Users, Award, Flame, Calendar } from 'lucide-react';
 import InsightCard from '@/components/ai/InsightCard';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 
 interface ImpactProjection {
@@ -46,10 +47,9 @@ const EnhancedSaveStack = () => {
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [userStreak, setUserStreak] = useState<StreakData | null>(null);
+  const { stats, formatCurrency, streakInfo, triggerRefresh } = useProfile();
   const [userBadges, setUserBadges] = useState<BadgeData[]>([]);
   const [recentSaves, setRecentSaves] = useState<SaveData[]>([]);
-  const [totalSaved, setTotalSaved] = useState(0);
   const [showMatchDialog, setShowMatchDialog] = useState(false);
   const [showSavingsInsight, setShowSavingsInsight] = useState(false);
   const { user } = useAuth();
@@ -72,9 +72,9 @@ const EnhancedSaveStack = () => {
     if (!user) return;
 
     try {
-      // Load user saves
+      // Load recent save events (detailed view still needed)
       const { data: saves } = await supabase
-        .from('saves')
+        .from('save_events')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -82,8 +82,6 @@ const EnhancedSaveStack = () => {
 
       if (saves) {
         setRecentSaves(saves);
-        const total = saves.reduce((sum, save) => sum + save.amount_cents, 0);
-        setTotalSaved(total);
         
         // Show insight if user has saved recently
         if (saves.length >= 2) {
@@ -91,18 +89,32 @@ const EnhancedSaveStack = () => {
         }
       }
 
-      // Mock badges and streaks for now until database is set up
-      setUserBadges([
-        { id: '1', name: 'First Save', description: 'Made your first save!', icon: '🎯' },
-        { id: '2', name: 'Consistent Saver', description: 'Saved 5 times', icon: '🔥' }
-      ]);
-      
-      setUserStreak({
-        current_length: Math.floor(saves?.length || 0 / 2),
-        longest_length: saves?.length || 0,
-        is_active: true
-      });
+      // Load badges (detailed view still needed)
+      const { data: badges } = await supabase
+        .from('user_badges')
+        .select(`
+          badges (
+            id,
+            name,
+            description,
+            icon,
+            requirement_type,
+            requirement_value
+          ),
+          earned_at
+        `)
+        .eq('user_id', user.id);
 
+      if (badges) {
+        const formattedBadges = badges.map(b => ({
+          id: b.badges.id,
+          name: b.badges.name,
+          description: b.badges.description,
+          icon: b.badges.icon,
+          earned_at: b.earned_at
+        }));
+        setUserBadges(formattedBadges);
+      }
     } catch (error) {
       console.error('Error loading user data:', error);
     }
@@ -120,36 +132,85 @@ const EnhancedSaveStack = () => {
     
     const amountCents = Math.round(parseFloat(amount) * 100);
     
-    const { error } = await supabase
-      .from('saves')
-      .insert({
-        user_id: user.id,
-        amount_cents: amountCents,
-        reason: reason,
-      });
+    try {
+      // Get or create a default stacklet for the user
+      let { data: stacklet, error: stackletError } = await supabase
+        .from('stacklets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .limit(1)
+        .single();
 
-    if (error) {
+      // If no stacklet exists, create a default one
+      if (stackletError || !stacklet) {
+        const { data: newStacklet, error: createError } = await supabase
+          .from('stacklets')
+          .insert({
+            user_id: user.id,
+            title: 'General Savings',
+            emoji: '💰',
+            target_cents: 100000, // $1000 default target
+            is_archived: false
+          })
+          .select('id')
+          .single();
+        
+        if (createError) {
+          toast({
+            title: "Error creating stacklet",
+            description: createError.message,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
+        stacklet = newStacklet;
+      }
+
+      // Now create the save event
+      const { error } = await supabase
+        .from('save_events')
+        .insert({
+          user_id: user.id,
+          stacklet_id: stacklet.id,
+          amount_cents: amountCents,
+          reason: reason,
+          source: 'manual'
+        });
+
+      if (error) {
+        toast({
+          title: "Error saving",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        const projection = calculateImpactProjection(amountCents);
+        
+        toast({
+          title: "Nice! You just stacked $" + amount + " today 🎉",
+          description: `That's worth $${projection.twentyYears.toFixed(2)} in 20 years at 8% returns!`,
+        });
+        
+        setAmount('');
+        setReason('');
+        
+        // Trigger profile refresh and reload detailed data
+        await triggerRefresh();
+        await loadUserData();
+        
+        // Show match dialog after successful save
+        setShowMatchDialog(true);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
       toast({
         title: "Error saving",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      const projection = calculateImpactProjection(amountCents);
-      
-      toast({
-        title: "Nice! You just stacked $" + amount + " today 🎉",
-        description: `That's worth $${projection.twentyYears.toFixed(2)} in 20 years at 8% returns!`,
-      });
-      
-      setAmount('');
-      setReason('');
-      
-      // Reload user data to show updated stats
-      loadUserData();
-      
-      // Show match dialog after successful save
-      setShowMatchDialog(true);
     }
     
     setIsLoading(false);
@@ -176,11 +237,11 @@ const EnhancedSaveStack = () => {
   return (
     <div className="space-y-6">
       {/* AI Savings Insight */}
-      {showSavingsInsight && totalSaved > 0 && (
+      {showSavingsInsight && stats.totalSaved > 0 && (
         <InsightCard
           title="Supercharge Your Savings"
-          description={`You've saved $${(totalSaved/100).toFixed(2)} so far! Set up a weekly auto-save to 3x your momentum and build consistent wealth-building habits.`}
-          impact={`+$${((totalSaved/100) * 3 * 12).toFixed(0)}/year potential`}
+          description={`You've saved ${formatCurrency(stats.totalSaved)} so far! Set up a weekly auto-save to 3x your momentum and build consistent wealth-building habits.`}
+          impact={`+${formatCurrency(stats.totalSaved * 3 * 12)}/year potential`}
           actionLabel="Set Up Auto-Save"
           variant="success"
           onAccept={() => {
@@ -204,7 +265,7 @@ const EnhancedSaveStack = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Saved</p>
                 <p className="text-xl font-bold text-primary">
-                  ${(totalSaved / 100).toFixed(2)}
+                  {formatCurrency(stats.totalSaved)}
                 </p>
               </div>
             </div>
@@ -218,7 +279,7 @@ const EnhancedSaveStack = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Save Streak</p>
                 <p className="text-xl font-bold text-warning">
-                  {userStreak?.current_length || 0} days
+                  {streakInfo.current} days
                 </p>
               </div>
             </div>

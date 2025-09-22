@@ -10,6 +10,8 @@ interface AuthContextType {
   profile: any | null;
   sendVerificationEmail: (email: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<any>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,9 +90,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      const { data: profile, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          total_saved_cents,
+          current_streak_days,
+          longest_streak_days,
+          total_stacklets,
+          completed_goals,
+          active_budgets,
+          last_save_date,
+          total_saves_count,
+          notification_preferences,
+          ui_preferences
+        `)
         .eq('id', userId)
         .single();
 
@@ -99,10 +113,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setProfile(profile);
+      setProfile(data);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Unexpected error fetching profile:', error);
     }
+  };
+
+  const updateProfile = async (updates: Partial<any>) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error updating profile:', error);
+        return;
+      }
+
+      // Refresh profile data
+      await fetchUserProfile(user.id);
+    } catch (error) {
+      console.error('Unexpected error updating profile:', error);
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (!user) return;
+    await fetchUserProfile(user.id);
   };
 
   const sendVerificationEmail = async (email: string) => {
@@ -143,6 +183,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     sendVerificationEmail,
     signOut,
+    updateProfile,
+    refreshProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

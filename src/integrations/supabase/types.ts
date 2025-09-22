@@ -1457,11 +1457,14 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active_budgets: number | null
           avatar_url: string | null
           birth_year: number | null
           bonus_access_until: string | null
+          completed_goals: number | null
           completed_onboarding: boolean | null
           created_at: string
+          current_streak_days: number | null
           default_splits: Json | null
           display_name: string | null
           email: string | null
@@ -1471,8 +1474,11 @@ export type Database = {
           id: string
           in_group: boolean | null
           last_route: string | null
+          last_save_date: string | null
           lightning_address: string | null
+          longest_streak_days: number | null
           mode: string | null
+          notification_preferences: Json | null
           onboarding_completed_at: string | null
           parent_email: string | null
           phone: string | null
@@ -1483,14 +1489,21 @@ export type Database = {
           pro_access_until: string | null
           stripe_customer_id: string | null
           timezone: string | null
+          total_saved_cents: number | null
+          total_saves_count: number | null
+          total_stacklets: number | null
+          ui_preferences: Json | null
           updated_at: string
         }
         Insert: {
+          active_budgets?: number | null
           avatar_url?: string | null
           birth_year?: number | null
           bonus_access_until?: string | null
+          completed_goals?: number | null
           completed_onboarding?: boolean | null
           created_at?: string
+          current_streak_days?: number | null
           default_splits?: Json | null
           display_name?: string | null
           email?: string | null
@@ -1500,8 +1513,11 @@ export type Database = {
           id: string
           in_group?: boolean | null
           last_route?: string | null
+          last_save_date?: string | null
           lightning_address?: string | null
+          longest_streak_days?: number | null
           mode?: string | null
+          notification_preferences?: Json | null
           onboarding_completed_at?: string | null
           parent_email?: string | null
           phone?: string | null
@@ -1512,14 +1528,21 @@ export type Database = {
           pro_access_until?: string | null
           stripe_customer_id?: string | null
           timezone?: string | null
+          total_saved_cents?: number | null
+          total_saves_count?: number | null
+          total_stacklets?: number | null
+          ui_preferences?: Json | null
           updated_at?: string
         }
         Update: {
+          active_budgets?: number | null
           avatar_url?: string | null
           birth_year?: number | null
           bonus_access_until?: string | null
+          completed_goals?: number | null
           completed_onboarding?: boolean | null
           created_at?: string
+          current_streak_days?: number | null
           default_splits?: Json | null
           display_name?: string | null
           email?: string | null
@@ -1529,8 +1552,11 @@ export type Database = {
           id?: string
           in_group?: boolean | null
           last_route?: string | null
+          last_save_date?: string | null
           lightning_address?: string | null
+          longest_streak_days?: number | null
           mode?: string | null
+          notification_preferences?: Json | null
           onboarding_completed_at?: string | null
           parent_email?: string | null
           phone?: string | null
@@ -1541,6 +1567,10 @@ export type Database = {
           pro_access_until?: string | null
           stripe_customer_id?: string | null
           timezone?: string | null
+          total_saved_cents?: number | null
+          total_saves_count?: number | null
+          total_stacklets?: number | null
+          ui_preferences?: Json | null
           updated_at?: string
         }
         Relationships: []
@@ -2750,6 +2780,10 @@ export type Database = {
         Returns: boolean
       }
       update_friend_streaks: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
+      update_user_profile_summary: {
         Args: { target_user_id: string }
         Returns: undefined
       }

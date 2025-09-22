@@ -3,16 +3,31 @@ import NetWorthProjection from "@/components/NetWorthProjection";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import NetWorthOnboarding from "@/components/networth/NetWorthOnboarding";
 
 export default function NetWorthPage() {
   const { user } = useAuth();
   const [currentSavings, setCurrentSavings] = useState(0);
+  const [showNetWorthOnboarding, setShowNetWorthOnboarding] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadCurrentSavings();
+      checkNetWorthOnboardingNeeds();
     }
   }, [user]);
+
+  const checkNetWorthOnboardingNeeds = () => {
+    const completedNetWorthOnboarding = localStorage.getItem('networth_onboarding_completed');
+    if (!completedNetWorthOnboarding) {
+      setTimeout(() => setShowNetWorthOnboarding(true), 800);
+    }
+  };
+
+  const handleNetWorthOnboardingComplete = () => {
+    localStorage.setItem('networth_onboarding_completed', 'true');
+    setShowNetWorthOnboarding(false);
+  };
 
   const loadCurrentSavings = async () => {
     try {
@@ -39,6 +54,13 @@ export default function NetWorthPage() {
       <main className="p-4 max-w-4xl mx-auto">
         <NetWorthProjection currentSavings={currentSavings} />
       </main>
+
+      {showNetWorthOnboarding && (
+        <NetWorthOnboarding
+          onComplete={handleNetWorthOnboardingComplete}
+          onSkip={handleNetWorthOnboardingComplete}
+        />
+      )}
     </div>
   );
 }

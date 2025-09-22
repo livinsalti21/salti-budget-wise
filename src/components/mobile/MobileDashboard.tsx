@@ -13,6 +13,7 @@ import BudgetProgress from '@/components/BudgetProgress';
 import MobileMatchSection from './MobileMatchSection';
 import { Link } from 'react-router-dom';
 import { track, EVENTS } from '@/analytics/analytics';
+import MobileDashboardOnboarding from './MobileDashboardOnboarding';
 
 interface DashboardData {
   totalSaved: number;
@@ -45,13 +46,27 @@ export default function MobileDashboard() {
   const [topFriends, setTopFriends] = useState<FriendStreak[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [showMobileOnboarding, setShowMobileOnboarding] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
       loadTopFriends();
+      checkMobileOnboardingNeeds();
     }
   }, [user]);
+
+  const checkMobileOnboardingNeeds = () => {
+    const completedMobileOnboarding = localStorage.getItem('mobile_dashboard_onboarding_completed');
+    if (!completedMobileOnboarding) {
+      setTimeout(() => setShowMobileOnboarding(true), 1500);
+    }
+  };
+
+  const handleMobileOnboardingComplete = () => {
+    localStorage.setItem('mobile_dashboard_onboarding_completed', 'true');
+    setShowMobileOnboarding(false);
+  };
 
   const loadDashboardData = async () => {
     if (!user) return;
@@ -451,6 +466,13 @@ export default function MobileDashboard() {
             </TouchTarget>
           </CardContent>
         </Card>
+      )}
+
+      {showMobileOnboarding && (
+        <MobileDashboardOnboarding
+          onComplete={handleMobileOnboardingComplete}
+          onSkip={handleMobileOnboardingComplete}
+        />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import GoalsOnboarding from "@/components/goals/GoalsOnboarding";
 
 export default function GoalsPage() {
   const { user } = useAuth();
@@ -14,12 +15,41 @@ export default function GoalsPage() {
     projectedAnnual: 0,
     projectedDecade: 0
   });
+  const [showGoalsOnboarding, setShowGoalsOnboarding] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadGoalData();
+      checkGoalsOnboardingNeeds();
     }
   }, [user]);
+
+  const checkGoalsOnboardingNeeds = async () => {
+    const completedGoalsOnboarding = localStorage.getItem('goals_onboarding_completed');
+    
+    if (!completedGoalsOnboarding) {
+      // Check if user has meaningful goal engagement
+      try {
+        const { data: saveData } = await supabase
+          .from('save_events')
+          .select('amount_cents')
+          .eq('user_id', user?.id)
+          .limit(5);
+
+        // Show onboarding if user has fewer than 5 saves
+        if (!saveData || saveData.length < 5) {
+          setShowGoalsOnboarding(true);
+        }
+      } catch (error) {
+        setShowGoalsOnboarding(true);
+      }
+    }
+  };
+
+  const handleGoalsOnboardingComplete = () => {
+    localStorage.setItem('goals_onboarding_completed', 'true');
+    setShowGoalsOnboarding(false);
+  };
 
   const loadGoalData = async () => {
     try {
@@ -170,6 +200,13 @@ export default function GoalsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {showGoalsOnboarding && (
+        <GoalsOnboarding
+          onComplete={handleGoalsOnboardingComplete}
+          onSkip={handleGoalsOnboardingComplete}
+        />
+      )}
     </div>
   );
 }

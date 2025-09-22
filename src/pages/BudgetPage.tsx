@@ -18,6 +18,8 @@ import ProGate from "@/components/core/ProGate";
 import { FeatureGate } from "@/components/core/FeatureGate";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 import { MessageCircle } from "lucide-react";
+import BudgetOnboarding from "@/components/budget/BudgetOnboarding";
+import BudgetDashboardOnboarding from "@/components/budget/BudgetDashboardOnboarding";
 
 export default function BudgetPage() {
   const [currentView, setCurrentView] = useState<'method-select' | 'ai' | 'upload' | 'template' | 'manual' | 'fallback' | 'dashboard'>('method-select');
@@ -25,14 +27,40 @@ export default function BudgetPage() {
   const [budgetId, setBudgetId] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [showCoach, setShowCoach] = useState(false);
+  const [showBudgetOnboarding, setShowBudgetOnboarding] = useState(false);
+  const [showDashboardOnboarding, setShowDashboardOnboarding] = useState(false);
   const { user } = useAuth();
 
   // Load existing budget on component mount
   useEffect(() => {
     if (user) {
       loadExistingBudget();
+      checkOnboardingNeeds();
     }
   }, [user]);
+
+  const checkOnboardingNeeds = () => {
+    const completedBudgetOnboarding = localStorage.getItem('budget_onboarding_completed');
+    const completedDashboardOnboarding = localStorage.getItem('budget_dashboard_onboarding_completed');
+    
+    if (!completedBudgetOnboarding && currentView === 'method-select') {
+      setShowBudgetOnboarding(true);
+    }
+    
+    if (!completedDashboardOnboarding && currentView === 'dashboard' && budgetData) {
+      setShowDashboardOnboarding(true);
+    }
+  };
+
+  const handleBudgetOnboardingComplete = () => {
+    localStorage.setItem('budget_onboarding_completed', 'true');
+    setShowBudgetOnboarding(false);
+  };
+
+  const handleDashboardOnboardingComplete = () => {
+    localStorage.setItem('budget_dashboard_onboarding_completed', 'true');
+    setShowDashboardOnboarding(false);
+  };
 
   const loadExistingBudget = async () => {
     if (!user) return;
@@ -64,6 +92,12 @@ export default function BudgetPage() {
     setBudgetData(data);
     setBudgetId(undefined); // New budget, no ID yet
     setCurrentView('dashboard');
+    
+    // Trigger dashboard onboarding for first-time budget creators
+    const completedDashboardOnboarding = localStorage.getItem('budget_dashboard_onboarding_completed');
+    if (!completedDashboardOnboarding) {
+      setTimeout(() => setShowDashboardOnboarding(true), 500);
+    }
   };
 
   const handleBackToMethodSelect = () => {
@@ -133,10 +167,18 @@ export default function BudgetPage() {
             </div>
           </div>
         ) : currentView === 'method-select' && (
-          <BudgetCreationFlow 
-            onMethodSelected={handleMethodSelected}
-            onBudgetCreated={handleBudgetCreated}
-          />
+          <>
+            <BudgetCreationFlow 
+              onMethodSelected={handleMethodSelected}
+              onBudgetCreated={handleBudgetCreated}
+            />
+            {showBudgetOnboarding && (
+              <BudgetOnboarding
+                onComplete={handleBudgetOnboardingComplete}
+                onSkip={handleBudgetOnboardingComplete}
+              />
+            )}
+          </>
         )}
         
         {currentView === 'ai' && (
@@ -178,11 +220,19 @@ export default function BudgetPage() {
         )}
         
         {currentView === 'dashboard' && budgetData && (
-          <WeeklyBudgetDashboard 
-            budgetData={budgetData} 
-            budgetId={budgetId}
-            onBudgetSaved={(savedBudgetId) => setBudgetId(savedBudgetId)}
-          />
+          <>
+            <WeeklyBudgetDashboard 
+              budgetData={budgetData} 
+              budgetId={budgetId}
+              onBudgetSaved={(savedBudgetId) => setBudgetId(savedBudgetId)}
+            />
+            {showDashboardOnboarding && (
+              <BudgetDashboardOnboarding
+                onComplete={handleDashboardOnboardingComplete}
+                onSkip={handleDashboardOnboardingComplete}
+              />
+            )}
+          </>
         )}
       </main>
 

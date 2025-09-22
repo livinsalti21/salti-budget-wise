@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import RewardsOnboarding from "@/components/rewards/RewardsOnboarding";
 
 const rewards = [
   {
@@ -56,6 +58,20 @@ const challenges = [
 ];
 
 export default function RewardsPage() {
+  const [showRewardsOnboarding, setShowRewardsOnboarding] = useState(false);
+
+  useEffect(() => {
+    const completedRewardsOnboarding = localStorage.getItem('rewards_onboarding_completed');
+    if (!completedRewardsOnboarding) {
+      setTimeout(() => setShowRewardsOnboarding(true), 600);
+    }
+  }, []);
+
+  const handleRewardsOnboardingComplete = () => {
+    localStorage.setItem('rewards_onboarding_completed', 'true');
+    setShowRewardsOnboarding(false);
+  };
+
   return (
     <div className="pb-20 safe-area-top">
       <header className="sticky top-0 z-10 bg-background/90 backdrop-blur p-4 border-b">
@@ -169,6 +185,13 @@ export default function RewardsPage() {
           </CardContent>
         </Card>
       </main>
+
+      {showRewardsOnboarding && (
+        <RewardsOnboarding
+          onComplete={handleRewardsOnboardingComplete}
+          onSkip={handleRewardsOnboardingComplete}
+        />
+      )}
     </div>
   );
 }

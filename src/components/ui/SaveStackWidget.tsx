@@ -57,7 +57,7 @@ export function SaveStackWidget() {
   // Don't show widget if user is not authenticated
   if (!user) return null;
 
-  const calculateFutureValue = (amountCents: number, years: number = 10): number => {
+  const calculateFutureValue = (amountCents: number, years: number = 40): number => {
     const principal = amountCents / 100;
     const annualRate = 0.08; // 8% annual return
     return principal * Math.pow(1 + annualRate, years);
@@ -88,8 +88,8 @@ export function SaveStackWidget() {
       const futureValue = calculateFutureValue(amountCents);
       
       toast({
-        title: `Nice! You saved $${quickAmount} 🎉`,
-        description: `Worth $${futureValue.toFixed(2)} in 10 years!`,
+        title: `💎 Wealth Builder Move!`,
+        description: `$${quickAmount} invested → $${futureValue.toFixed(2)} compound wealth in 40 years!`,
       });
       
       loadRecentSaves();
@@ -123,8 +123,8 @@ export function SaveStackWidget() {
       const futureValue = calculateFutureValue(amountCents);
       
       toast({
-        title: `Great save! $${amount} stacked 🚀`,
-        description: `Future value: $${futureValue.toFixed(2)} in 10 years!`,
+        title: `🚀 Wealth Accelerated!`,
+        description: `$${amount} investment → $${futureValue.toFixed(2)} compound wealth in 40 years!`,
       });
       
       setAmount('');
@@ -160,7 +160,7 @@ export function SaveStackWidget() {
           <div className="flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-primary" />
             <div>
-              <h3 className="font-semibold text-sm">Save & Stack</h3>
+              <h3 className="font-semibold text-sm">Wealth Accelerator</h3>
               <p className="text-xs text-muted-foreground">
                 Total: ${(totalSaved / 100).toFixed(2)}
               </p>
@@ -241,9 +241,9 @@ export function SaveStackWidget() {
             <div className="flex items-center justify-between p-2 bg-primary/5 rounded-lg">
               <div className="flex items-center gap-1">
                 <TrendingUp className="h-3 w-3 text-primary" />
-                <span className="text-xs text-muted-foreground">10yr value:</span>
+                <span className="text-xs text-muted-foreground">40yr wealth:</span>
               </div>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs bg-gradient-to-r from-accent/20 to-primary/20 font-bold">
                 ${calculateFutureValue(parseFloat(amount) * 100).toFixed(2)}
               </Badge>
             </div>

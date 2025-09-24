@@ -14,6 +14,7 @@ interface ImpactProjection {
   tenYears: number;
   twentyYears: number;
   thirtyYears: number;
+  fortyYears: number;
 }
 
 export default function SaveStack() {
@@ -33,14 +34,15 @@ export default function SaveStack() {
       fiveYears: amount * Math.pow(1 + annualRate, 5),
       tenYears: amount * Math.pow(1 + annualRate, 10),
       twentyYears: amount * Math.pow(1 + annualRate, 20),
-      thirtyYears: amount * Math.pow(1 + annualRate, 30)
+      thirtyYears: amount * Math.pow(1 + annualRate, 30),
+      fortyYears: amount * Math.pow(1 + annualRate, 40)
     };
   };
 
-  const calculate35YearProjection = (amountCents: number): number => {
+  const calculate40YearProjection = (amountCents: number): number => {
     const amount = amountCents / 100;
     const annualRate = 0.08;
-    return amount * Math.pow(1 + annualRate, 35);
+    return amount * Math.pow(1 + annualRate, 40);
   };
 
   const handleSaveStack = async (e: React.FormEvent) => {
@@ -54,14 +56,14 @@ export default function SaveStack() {
     setLoading(true);
     try {
       const amountCents = Math.round(parseFloat(amount) * 100);
-      const projection35Year = calculate35YearProjection(amountCents);
+      const projection40Year = calculate40YearProjection(amountCents);
       
       // Store locally for demo
       const newTotal = totalSaved + amountCents;
       setTotalSaved(newTotal);
       setSaveCount(saveCount + 1);
       
-      alert(`🚀 SAVE STACKED! 🚀\n💰 $${amount} saved today → $${projection35Year.toFixed(2)} in 35 years at 8% return! 📈`);
+      alert(`💎 Wealth Builder Move!\n$${amount} invested in your future → $${projection40Year.toFixed(2)} compound wealth in 40 years! 🚀`);
 
       // Reset form
       setAmount('');
@@ -113,9 +115,9 @@ export default function SaveStack() {
         <Card className="bg-gradient-to-br from-accent/10 to-accent/5">
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-accent">
-              ${formatCurrency(calculateImpactProjection(totalSaved).thirtyYears)}
+              ${formatCurrency(calculateImpactProjection(totalSaved).fortyYears)}
             </div>
-            <div className="text-sm text-muted-foreground">30Y Projection</div>
+            <div className="text-sm text-muted-foreground">40Y Wealth Goal</div>
           </CardContent>
         </Card>
       </div>
@@ -125,10 +127,10 @@ export default function SaveStack() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PiggyBank className="h-5 w-5 text-primary" />
-            Save & Stack
+            Wealth Accelerator
           </CardTitle>
           <CardDescription>
-            Turn your conscious spending into future wealth
+            Transform smart spending decisions into serious wealth accumulation
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -158,7 +160,7 @@ export default function SaveStack() {
             </div>
 
             <Button type="submit" disabled={loading} className="w-full" size="lg">
-              {loading ? "Saving..." : "Save & Stack"}
+              {loading ? "Building Wealth..." : "Accelerate My Wealth"}
               <Sparkles className="h-4 w-4 ml-2" />
             </Button>
           </form>
@@ -171,14 +173,14 @@ export default function SaveStack() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-success" />
-              Impact Projection
+              Your Financial Future
             </CardTitle>
             <CardDescription>
-              See how your ${amount} save grows over time (8% annual return)
+              See how your ${amount} investment compounds into wealth (8% annual return)
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
               <div className="text-center p-3 bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg">
                 <div className="text-lg font-bold text-primary">
                   ${formatCurrency(projection.oneYear)}
@@ -208,6 +210,17 @@ export default function SaveStack() {
                   ${formatCurrency(projection.thirtyYears)}
                 </div>
                 <div className="text-xs text-muted-foreground">30 Years</div>
+              </div>
+              <div className="text-center p-3 bg-gradient-to-br from-accent/20 to-primary/20 rounded-lg border-2 border-accent/50 relative">
+                <div className="text-xl font-black bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+                  ${formatCurrency(projection.fortyYears)}
+                </div>
+                <div className="text-xs text-muted-foreground font-medium">🎯 40-Year Wealth</div>
+                <div className="absolute -top-1 -right-1">
+                  <span className="text-xs bg-gradient-to-r from-accent to-primary text-white px-2 py-1 rounded-full font-bold">
+                    GOAL
+                  </span>
+                </div>
               </div>
             </div>
             

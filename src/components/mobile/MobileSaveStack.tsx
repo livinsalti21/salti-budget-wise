@@ -57,10 +57,10 @@ export default function MobileSaveStack() {
     };
   };
 
-  const calculate35YearProjection = (amountCents: number): number => {
+  const calculate40YearProjection = (amountCents: number): number => {
     const principal = amountCents / 100;
     const annualRate = 0.08;
-    return principal * Math.pow(1 + annualRate, 35);
+    return principal * Math.pow(1 + annualRate, 40);
   };
 
   const handleQuickAmount = (quickAmount: string, quickReason: string) => {
@@ -92,12 +92,12 @@ export default function MobileSaveStack() {
         variant: "destructive",
       });
     } else {
-      const projection35Year = calculate35YearProjection(amountCents);
+      const projection40Year = calculate40YearProjection(amountCents);
       
       toast({
-        title: "🚀 SAVE STACKED! 🚀",
-        description: `💰 $${amount} saved today → $${projection35Year.toFixed(2)} in 35 years at 8% return! 📈`,
-        duration: 8000,
+        title: "💎 Wealth Builder Move!",
+        description: `$${amount} invested in your future → $${projection40Year.toFixed(2)} compound wealth in 40 years! 🚀`,
+        duration: 8000,  
         className: "border-2 border-success bg-gradient-to-r from-success/20 to-primary/20 text-lg font-semibold shadow-2xl",
       });
       
@@ -124,10 +124,10 @@ export default function MobileSaveStack() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <PiggyBank className="h-5 w-5" />
-            Quick Save
+            Wealth Builder
           </CardTitle>
           <CardDescription className="text-sm">
-            Tap a button to instantly log your smart choice
+            Tap to transform smart spending into compound wealth
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -155,16 +155,16 @@ export default function MobileSaveStack() {
       {/* Custom Amount Form */}
       <Card className="border-primary/20">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Custom Save</CardTitle>
+          <CardTitle className="text-lg">Custom Investment</CardTitle>
           <CardDescription className="text-sm">
-            Enter any amount and reason
+            Enter any amount to accelerate your wealth building
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveStack} className="space-y-4">
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-sm font-medium">Amount Saved</Label>
+                <Label htmlFor="amount" className="text-sm font-medium">Investment Amount</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">$</span>
                   <Input
@@ -221,7 +221,7 @@ export default function MobileSaveStack() {
                 disabled={isLoading || !amount || !reason}
               >
                 <Zap className="mr-2 h-5 w-5" />
-                {isLoading ? 'Saving...' : 'Stack This Save!'}
+                {isLoading ? 'Building Wealth...' : 'Accelerate My Wealth'}
               </Button>
             </TouchTarget>
           </form>
@@ -234,28 +234,38 @@ export default function MobileSaveStack() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <TrendingUp className="h-5 w-5 text-warning" />
-              Your ${amount} Impact
+              Your ${amount} Wealth Trajectory
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <p className="text-xs text-muted-foreground font-medium">1 Year</p>
-                <p className="text-sm font-semibold text-accent">${projection.oneYear.toFixed(2)}</p>
-              </div>
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <p className="text-xs text-muted-foreground font-medium">10 Years</p>
-                <p className="text-lg font-bold text-warning">${projection.tenYears.toFixed(2)}</p>
-              </div>
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <p className="text-xs text-muted-foreground font-medium">20 Years</p>
-                <p className="text-lg font-bold text-success">${projection.twentyYears.toFixed(2)}</p>
-              </div>
-              <div className="text-center p-3 bg-background/50 rounded-lg">
-                <p className="text-xs text-muted-foreground font-medium">30 Years</p>
-                <p className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  ${projection.thirtyYears.toFixed(2)}
+            <div className="space-y-3 mb-4">
+              {/* Hero 40-year projection */}
+              <div className="text-center p-4 bg-gradient-to-r from-accent/20 to-primary/20 rounded-lg border-2 border-accent/50 relative">
+                <p className="text-sm text-muted-foreground font-bold">🎯 Your 40-Year Wealth Goal</p>
+                <p className="text-3xl font-black bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+                  ${projection.fortyYears.toFixed(2)}
                 </p>
+                <div className="absolute -top-2 -right-2">
+                  <span className="text-xs bg-gradient-to-r from-accent to-primary text-white px-2 py-1 rounded-full font-bold">
+                    WEALTH TARGET
+                  </span>
+                </div>
+              </div>
+              
+              {/* Supporting projections */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="text-center p-2 bg-background/50 rounded-lg">
+                  <p className="text-xs text-muted-foreground font-medium">10 Years</p>
+                  <p className="text-sm font-bold text-warning">${projection.tenYears.toFixed(2)}</p>
+                </div>
+                <div className="text-center p-2 bg-background/50 rounded-lg">
+                  <p className="text-xs text-muted-foreground font-medium">20 Years</p>
+                  <p className="text-sm font-bold text-success">${projection.twentyYears.toFixed(2)}</p>
+                </div>
+                <div className="text-center p-2 bg-background/50 rounded-lg">
+                  <p className="text-xs text-muted-foreground font-medium">30 Years</p>
+                  <p className="text-sm font-bold text-primary">${projection.thirtyYears.toFixed(2)}</p>
+                </div>
               </div>
             </div>
             

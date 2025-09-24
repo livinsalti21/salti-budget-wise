@@ -42,10 +42,10 @@ const SaveStack = () => {
     };
   };
 
-  const calculate35YearProjection = (amountCents: number): number => {
+  const calculate40YearProjection = (amountCents: number): number => {
     const principal = amountCents / 100;
     const annualRate = 0.08;
-    return principal * Math.pow(1 + annualRate, 35);
+    return principal * Math.pow(1 + annualRate, 40);
   };
 
   const handleSaveStack = async (e: React.FormEvent) => {
@@ -92,11 +92,11 @@ const SaveStack = () => {
         source: 'manual'
       });
 
-      const projection35Year = calculate35YearProjection(amountCents);
+      const projection40Year = calculate40YearProjection(amountCents);
       
       toast({
-        title: "🚀 SAVE STACKED! 🚀",
-        description: `💰 $${amount} saved today → $${projection35Year.toFixed(2)} in 35 years at 8% return! 📈`,
+        title: "💎 Wealth Builder Move!",
+        description: `$${amount} invested in your future → $${projection40Year.toFixed(2)} compound wealth in 40 years! 🚀`,
         duration: 8000,
         className: "border-2 border-success bg-gradient-to-r from-success/20 to-primary/20 text-lg font-semibold shadow-2xl",
       });
@@ -131,10 +131,10 @@ const SaveStack = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PiggyBank className="h-5 w-5" />
-            Save & Stack
+            Wealth Accelerator
           </CardTitle>
           <CardDescription>
-            Build the habit of conscious spending. Every save becomes future wealth and celebrates your progress.
+            Transform smart spending decisions into serious wealth accumulation. Every investment compounds your financial future.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -171,7 +171,7 @@ const SaveStack = () => {
             
             <Button type="submit" className="w-full" disabled={isLoading || !amount || !reason}>
               <Zap className="mr-2 h-4 w-4" />
-              {isLoading ? 'Saving...' : 'Stack This Save!'}
+              {isLoading ? 'Building Wealth...' : 'Accelerate My Wealth'}
             </Button>
           </form>
         </CardContent>
@@ -183,10 +183,10 @@ const SaveStack = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Impact Projection
+              Your Wealth Trajectory
             </CardTitle>
             <CardDescription>
-              See how your ${amount} save could grow over time
+              See how your ${amount} investment compounds into serious wealth
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -213,11 +213,16 @@ const SaveStack = () => {
                   ${projection.thirtyYears.toFixed(2)}
                 </p>
               </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">40 Years</p>
-                <p className="text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+              <div className="text-center relative">
+                <p className="text-sm text-muted-foreground font-medium">🎯 40-Year Wealth</p>
+                <p className="text-3xl font-black bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
                   ${projection.fortyYears.toFixed(2)}
                 </p>
+                <div className="absolute -top-1 -right-1">
+                  <span className="text-xs bg-gradient-to-r from-accent to-primary text-white px-2 py-1 rounded-full font-bold">
+                    HERO
+                  </span>
+                </div>
               </div>
             </div>
             

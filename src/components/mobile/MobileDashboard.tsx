@@ -288,9 +288,7 @@ export default function MobileDashboard() {
 
       {/* Quick Save Section */}
       <div className="mb-4">
-        <Card className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-orange-500/30 shadow-sm">
-          
-        </Card>
+        
       </div>
 
       {/* Budget Progress - Mobile Optimized */}

@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useProfileSync } from "@/hooks/useProfileSync";
 import SaveHistory from "@/components/SaveHistory";
 import { ProjectionSettings } from "@/components/ProjectionSettings";
 import SaveHistoryOnboarding from "@/components/save/SaveHistoryOnboarding";
@@ -26,6 +27,7 @@ export default function SavePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { saveWithSync } = useProfileSync();
   const [selectedPurchase, setSelectedPurchase] = useState(skippedPurchases[0]);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
@@ -147,17 +149,13 @@ export default function SavePage() {
         stackletId = stacklets[0].id;
       }
 
-      const { error } = await supabase
-        .from('save_events')
-        .insert({
-          user_id: user.id,
-          stacklet_id: stackletId,
-          amount_cents: Math.round(amount * 100),
-          reason: selectedPurchase.name,
-          source: 'manual'
-        });
-
-      if (error) throw error;
+      // Use enhanced save with profile sync validation
+      await saveWithSync({
+        stacklet_id: stackletId,
+        amount_cents: Math.round(amount * 100),
+        reason: selectedPurchase.name,
+        source: 'manual'
+      });
 
       // Navigate to standardized confirmation flow
       navigate(`/app/save/confirm?amount_cents=${Math.round(amount * 100)}&source=manual`);

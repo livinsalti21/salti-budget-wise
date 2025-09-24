@@ -12,6 +12,7 @@ import SettingsPanel from "@/components/SettingsPanel";
 import NotificationCenter from "@/components/NotificationCenter";
 import { SecurityDashboard } from "@/components/SecurityDashboard";
 import { ProfileOnboarding } from "@/components/profile/ProfileOnboarding";
+import { ProfileDataStatus } from "@/components/profile/ProfileDataStatus";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -218,9 +219,10 @@ export default function ProfilePage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="settings">
-            <SettingsPanel />
-          </TabsContent>
+            <TabsContent value="settings" className="space-y-6">
+              <SettingsPanel />
+              <ProfileDataStatus />
+            </TabsContent>
 
           <TabsContent value="notifications">
             <NotificationCenter />

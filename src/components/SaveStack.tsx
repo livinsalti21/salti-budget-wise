@@ -9,6 +9,7 @@ import { PiggyBank, TrendingUp, Zap, Share2, Target } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfileSync } from '@/hooks/useProfileSync';
 
 interface ImpactProjection {
   oneYear: number;
@@ -25,6 +26,7 @@ const SaveStack = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { saveWithSync } = useProfileSync();
 
   const calculateImpactProjection = (amountCents: number): ImpactProjection => {
     const principal = amountCents / 100; // Convert to dollars
@@ -52,23 +54,44 @@ const SaveStack = () => {
     
     setIsLoading(true);
     
-    const amountCents = Math.round(parseFloat(amount) * 100);
-    
-    const { error } = await supabase
-      .from('saves')
-      .insert({
-        user_id: user.id,
+    try {
+      const amountCents = Math.round(parseFloat(amount) * 100);
+      
+      // Get user's first stacklet or create a default one
+      let { data: stacklets } = await supabase
+        .from('stacklets')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      let stackletId;
+      if (!stacklets || stacklets.length === 0) {
+        // Create a default stacklet
+        const { data: newStacklet, error: stackletError } = await supabase
+          .from('stacklets')
+          .insert({
+            user_id: user.id,
+            title: 'General Savings',
+            target_cents: 100000, // $1000 default
+            emoji: '💰'
+          })
+          .select('id')
+          .single();
+        
+        if (stackletError) throw stackletError;
+        stackletId = newStacklet.id;
+      } else {
+        stackletId = stacklets[0].id;
+      }
+
+      // Use enhanced save with profile sync validation
+      await saveWithSync({
+        stacklet_id: stackletId,
         amount_cents: amountCents,
         reason: reason,
+        source: 'manual'
       });
 
-    if (error) {
-      toast({
-        title: "Error saving",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
       const projection35Year = calculate35YearProjection(amountCents);
       
       toast({
@@ -80,9 +103,16 @@ const SaveStack = () => {
       
       setAmount('');
       setReason('');
+    } catch (error) {
+      console.error('Save stack error:', error);
+      toast({
+        title: "Error saving",
+        description: error instanceof Error ? error.message : 'Failed to save',
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const getProjectionPreview = () => {

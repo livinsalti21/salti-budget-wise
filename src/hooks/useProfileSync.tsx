@@ -138,7 +138,7 @@ export const useProfileSync = () => {
     return false;
   }, [user, refreshProfile, validateProfileData, toast]);
 
-  // Enhanced save with profile sync validation
+  // Enhanced save with profile sync validation and ledger integration
   const saveWithSync = useCallback(async (saveData: {
     stacklet_id: string;
     amount_cents: number;
@@ -159,6 +159,27 @@ export const useProfileSync = () => {
         .single();
 
       if (saveError) throw saveError;
+
+      // Create ledger entry
+      try {
+        const { data: ledgerResult, error: ledgerError } = await supabase.functions.invoke('ledger-operations', {
+          body: {
+            operation: 'create_ledger_entry',
+            amount_cents: saveData.amount_cents,
+            transaction_type: 'SAVE',
+            description: saveData.reason || `Wealth building ${saveData.source} save`,
+            reference_id: saveEvent.id
+          }
+        });
+
+        if (ledgerError) {
+          console.error('Ledger entry failed:', ledgerError);
+          // Don't fail the save if ledger fails, just log it
+        }
+      } catch (ledgerError) {
+        console.error('Ledger operation error:', ledgerError);
+        // Continue with profile sync even if ledger fails
+      }
 
       // Wait for triggers to complete (give DB time to process)
       await new Promise(resolve => setTimeout(resolve, 1000));

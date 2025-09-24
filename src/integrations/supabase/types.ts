@@ -2114,6 +2114,36 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_accounts: {
+        Row: {
+          created_at: string
+          current_outstanding_cents: number
+          last_transaction_at: string | null
+          sponsor_id: string
+          total_charged_cents: number
+          total_matched_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_outstanding_cents?: number
+          last_transaction_at?: string | null
+          sponsor_id: string
+          total_charged_cents?: number
+          total_matched_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_outstanding_cents?: number
+          last_transaction_at?: string | null
+          sponsor_id?: string
+          total_charged_cents?: number
+          total_matched_cents?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sponsor_growth_tracking: {
         Row: {
           average_save_cents: number
@@ -2179,6 +2209,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sponsor_ledger: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          id: string
+          match_event_id: string | null
+          recipient_user_id: string | null
+          running_balance_cents: number
+          sponsor_id: string
+          transaction_type: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_event_id?: string | null
+          recipient_user_id?: string | null
+          running_balance_cents: number
+          sponsor_id: string
+          transaction_type: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_event_id?: string | null
+          recipient_user_id?: string | null
+          running_balance_cents?: number
+          sponsor_id?: string
+          transaction_type?: string
+        }
+        Relationships: []
       }
       sponsor_metrics_snapshots: {
         Row: {
@@ -2543,6 +2609,42 @@ export type Database = {
           },
         ]
       }
+      user_accounts: {
+        Row: {
+          account_type: string
+          created_at: string
+          current_balance_cents: number
+          last_transaction_at: string | null
+          projected_40yr_value_cents: number
+          total_inflow_cents: number
+          total_outflow_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          created_at?: string
+          current_balance_cents?: number
+          last_transaction_at?: string | null
+          projected_40yr_value_cents?: number
+          total_inflow_cents?: number
+          total_outflow_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          created_at?: string
+          current_balance_cents?: number
+          last_transaction_at?: string | null
+          projected_40yr_value_cents?: number
+          total_inflow_cents?: number
+          total_outflow_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           badge_id: string
@@ -2571,6 +2673,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_ledger: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          description: string | null
+          future_value_40yr_cents: number
+          id: string
+          reference_id: string | null
+          running_balance_cents: number
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          description?: string | null
+          future_value_40yr_cents?: number
+          id?: string
+          reference_id?: string | null
+          running_balance_cents: number
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          description?: string | null
+          future_value_40yr_cents?: number
+          id?: string
+          reference_id?: string | null
+          running_balance_cents?: number
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

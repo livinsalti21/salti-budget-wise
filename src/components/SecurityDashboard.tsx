@@ -6,6 +6,7 @@ import { Shield, AlertTriangle, CheckCircle, Eye, RefreshCw } from 'lucide-react
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import SecurityAlertsMonitor from './security/SecurityAlertsMonitor';
 
 interface SecurityEvent {
   id: string;
@@ -229,9 +230,11 @@ export const SecurityDashboard: React.FC = () => {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+        )}
+      </CardContent>
+    </Card>
+
+    <SecurityAlertsMonitor />
+  </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { SecurityLogger } from '@/utils/securityLogger';
 
 interface RateLimitResponse {
   allowed: boolean;
@@ -37,8 +38,19 @@ export const useRateLimit = (): UseRateLimitReturn => {
 
       if (error) {
         console.error('Rate limit check failed:', error);
+        SecurityLogger.logEvent('rate_limit_check_error', 'medium', { error: error.message, identifier, type });
         // On error, allow the request but log it
         return { allowed: true, remaining: 0 };
+      }
+
+      // Log rate limit events
+      if (!data.allowed) {
+        SecurityLogger.logSuspicious('rate_limit_exceeded', 'high', { 
+          identifier, 
+          type, 
+          remaining: data.remaining,
+          blocked: data.blocked 
+        });
       }
 
       return data;

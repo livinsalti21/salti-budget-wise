@@ -1090,10 +1090,13 @@ export type Database = {
           balance_cents: number | null
           created_at: string
           encrypted_access_token: string | null
+          encryption_version: number | null
           id: string
           institution_name: string
           is_active: boolean
+          key_rotation_date: string | null
           last_sync: string | null
+          security_flags: Json | null
           token_iv: string | null
           updated_at: string
           user_id: string
@@ -1106,10 +1109,13 @@ export type Database = {
           balance_cents?: number | null
           created_at?: string
           encrypted_access_token?: string | null
+          encryption_version?: number | null
           id?: string
           institution_name: string
           is_active?: boolean
+          key_rotation_date?: string | null
           last_sync?: string | null
+          security_flags?: Json | null
           token_iv?: string | null
           updated_at?: string
           user_id: string
@@ -1122,10 +1128,13 @@ export type Database = {
           balance_cents?: number | null
           created_at?: string
           encrypted_access_token?: string | null
+          encryption_version?: number | null
           id?: string
           institution_name?: string
           is_active?: boolean
+          key_rotation_date?: string | null
           last_sync?: string | null
+          security_flags?: Json | null
           token_iv?: string | null
           updated_at?: string
           user_id?: string
@@ -2030,31 +2039,76 @@ export type Database = {
         }
         Relationships: []
       }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          event_details: Json
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          severity: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          event_details: Json
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          event_details?: Json
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          severity?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_audit_log: {
         Row: {
+          automated_response: boolean | null
           created_at: string | null
           event_details: Json | null
           event_type: string
           id: string
           ip_address: unknown | null
+          resolved_at: string | null
+          severity: string | null
           user_agent: string | null
           user_id: string | null
         }
         Insert: {
+          automated_response?: boolean | null
           created_at?: string | null
           event_details?: Json | null
           event_type: string
           id?: string
           ip_address?: unknown | null
+          resolved_at?: string | null
+          severity?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
         Update: {
+          automated_response?: boolean | null
           created_at?: string | null
           event_details?: Json | null
           event_type?: string
           id?: string
           ip_address?: unknown | null
+          resolved_at?: string | null
+          severity?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -2778,6 +2832,15 @@ export type Database = {
       is_parent_of: {
         Args: { child: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_event_details?: Json
+          p_event_type: string
+          p_severity?: string
+          p_user_id?: string
+        }
+        Returns: undefined
       }
       update_friend_streaks: {
         Args: { target_user_id: string }

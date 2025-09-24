@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { SecurityLogger } from './securityLogger';
 
 export const generateSecureDeepLink = async (
   amount_cents: number,
@@ -17,8 +18,19 @@ export const generateSecureDeepLink = async (
 
     if (error) {
       console.error('Error generating secure deep link:', error);
+      SecurityLogger.logEvent('deeplink_generation_error', 'medium', { 
+        error: error.message, 
+        amount_cents, 
+        source 
+      });
       throw new Error('Failed to generate secure deep link');
     }
+
+    SecurityLogger.logEvent('deeplink_generated', 'info', { 
+      amount_cents, 
+      source, 
+      has_push_id: !!push_id 
+    });
 
     return data.deepLink;
   } catch (error) {
@@ -48,10 +60,24 @@ export const verifySecureDeepLink = async (
 
     if (error) {
       console.error('Error verifying deep link:', error);
+      SecurityLogger.logSuspicious('deeplink_verification_error', 'high', {
+        error: error.message,
+        amount_cents,
+        source,
+        expires_at
+      });
       return false;
     }
 
-    return data.valid;
+    const isValid = data.valid;
+    SecurityLogger.logEvent('deeplink_verified', isValid ? 'info' : 'medium', {
+      amount_cents,
+      source,
+      valid: isValid,
+      expires_at
+    });
+
+    return isValid;
   } catch (error) {
     console.error('Error in verifySecureDeepLink:', error);
     return false;

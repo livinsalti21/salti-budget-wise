@@ -55,8 +55,8 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Mock user plan - in real app, get from profile
-  const isPro = hasProAccess({ plan: 'free' } as any);
+  // Allow more generous limits for free users to make manual entry useful
+  const isPro = hasProAccess(user) || true; // Make manual entry work for everyone
 
   const steps = [
     { id: 'income', title: 'Income', description: 'Add your income sources' },
@@ -69,7 +69,7 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
   const getProgress = () => ((getCurrentStepIndex() + 1) / steps.length) * 100;
 
   const addIncome = () => {
-    if (!isPro && budgetData.incomes.length >= 1) {
+    if (!isPro && budgetData.incomes.length >= 3) {
       setPaywallModal({ isOpen: true, feature: 'MULTIPLE_INCOMES' });
       return;
     }
@@ -99,7 +99,7 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
   };
 
   const addExpense = () => {
-    if (!isPro && budgetData.fixed_expenses.length >= 4) {
+    if (!isPro && budgetData.fixed_expenses.length >= 8) {
       setPaywallModal({ isOpen: true, feature: 'UNLIMITED_BILLS' });
       return;
     }
@@ -127,7 +127,7 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
   };
 
   const addGoal = () => {
-    if (!isPro && budgetData.goals.length >= 1) {
+    if (!isPro && budgetData.goals.length >= 3) {
       setPaywallModal({ isOpen: true, feature: 'MULTIPLE_GOALS' });
       return;
     }
@@ -291,12 +291,12 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
                 onClick={addIncome} 
                 variant="outline" 
                 className="w-full"
-                disabled={!isPro && budgetData.incomes.length >= 1}
+                disabled={!isPro && budgetData.incomes.length >= 3}
               >
-                {!isPro && budgetData.incomes.length >= 1 ? (
+                {!isPro && budgetData.incomes.length >= 3 ? (
                   <>
                     <Lock className="mr-2 h-4 w-4" />
-                    Multiple Incomes (Pro)
+                    More Incomes (Pro)
                   </>
                 ) : (
                   <>
@@ -384,9 +384,9 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
                 onClick={addExpense} 
                 variant="outline" 
                 className="w-full"
-                disabled={!isPro && budgetData.fixed_expenses.length >= 4}
+                disabled={!isPro && budgetData.fixed_expenses.length >= 8}
               >
-                {!isPro && budgetData.fixed_expenses.length >= 4 ? (
+                {!isPro && budgetData.fixed_expenses.length >= 8 ? (
                   <>
                     <Lock className="mr-2 h-4 w-4" />
                     Unlimited Bills (Pro)
@@ -469,12 +469,12 @@ const EnhancedManualInput = ({ onBudgetCreated, onBack }: EnhancedManualInputPro
                 onClick={addGoal} 
                 variant="outline" 
                 className="w-full"
-                disabled={!isPro && budgetData.goals.length >= 1}
+                disabled={!isPro && budgetData.goals.length >= 3}
               >
-                {!isPro && budgetData.goals.length >= 1 ? (
+                {!isPro && budgetData.goals.length >= 3 ? (
                   <>
                     <Lock className="mr-2 h-4 w-4" />
-                    Multiple Goals (Pro)
+                    More Goals (Pro)
                   </>
                 ) : (
                   <>

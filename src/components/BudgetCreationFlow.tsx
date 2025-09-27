@@ -17,6 +17,7 @@ const BudgetCreationFlow = ({
   const isFallbackEnabled = import.meta.env.VITE_FEATURE_BUDGET_FALLBACK_ENABLED !== "false";
   const isAIEnabled = import.meta.env.VITE_FEATURE_AI_BUDGET_ENABLED === "true";
   const isTemplatePurchasingEnabled = import.meta.env.VITE_FEATURE_TEMPLATE_PURCHASING_ENABLED === "true";
+  // Only show working/enabled methods
   const methods = [...(isFallbackEnabled ? [{
     id: 'fallback' as const,
     title: 'Save-n-Stack Budget',
@@ -40,34 +41,12 @@ const BudgetCreationFlow = ({
     iconColor: 'text-primary',
     examples: ['I make $3000/month, rent is $900...', 'Biweekly pay $1200, want to save for vacation...', 'Multiple income streams, complex expenses...']
   }] : []), {
-    id: 'upload' as const,
-    title: 'Upload Spreadsheet',
-    description: 'Import from Excel, CSV, or Google Sheets',
-    details: 'Already have your budget in a spreadsheet? Upload it and we\'ll extract the data',
-    icon: Upload,
-    badge: 'Fast',
-    badgeVariant: 'secondary' as const,
-    color: 'bg-gradient-to-br from-success/10 to-success/5 border-success/20',
-    iconColor: 'text-success',
-    examples: ['Excel budget templates', 'Bank export CSV files', 'Google Sheets data']
-  }, ...(isTemplatePurchasingEnabled ? [{
-    id: 'template' as const,
-    title: 'Buy Template',
-    description: 'Professional budget templates',
-    details: 'Choose from expert-designed templates for different lifestyles and goals',
-    icon: ShoppingBag,
-    badge: 'Pro',
-    badgeVariant: 'outline' as const,
-    color: 'bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20',
-    iconColor: 'text-warning',
-    examples: ['Student budgets from $0', 'Family templates from $19.99', 'Professional budgets from $9.99']
-  }] : []), {
     id: 'manual' as const,
     title: 'Manual Entry',
     description: 'Fill out a detailed budget form',
     details: 'Enter your income, expenses, and goals step by step with guided assistance',
     icon: Calculator,
-    badge: 'Traditional',
+    badge: 'Simple',
     badgeVariant: 'outline' as const,
     color: 'bg-gradient-to-br from-muted/50 to-muted/20 border-muted',
     iconColor: 'text-muted-foreground',

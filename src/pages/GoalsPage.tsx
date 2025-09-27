@@ -1,25 +1,41 @@
-import { Target, TrendingUp, Calendar } from "lucide-react";
-import PageHeader from "@/components/ui/PageHeader";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { Plus, PiggyBank } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/hooks/use-toast';
 import GoalsOnboarding from "@/components/goals/GoalsOnboarding";
+import GoalsSummary from "@/components/goals/GoalsSummary";
+import GoalCard from "@/components/goals/GoalCard";
+import GoalCreateForm from "@/components/goals/GoalCreateForm";
+
+interface Goal {
+  id: string;
+  title: string;
+  emoji: string;
+  target_cents: number | null;
+  deadline_date: string | null;
+  asset_type: 'CASH' | 'BTC';
+  progress_cents: number;
+  is_archived: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function GoalsPage() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    weeklyTotal: 0,
-    totalSaved: 0,
-    weeklyGoal: 50, // Default $50 weekly goal
-    projectedAnnual: 0,
-    projectedDecade: 0
-  });
+  const { toast } = useToast();
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [totalSaved, setTotalSaved] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showGoalsOnboarding, setShowGoalsOnboarding] = useState(false);
 
   useEffect(() => {
     if (user) {
-      loadGoalData();
+      loadData();
       checkGoalsOnboardingNeeds();
     }
   }, [user]);
@@ -28,7 +44,6 @@ export default function GoalsPage() {
     const completedGoalsOnboarding = localStorage.getItem('goals_onboarding_completed');
     
     if (!completedGoalsOnboarding) {
-      // Check if user has meaningful goal engagement
       try {
         const { data: saveData } = await supabase
           .from('save_events')
@@ -36,7 +51,6 @@ export default function GoalsPage() {
           .eq('user_id', user?.id)
           .limit(5);
 
-        // Show onboarding if user has fewer than 5 saves
         if (!saveData || saveData.length < 5) {
           setShowGoalsOnboarding(true);
         }
@@ -51,156 +65,147 @@ export default function GoalsPage() {
     setShowGoalsOnboarding(false);
   };
 
-  const loadGoalData = async () => {
+  const loadData = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    
     try {
-      // Get total saved
-      const { data: totalSaveData } = await supabase
+      // Load goals (stacklets)
+      const { data: goalsData, error: goalsError } = await supabase
+        .from('stacklets')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+
+      if (goalsError) throw goalsError;
+      setGoals((goalsData || []) as Goal[]);
+
+      // Load total saved from save_events
+      const { data: saveData, error: saveError } = await supabase
         .from('save_events')
         .select('amount_cents')
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
-      const totalSaved = totalSaveData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
+      if (saveError) throw saveError;
+      const total = saveData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
+      setTotalSaved(total);
 
-      // Get this week's savings
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1);
-      startOfWeek.setHours(0, 0, 0, 0);
-
-      const { data: weeklyData } = await supabase
-        .from('save_events')
-        .select('amount_cents')
-        .eq('user_id', user?.id)
-        .gte('created_at', startOfWeek.toISOString());
-
-      const weeklyTotal = weeklyData?.reduce((sum, save) => sum + save.amount_cents, 0) || 0;
-
-      // Calculate projections based on current weekly rate
-      const weeklyAvg = weeklyTotal || stats.weeklyGoal * 100; // Use current or default goal
-      const projectedAnnual = (weeklyAvg * 52) / 100;
-      const projectedDecade = ((weeklyAvg * 52 * 10) * Math.pow(1.07, 10)) / 100; // 7% annual return
-
-      setStats({
-        weeklyTotal: weeklyTotal / 100,
-        totalSaved: totalSaved / 100,
-        weeklyGoal: stats.weeklyGoal,
-        projectedAnnual,
-        projectedDecade
+    } catch (error: any) {
+      toast({
+        title: "Error loading goals",
+        description: error.message,
+        variant: "destructive",
       });
-    } catch (error) {
-      console.error('Error loading goal data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const progressPercentage = (stats.weeklyTotal / stats.weeklyGoal) * 100;
+  const handleAddSave = (goalId: string) => {
+    // This would open a save flow targeting the specific goal
+    // For now, just show a toast
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+      toast({
+        title: "Add save to goal",
+        description: `This will open the save flow for ${goal.emoji} ${goal.title}`,
+      });
+    }
+  };
+
+  const handleEditGoal = (goal: Goal) => {
+    // This would open an edit form
+    toast({
+      title: "Edit goal",
+      description: `Edit functionality for ${goal.emoji} ${goal.title} coming soon!`,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div>
+        <PageHeader 
+          title="My Goals" 
+          subtitle="Track your savings goals"
+          backTo="/app"
+        />
+        <div className="p-4 space-y-4 max-w-6xl mx-auto">
+          <div className="animate-pulse">
+            <div className="h-32 bg-muted rounded-lg mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-48 bg-muted rounded-lg"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <PageHeader 
-        title="Goals & Projections" 
-        subtitle="Track your progress"
+        title="My Goals" 
+        subtitle="Track your savings goals"
         backTo="/app"
       />
 
-      <main className="p-4 space-y-6 max-w-2xl mx-auto">
-        {/* Current Week Goal */}
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Weekly Goal Progress
-            </CardTitle>
-            <CardDescription>
-              Goal: ${stats.weeklyGoal} per week
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span>Progress</span>
-                <span>${stats.weeklyTotal.toFixed(2)} / ${stats.weeklyGoal}</span>
-              </div>
-              <div className="w-full bg-muted rounded-full h-3">
-                <div 
-                  className="bg-primary h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                />
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-primary">
-                  {progressPercentage.toFixed(0)}%
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {progressPercentage >= 100 ? "Goal achieved! 🎉" : `$${(stats.weeklyGoal - stats.weeklyTotal).toFixed(2)} to go`}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <main className="p-4 space-y-6 max-w-6xl mx-auto">
+        {/* Summary */}
+        <GoalsSummary goals={goals} totalSaved={totalSaved} />
 
-        {/* Future Projections */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Future Projections
-            </CardTitle>
-            <CardDescription>
-              Based on your current saving rate
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-success/5 rounded-lg border border-success/20">
-                <Calendar className="h-6 w-6 mx-auto mb-2 text-success" />
-                <div className="text-xl font-bold text-success">
-                  ${stats.projectedAnnual.toLocaleString()}
-                </div>
-                <div className="text-sm text-muted-foreground">This Year</div>
-              </div>
-              
-              <div className="text-center p-4 bg-accent/5 rounded-lg border border-accent/20">
-                <TrendingUp className="h-6 w-6 mx-auto mb-2 text-accent" />
-                <div className="text-xl font-bold text-accent">
-                  ${Math.round(stats.projectedDecade).toLocaleString()}
-                </div>
-                <div className="text-sm text-muted-foreground">10 Years (7% growth)</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Stats</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Saved</span>
-              <span className="font-medium">${stats.totalSaved.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">This Week</span>
-              <span className="font-medium">${stats.weeklyTotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Weekly Goal</span>
-              <span className="font-medium">${stats.weeklyGoal}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coming Soon */}
-        <Card className="bg-muted/30">
-          <CardContent className="pt-6 text-center">
+        {/* Goals Section */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">Your Goals</h2>
             <p className="text-sm text-muted-foreground">
-              🚀 Custom goal setting coming soon!
+              {goals.length === 0 ? 'Create your first savings goal' : `${goals.length} active goals`}
             </p>
-          </CardContent>
-        </Card>
+          </div>
+          <Button onClick={() => setShowCreateForm(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Goal
+          </Button>
+        </div>
+
+        {/* Goals Grid */}
+        {goals.length === 0 ? (
+          <Card className="p-8 text-center">
+            <PiggyBank className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No goals yet</h3>
+            <p className="text-muted-foreground mb-4">
+              Create your first savings goal to start tracking your progress
+            </p>
+            <Button onClick={() => setShowCreateForm(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create First Goal
+            </Button>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {goals.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                onEdit={handleEditGoal}
+                onAddSave={handleAddSave}
+              />
+            ))}
+          </div>
+        )}
       </main>
 
+      {/* Create Form */}
+      <GoalCreateForm
+        open={showCreateForm}
+        onOpenChange={setShowCreateForm}
+        onSuccess={loadData}
+      />
+
+      {/* Onboarding */}
       {showGoalsOnboarding && (
         <GoalsOnboarding
           onComplete={handleGoalsOnboardingComplete}

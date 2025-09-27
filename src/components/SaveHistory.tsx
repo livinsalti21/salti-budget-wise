@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Clock, PiggyBank, TrendingUp, Users, Flame, History, Target, Calendar, Search, Filter, Sparkles, Award } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import SaveHistoryStats from './savehistory/SaveHistoryStats';
+import SaveHistoryInsights from './savehistory/SaveHistoryInsights';
+import SaveHistoryFilters from './savehistory/SaveHistoryFilters';
+import SaveHistoryList from './savehistory/SaveHistoryList';
 
 interface Save {
   id: string;
@@ -89,7 +86,7 @@ const SaveHistory = () => {
     if (!user) return;
 
     // Fetch recent saves for display
-    const { data: recentSaves, error } = await supabase
+    const { data: recentSaves } = await supabase
       .from('save_events')
       .select('*')
       .eq('user_id', user.id)
@@ -129,11 +126,9 @@ const SaveHistory = () => {
       setTotalSaved(total);
       setTotalSessions(allSavesData.length);
       
-      // Calculate streak based on consecutive days
       const streakDays = calculateStreak(allSavesData);
       setStreak(streakDays);
       
-      // Generate smart insights
       generateInsights(allSavesFormatted);
     }
   };
@@ -141,14 +136,12 @@ const SaveHistory = () => {
   const filterSaves = () => {
     let filtered = [...allSaves];
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(save => 
         save.reason.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Period filter
     if (filterPeriod !== 'all') {
       const now = new Date();
       const filterDate = new Date();
@@ -171,7 +164,6 @@ const SaveHistory = () => {
       filtered = filtered.filter(save => new Date(save.created_at) >= filterDate);
     }
 
-    // Category filter
     if (filterCategory !== 'all') {
       filtered = filtered.filter(save => save.reason.toLowerCase().includes(filterCategory.toLowerCase()));
     }
@@ -184,7 +176,6 @@ const SaveHistory = () => {
     
     if (savesData.length === 0) return;
 
-    // Most common save reason
     const reasonCounts = savesData.reduce((acc, save) => {
       acc[save.reason] = (acc[save.reason] || 0) + 1;
       return acc;
@@ -195,24 +186,9 @@ const SaveHistory = () => {
       insights.push(`Your top saving trigger: ${topReason[0]} (${topReason[1]} times)`);
     }
 
-    // Average save amount
     const avgAmount = savesData.reduce((sum, save) => sum + save.amount_cents, 0) / savesData.length;
     insights.push(`Your average save: $${(avgAmount / 100).toFixed(2)}`);
 
-    // Best saving day analysis
-    const dayOfWeekCounts = savesData.reduce((acc, save) => {
-      const dayOfWeek = new Date(save.created_at).getDay();
-      const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
-      acc[dayName] = (acc[dayName] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const bestDay = Object.entries(dayOfWeekCounts).sort(([,a], [,b]) => b - a)[0];
-    if (bestDay) {
-      insights.push(`You save most on ${bestDay[0]}s`);
-    }
-
-    // Recent momentum
     const recentSaves = savesData.filter(save => {
       const saveDate = new Date(save.created_at);
       const weekAgo = new Date();
@@ -261,13 +237,11 @@ const SaveHistory = () => {
     let streak = 0;
     const savesByDate = new Map();
 
-    // Group saves by date
     savesData.forEach(save => {
       const date = new Date(save.created_at).toDateString();
       savesByDate.set(date, true);
     });
 
-    // Count consecutive days from today backwards
     let currentDate = new Date(today);
     while (savesByDate.has(currentDate.toDateString())) {
       streak++;
@@ -277,317 +251,40 @@ const SaveHistory = () => {
     return streak;
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays - 1} days ago`;
-    return date.toLocaleDateString();
-  };
-
-  const calculateFutureValue = (amount: number, years: number = 10) => {
-    const principal = amount / 100;
-    const annualRate = projectionRate / 100;
-    return principal * Math.pow(1 + annualRate, years);
-  };
+  const filteredTotal = filteredSaves.reduce((sum, save) => sum + save.amount_cents, 0);
 
   return (
     <div className="space-y-6">
-      {/* Smart Insights */}
-      {insights.length > 0 && (
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Smart Insights
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {insights.map((insight, index) => (
-                <div key={index} className="flex items-center gap-2 animate-fade-in">
-                  <Award className="h-3 w-3 text-primary flex-shrink-0" />
-                  <p className="text-sm text-foreground">{insight}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <PiggyBank className="h-4 w-4" />
-              Total Saved
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-success">${(totalSaved / 100).toFixed(2)}</p>
-            <p className="text-xs text-muted-foreground">
-              10yr @ {projectionRate}%: ${calculateFutureValue(totalSaved).toFixed(2)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              Save Sessions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-primary">{totalSessions}</p>
-            <p className="text-xs text-muted-foreground">Total saves completed</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Flame className="h-4 w-4" />
-              Save Streak
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-warning">{streak}</p>
-            <p className="text-xs text-muted-foreground">Consecutive days</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Matches Received
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-accent">{matches}</p>
-            <p className="text-xs text-muted-foreground">From sponsors & friends</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Interactive Filters */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filter & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search saves..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={filterPeriod} onValueChange={setFilterPeriod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Time period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-                <SelectItem value="year">This Year</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="coffee">Coffee</SelectItem>
-                <SelectItem value="lunch">Lunch</SelectItem>
-                <SelectItem value="snack">Snack</SelectItem>
-                <SelectItem value="manual">Manual Save</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {(searchTerm || filterPeriod !== 'all' || filterCategory !== 'all') && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Showing {filteredSaves.length} of {allSaves.length} saves</span>
-              {filteredSaves.length > 0 && (
-                <span className="text-success">
-                  (${(filteredSaves.reduce((sum, save) => sum + save.amount_cents, 0) / 100).toFixed(2)} total)
-                </span>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Save History Tabs */}
-      <Tabs defaultValue="recent" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="recent">Recent Saves</TabsTrigger>
-          <TabsTrigger value="filtered">Filtered Results ({filteredSaves.length})</TabsTrigger>
-          <TabsTrigger value="projections">Projections</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="recent" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Recent Saves
-              </CardTitle>
-              <CardDescription>
-                Your latest Save & Stack activities
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {saves.length === 0 ? (
-                <div className="text-center py-8">
-                  <PiggyBank className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No saves yet. Start stacking!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {saves.map((save, index) => (
-                    <div 
-                      key={save.id} 
-                      className="flex items-center justify-between p-4 border rounded-lg hover:border-primary/30 transition-all duration-200 hover:shadow-sm animate-fade-in hover-scale"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">${(save.amount_cents / 100).toFixed(2)}</p>
-                          <Badge variant="secondary" className="hover:bg-primary/10 transition-colors">
-                            {save.reason}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{formatDate(save.created_at)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-success">
-                          ${calculateFutureValue(save.amount_cents).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">in 10 years</p>
-                        <div className="mt-1">
-                          <Progress 
-                            value={(save.amount_cents / Math.max(...saves.map(s => s.amount_cents))) * 100} 
-                            className="h-1 w-16"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="filtered" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Filtered Save History
-              </CardTitle>
-              <CardDescription>
-                {filteredSaves.length} saves matching your filters
-                {filteredSaves.length > 0 && (
-                  <span className="ml-2 text-success">
-                    (${(filteredSaves.reduce((sum, save) => sum + save.amount_cents, 0) / 100).toFixed(2)} total)
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="max-h-96 overflow-y-auto">
-              {filteredSaves.length === 0 ? (
-                <div className="text-center py-8">
-                  <PiggyBank className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {searchTerm || filterPeriod !== 'all' || filterCategory !== 'all' 
-                      ? 'No saves match your filters. Try adjusting them.'
-                      : 'No saves yet. Start stacking!'
-                    }
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredSaves.map((save, index) => (
-                    <div 
-                      key={save.id} 
-                      className="flex items-center justify-between p-3 border rounded-lg hover:border-primary/30 transition-all duration-200 hover:shadow-sm animate-fade-in hover-scale"
-                      style={{ animationDelay: `${index * 30}ms` }}
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">${(save.amount_cents / 100).toFixed(2)}</p>
-                          <Badge variant="outline" className="text-xs hover:bg-primary/10 transition-colors">
-                            {save.reason}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{formatDate(save.created_at)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-success">
-                          ${calculateFutureValue(save.amount_cents).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">10yr @ {projectionRate}%</p>
-                        <div className="mt-1">
-                          <Progress 
-                            value={(save.amount_cents / Math.max(...filteredSaves.map(s => s.amount_cents), 1)) * 100} 
-                            className="h-1 w-16"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="projections" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Future Value Projections
-              </CardTitle>
-              <CardDescription>
-                See how your total savings will grow over time at {projectionRate}% annual return
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[1, 5, 10, 20].map((years) => (
-                  <div key={years} className="text-center p-4 bg-secondary/20 rounded-lg">
-                    <p className="text-2xl font-bold text-success">
-                      ${calculateFutureValue(totalSaved, years).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">In {years} year{years > 1 ? 's' : ''}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      +${(calculateFutureValue(totalSaved, years) - (totalSaved / 100)).toFixed(2)} growth
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <SaveHistoryStats
+        totalSaved={totalSaved}
+        totalSessions={totalSessions}
+        streak={streak}
+        matches={matches}
+      />
+      
+      <SaveHistoryInsights insights={insights} />
+      
+      <SaveHistoryFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filterPeriod={filterPeriod}
+        setFilterPeriod={setFilterPeriod}
+        filterCategory={filterCategory}
+        setFilterCategory={setFilterCategory}
+        filteredCount={filteredSaves.length}
+        totalCount={allSaves.length}
+        filteredTotal={filteredTotal}
+      />
+      
+      <SaveHistoryList
+        saves={filteredSaves.length > 0 ? filteredSaves : saves}
+        title={filteredSaves.length > 0 ? `Filtered Results (${filteredSaves.length})` : "Recent Saves"}
+        description={filteredSaves.length > 0 ? 
+          `${filteredSaves.length} saves matching your filters` : 
+          "Your latest Save & Stack activities"
+        }
+        projectionRate={projectionRate}
+      />
     </div>
   );
 };

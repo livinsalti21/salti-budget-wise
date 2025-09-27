@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -23,13 +23,13 @@ export default function AchievementBanner() {
   const { accountSummary } = useLedger();
   const [showBanner, setShowBanner] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   const currentBalance = (accountSummary?.current_balance_cents || 0) / 100;
   const hasStartedSaving = currentBalance > 0;
+  const currentStreak = streakInfo?.current || 0;
 
-  // Define achievements based on user progress
-  useEffect(() => {
+  // Memoize achievements to prevent infinite re-renders
+  const achievements = useMemo(() => {
     const achievementList: Achievement[] = [
       {
         id: 'first_save',
@@ -44,8 +44,8 @@ export default function AchievementBanner() {
         title: 'Getting Started',
         description: 'Maintained a 3-day saving streak',
         icon: <Flame className="h-5 w-5 text-primary" />,
-        earned: (streakInfo?.current || 0) >= 3,
-        progress: Math.min(((streakInfo?.current || 0) / 3) * 100, 100),
+        earned: currentStreak >= 3,
+        progress: Math.min((currentStreak / 3) * 100, 100),
         requirement: '3 day streak',
         rewardPoints: 25,
       },
@@ -54,8 +54,8 @@ export default function AchievementBanner() {
         title: 'Week Warrior',
         description: 'Saved for 7 consecutive days!',
         icon: <Trophy className="h-5 w-5 text-primary" />,
-        earned: (streakInfo?.current || 0) >= 7,
-        progress: Math.min(((streakInfo?.current || 0) / 7) * 100, 100),
+        earned: currentStreak >= 7,
+        progress: Math.min((currentStreak / 7) * 100, 100),
         requirement: '7 day streak',
         rewardPoints: 50,
       },
@@ -84,26 +84,28 @@ export default function AchievementBanner() {
         title: 'Monthly Master',
         description: 'Saved every day for a month!',
         icon: <Gift className="h-5 w-5 text-accent" />,
-        earned: (streakInfo?.current || 0) >= 30,
-        progress: Math.min(((streakInfo?.current || 0) / 30) * 100, 100),
+        earned: currentStreak >= 30,
+        progress: Math.min((currentStreak / 30) * 100, 100),
         requirement: '30 day streak',
         rewardPoints: 200,
       },
     ];
 
-    setAchievements(achievementList);
+    return achievementList;
+  }, [hasStartedSaving, currentBalance, currentStreak]);
 
-    // Check for newly earned achievements
-    const newlyEarned = achievementList.find(a => 
+  // Check for newly earned achievements only when achievements change
+  useEffect(() => {
+    const newlyEarned = achievements.find(a => 
       a.earned && !localStorage.getItem(`achievement_shown_${a.id}`)
     );
 
-    if (newlyEarned) {
+    if (newlyEarned && !showBanner) {
       setCurrentAchievement(newlyEarned);
       setShowBanner(true);
       localStorage.setItem(`achievement_shown_${newlyEarned.id}`, 'true');
     }
-  }, [hasStartedSaving, currentBalance, streakInfo]);
+  }, [achievements, showBanner]);
 
   const handleDismiss = () => {
     setShowBanner(false);

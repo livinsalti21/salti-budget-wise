@@ -65,17 +65,18 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
     
     // Calculate future values with compound interest
     const weeklyValue = currentSavingsValue + (monthlyContribution / 4);
-    const monthlyValue = currentSavingsValue + monthlyContribution;
     const yearlyValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 1) + 
                        monthlyContribution * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
-    const fiveYearValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 5) + 
-                         monthlyContribution * (Math.pow(1 + monthlyRate, 60) - 1) / monthlyRate;
+    const tenYearValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 10) + 
+                        monthlyContribution * (Math.pow(1 + monthlyRate, 120) - 1) / monthlyRate;
+    const fortyYearValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 40) + 
+                          monthlyContribution * (Math.pow(1 + monthlyRate, 480) - 1) / monthlyRate;
 
     return {
       weekly: weeklyValue,
-      monthly: monthlyValue,
       yearly: yearlyValue,
-      fiveYear: fiveYearValue
+      tenYear: tenYearValue,
+      fortyYear: fortyYearValue
     };
   };
 
@@ -179,16 +180,16 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
                 <p className="text-lg font-bold text-success">${projections.weekly.toFixed(0)}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <p className="text-xs text-muted-foreground mb-1">Monthly</p>
-                <p className="text-lg font-bold text-primary">${projections.monthly.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground mb-1">1 Year</p>
+                <p className="text-lg font-bold text-primary">${projections.yearly.toLocaleString()}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-accent/10 border border-accent/20">
-                <p className="text-xs text-muted-foreground mb-1">1 Year</p>
-                <p className="text-lg font-bold text-accent">${projections.yearly.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mb-1">10 Years</p>
+                <p className="text-lg font-bold text-accent">${projections.tenYear.toLocaleString()}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <p className="text-xs text-muted-foreground mb-1">5 Years</p>
-                <p className="text-lg font-bold text-warning">${projections.fiveYear.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground mb-1">40 Years</p>
+                <p className="text-lg font-bold text-warning">${projections.fortyYear.toLocaleString()}</p>
               </div>
             </div>
 
@@ -216,11 +217,11 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
                 <div className="text-xs text-muted-foreground">Current</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-accent">${(projections.fiveYear - currentSavings).toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Growth (5yr)</div>
+                <div className="font-bold text-accent">${(projections.fortyYear - currentSavings).toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground">Growth (40yr)</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-success">{((projections.fiveYear / currentSavings - 1) * 100).toFixed(0)}%</div>
+                <div className="font-bold text-success">{((projections.fortyYear / currentSavings - 1) * 100).toFixed(0)}%</div>
                 <div className="text-xs text-muted-foreground">Return</div>
               </div>
             </div>

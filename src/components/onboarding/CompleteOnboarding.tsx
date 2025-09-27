@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ModeSelect from '@/features/onboarding/ModeSelect';
-import InteractiveOnboardingFlow from './InteractiveOnboardingFlow';
+import StreamlinedOnboardingFlow from './StreamlinedOnboardingFlow';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -63,7 +63,7 @@ export default function CompleteOnboarding({ onComplete }: CompleteOnboardingPro
   }
 
   return (
-    <InteractiveOnboardingFlow 
+    <StreamlinedOnboardingFlow 
       onComplete={handleOnboardingComplete}
       mode={selectedMode}
     />

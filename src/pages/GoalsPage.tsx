@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, PiggyBank } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import GoalsOnboarding from "@/components/goals/GoalsOnboarding";
 import GoalsSummary from "@/components/goals/GoalsSummary";
 import GoalCard from "@/components/goals/GoalCard";
 import GoalCreateForm from "@/components/goals/GoalCreateForm";
+import GoalEditForm from "@/components/goals/GoalEditForm";
 
 interface Goal {
   id: string;
@@ -27,16 +29,35 @@ interface Goal {
 export default function GoalsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [totalSaved, setTotalSaved] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showGoalsOnboarding, setShowGoalsOnboarding] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   useEffect(() => {
     if (user) {
       loadData();
       checkGoalsOnboardingNeeds();
+      
+      // Set up real-time subscription for goals
+      const channel = supabase
+        .channel('goals-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'stacklets', filter: `user_id=eq.${user.id}` },
+          () => loadData()
+        )
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'save_events', filter: `user_id=eq.${user.id}` },
+          () => loadData()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [user]);
 
@@ -104,23 +125,17 @@ export default function GoalsPage() {
   };
 
   const handleAddSave = (goalId: string) => {
-    // This would open a save flow targeting the specific goal
-    // For now, just show a toast
-    const goal = goals.find(g => g.id === goalId);
-    if (goal) {
-      toast({
-        title: "Add save to goal",
-        description: `This will open the save flow for ${goal.emoji} ${goal.title}`,
-      });
-    }
+    // Navigate to save page with the specific goal selected
+    navigate(`/app/save?goalId=${goalId}`);
   };
 
   const handleEditGoal = (goal: Goal) => {
-    // This would open an edit form
-    toast({
-      title: "Edit goal",
-      description: `Edit functionality for ${goal.emoji} ${goal.title} coming soon!`,
-    });
+    setEditingGoal(goal);
+  };
+
+  const handleEditComplete = () => {
+    setEditingGoal(null);
+    loadData(); // Refresh goals after edit
   };
 
   if (isLoading) {
@@ -204,6 +219,16 @@ export default function GoalsPage() {
         onOpenChange={setShowCreateForm}
         onSuccess={loadData}
       />
+
+      {/* Edit Form */}
+      {editingGoal && (
+        <GoalEditForm
+          goal={editingGoal}
+          open={!!editingGoal}
+          onOpenChange={(open) => !open && setEditingGoal(null)}
+          onSuccess={handleEditComplete}
+        />
+      )}
 
       {/* Onboarding */}
       {showGoalsOnboarding && (

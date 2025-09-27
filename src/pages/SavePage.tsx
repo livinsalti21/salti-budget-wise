@@ -1,11 +1,12 @@
 import { Coffee, ShoppingBag, Car, Heart, PiggyBank, TrendingUp } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +27,7 @@ const skippedPurchases = [
 export default function SavePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { saveWithSync } = useProfileSync();
   const [selectedPurchase, setSelectedPurchase] = useState(skippedPurchases[0]);
@@ -36,13 +38,39 @@ export default function SavePage() {
   const [showProjectionOnboarding, setShowProjectionOnboarding] = useState(false);
   const [saveCount, setSaveCount] = useState(0);
   const [hasCustomizedProjections, setHasCustomizedProjections] = useState(false);
+  const [goals, setGoals] = useState<Array<{ id: string; title: string; emoji: string }>>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string>('');
 
-  // Check if user needs onboarding
+  // Check if user needs onboarding and load goals
   useEffect(() => {
     if (user) {
       checkOnboardingNeeds();
+      loadGoals();
+      
+      // Check if we have a specific goal from URL params
+      const goalId = searchParams.get('goalId');
+      if (goalId) {
+        setSelectedGoalId(goalId);
+      }
     }
-  }, [user]);
+  }, [user, searchParams]);
+
+  const loadGoals = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: goalsData } = await supabase
+        .from('stacklets')
+        .select('id, title, emoji')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+      
+      setGoals(goalsData || []);
+    } catch (error) {
+      console.error('Error loading goals:', error);
+    }
+  };
 
   const checkOnboardingNeeds = async () => {
     if (!user) return;
@@ -122,31 +150,34 @@ export default function SavePage() {
 
     setLoading(true);
     try {
-      // Get user's first stacklet or create a default one
-      let { data: stacklets } = await supabase
-        .from('stacklets')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
+      let stackletId = selectedGoalId;
 
-      let stackletId;
-      if (!stacklets || stacklets.length === 0) {
-        // Create a default stacklet
-        const { data: newStacklet, error: stackletError } = await supabase
+      // If no specific goal selected, get user's first stacklet or create a default one
+      if (!stackletId) {
+        let { data: stacklets } = await supabase
           .from('stacklets')
-          .insert({
-            user_id: user.id,
-            title: 'General Savings',
-            target_cents: 100000, // $1000 default
-            emoji: '💰'
-          })
           .select('id')
-          .single();
-        
-        if (stackletError) throw stackletError;
-        stackletId = newStacklet.id;
-      } else {
-        stackletId = stacklets[0].id;
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (!stacklets || stacklets.length === 0) {
+          // Create a default stacklet
+          const { data: newStacklet, error: stackletError } = await supabase
+            .from('stacklets')
+            .insert({
+              user_id: user.id,
+              title: 'General Savings',
+              target_cents: 100000, // $1000 default
+              emoji: '💰'
+            })
+            .select('id')
+            .single();
+          
+          if (stackletError) throw stackletError;
+          stackletId = newStacklet.id;
+        } else {
+          stackletId = stacklets[0].id;
+        }
       }
 
       // Use enhanced save with profile sync validation
@@ -220,6 +251,26 @@ export default function SavePage() {
                 ))}
               </div>
             </section>
+
+            {/* Goal Selection */}
+            {goals.length > 0 && (
+              <section className="space-y-3">
+                <Label htmlFor="goalSelect">Save to specific goal (optional):</Label>
+                <Select value={selectedGoalId} onValueChange={setSelectedGoalId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a goal or save to general savings" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">💰 General Savings</SelectItem>
+                    {goals.map((goal) => (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        {goal.emoji} {goal.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </section>
+            )}
 
             {/* Custom amount */}
             <section className="space-y-3">

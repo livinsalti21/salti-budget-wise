@@ -33,7 +33,7 @@ export default function SavePage() {
   const [selectedPurchase, setSelectedPurchase] = useState(skippedPurchases[0]);
   const [customAmount, setCustomAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentSavings, setCurrentSavings] = useState(15000); // $150 in cents
+  const [currentSavings, setCurrentSavings] = useState(0);
   const [showHistoryOnboarding, setShowHistoryOnboarding] = useState(false);
   const [showProjectionOnboarding, setShowProjectionOnboarding] = useState(false);
   const [saveCount, setSaveCount] = useState(0);
@@ -41,11 +41,13 @@ export default function SavePage() {
   const [goals, setGoals] = useState<Array<{ id: string; title: string; emoji: string }>>([]);
   const [selectedGoalId, setSelectedGoalId] = useState<string>('');
 
-  // Check if user needs onboarding and load goals
+  // Check if user needs onboarding, load goals, and setup real-time updates
   useEffect(() => {
     if (user) {
       checkOnboardingNeeds();
       loadGoals();
+      loadCurrentSavings();
+      setupRealtimeSubscription();
       
       // Check if we have a specific goal from URL params
       const goalId = searchParams.get('goalId');
@@ -54,6 +56,49 @@ export default function SavePage() {
       }
     }
   }, [user, searchParams]);
+
+  const setupRealtimeSubscription = () => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('save-events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'save_events',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // Update current savings when new save is made
+          setCurrentSavings(prev => prev + payload.new.amount_cents);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const loadCurrentSavings = async () => {
+    if (!user) return;
+    
+    try {
+      const { data } = await supabase
+        .from('save_events')
+        .select('amount_cents')
+        .eq('user_id', user.id);
+      
+      if (data) {
+        const total = data.reduce((sum, save) => sum + save.amount_cents, 0);
+        setCurrentSavings(total);
+      }
+    } catch (error) {
+      console.error('Error loading current savings:', error);
+    }
+  };
 
   const loadGoals = async () => {
     if (!user) return;
@@ -105,10 +150,22 @@ export default function SavePage() {
   };
 
   const calculateFutureValue = (amount: number) => {
-    const annualRate = 0.08;
-    const years = 30;
-    const futureValue = amount * Math.pow(1 + annualRate, years);
-    return futureValue;
+    // Get user's projection settings or use defaults
+    const savedSettings = localStorage.getItem('projectionSettings');
+    let annualRate = 0.08; // Default 8%
+    let years = 30; // Default 30 years
+    
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+        annualRate = (settings.expectedReturn || 8) / 100;
+        years = settings.timeHorizon || 30;
+      } catch (error) {
+        console.error('Error parsing projection settings:', error);
+      }
+    }
+    
+    return amount * Math.pow(1 + annualRate, years);
   };
 
   const handleHistoryOnboardingComplete = () => {
@@ -152,8 +209,8 @@ export default function SavePage() {
     try {
       let stackletId = selectedGoalId;
 
-      // If no specific goal selected, get user's first stacklet or create a default one
-      if (!stackletId) {
+      // If no specific goal selected or "general" selected, get user's first stacklet or create a default one
+      if (!stackletId || stackletId === 'general') {
         let { data: stacklets } = await supabase
           .from('stacklets')
           .select('id')
@@ -261,7 +318,7 @@ export default function SavePage() {
                     <SelectValue placeholder="Choose a goal or save to general savings" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">💰 General Savings</SelectItem>
+                    <SelectItem value="general">💰 General Savings</SelectItem>
                     {goals.map((goal) => (
                       <SelectItem key={goal.id} value={goal.id}>
                         {goal.emoji} {goal.title}
@@ -305,7 +362,18 @@ export default function SavePage() {
                   ${futureValue.toLocaleString()}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  in 30 years (8% annual return)
+                  {(() => {
+                    const savedSettings = localStorage.getItem('projectionSettings');
+                    if (savedSettings) {
+                      try {
+                        const settings = JSON.parse(savedSettings);
+                        return `in ${settings.timeHorizon || 30} years (${settings.expectedReturn || 8}% annual return)`;
+                      } catch (error) {
+                        return "in 30 years (8% annual return)";
+                      }
+                    }
+                    return "in 30 years (8% annual return)";
+                  })()}
                 </p>
               </CardContent>
             </Card>
@@ -318,15 +386,6 @@ export default function SavePage() {
             >
               {loading ? 'Saving...' : `Save $${displayAmount.toFixed(2)}`}
             </Button>
-
-            {/* Match save option (placeholder for Phase 2) */}
-            <Card className="bg-muted/30">
-              <CardContent className="text-center py-4">
-                <p className="text-sm text-muted-foreground">
-                  💝 Match Save feature coming soon - invite friends to match your saves!
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="history">

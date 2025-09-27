@@ -34,16 +34,42 @@ export default function AuthCallback() {
 
         if (data.session) {
           console.log('Auth callback success, user authenticated');
+          
+          // Check user profile and onboarding status
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('completed_onboarding')
+            .eq('id', data.session.user.id)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            // Error fetching profile (not including "no rows" error)
+            console.error('Error fetching profile:', profileError);
+            setStatus('error');
+            setMessage('Unable to verify your account. Please try signing in again.');
+            setTimeout(() => navigate('/auth'), 3000);
+            return;
+          }
+
           setStatus('success');
-          setMessage('Email verified successfully! Redirecting...');
           
-          toast({
-            title: "Email Verified!",
-            description: "Welcome! Setting up your account...",
-          });
-          
-          // Let the AuthGateway handle the routing based on profile status
-          setTimeout(() => navigate('/'), 1000);
+          // If no profile exists or onboarding not completed, go to onboarding
+          if (!profile || !profile.completed_onboarding) {
+            setMessage('Email verified! Setting up your account...');
+            toast({
+              title: "Welcome!",
+              description: "Let's get your account set up...",
+            });
+            setTimeout(() => navigate('/onboarding'), 1000);
+          } else {
+            // User has completed onboarding, go to app
+            setMessage('Welcome back! Redirecting to your dashboard...');
+            toast({
+              title: "Welcome back!",
+              description: "Taking you to your dashboard...",
+            });
+            setTimeout(() => navigate('/app'), 1000);
+          }
         } else {
           // No session found, but no error - might be an edge case
           setStatus('error');

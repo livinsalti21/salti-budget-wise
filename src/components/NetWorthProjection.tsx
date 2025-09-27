@@ -178,21 +178,29 @@ const NetWorthProjection = ({ currentSavings, accountSummary }: NetWorthProjecti
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Net Worth Projection
-          </CardTitle>
-          <CardDescription>
-            See how your savings grow over time with compound interest
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="space-y-8">
+      <div className="text-center space-y-4 p-6 bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl border border-primary/10">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full">
+          <span className="text-2xl">🎯</span>
+          <span className="font-semibold text-primary">Future Wealth Calculator</span>
+        </div>
+        <h2 className="text-2xl font-bold text-foreground">Plan Your Financial Freedom</h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          See exactly how your money will grow! Every save you make today becomes wealth tomorrow through the magic of compound interest.
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="hover:shadow-lg transition-all duration-300 border-primary/10">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <TrendingUp className="h-5 w-5" />
+              Projection Calculator
+            </CardTitle>
+            <CardDescription>
+              Adjust your savings to see how it affects your future wealth
+            </CardDescription>
+          </CardHeader>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-4 w-4" />

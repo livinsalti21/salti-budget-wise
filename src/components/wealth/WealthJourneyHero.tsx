@@ -1,72 +1,53 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { TrendingUp, Target, Flame, Trophy, Crown, Share2, Zap } from 'lucide-react';
-import { useLedger } from '@/hooks/useLedger';
-import { useProfile } from '@/hooks/useProfile';
-import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Trophy, TrendingUp, Target, Sparkles, Share2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useLedger } from "@/hooks/useLedger";
+import { useProfile } from "@/hooks/useProfile";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function WealthJourneyHero() {
-  const { accountSummary, formatCurrency } = useLedger();
-  const { streakInfo, formatCurrency: profileFormatCurrency } = useProfile();
+  const { accountSummary } = useLedger();
+  const { streakInfo } = useProfile();
   const [milestoneProgress, setMilestoneProgress] = useState(0);
-  const [nextMilestone, setNextMilestone] = useState<string>('');
-  const [wealthLevel, setWealthLevel] = useState<string>('Bronze');
+  const [nextMilestone, setNextMilestone] = useState(1000);
+  const [wealthLevel, setWealthLevel] = useState("Getting Started");
   const [showCelebration, setShowCelebration] = useState(false);
 
-  const currentBalance = accountSummary?.current_balance_cents || 0;
-  const hasStartedSaving = currentBalance > 0;
+  const currentBalance = (accountSummary?.current_balance_cents || 0) / 100;
+  const futureValue = currentBalance * 40; // Simple projection for display
+  const currentStreak = streakInfo?.current || 0;
 
-  // Calculate milestones and progress
-  useEffect(() => {
-    const balance = currentBalance / 100;
-    
-    let milestone = '';
-    let progress = 0;
-    let level = 'Bronze';
+  // Calculate milestone progress and wealth level
+  const milestones = [100, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000];
+  const currentMilestoneIndex = milestones.findIndex(milestone => currentBalance < milestone);
+  const targetMilestone = currentMilestoneIndex === -1 ? 250000 : milestones[currentMilestoneIndex];
+  const previousMilestone = currentMilestoneIndex <= 0 ? 0 : milestones[currentMilestoneIndex - 1];
+  const progress = ((currentBalance - previousMilestone) / (targetMilestone - previousMilestone)) * 100;
 
-    if (balance < 1000) {
-      milestone = '$1,000';
-      progress = (balance / 1000) * 100;
-      level = 'Bronze';
-    } else if (balance < 5000) {
-      milestone = '$5,000';
-      progress = ((balance - 1000) / 4000) * 100;
-      level = 'Silver';
-    } else if (balance < 10000) {
-      milestone = '$10,000';
-      progress = ((balance - 5000) / 5000) * 100;
-      level = 'Gold';
-    } else if (balance < 100000) {
-      milestone = 'Six Figures';
-      progress = ((balance - 10000) / 90000) * 100;
-      level = 'Platinum';
-    } else {
-      milestone = 'Millionaire';
-      progress = ((balance - 100000) / 900000) * 100;
-      level = 'Diamond';
-    }
+  // Determine wealth level
+  const getWealthLevel = (balance: number) => {
+    if (balance >= 100000) return { level: "Wealth Builder", icon: "👑", color: "from-yellow-500 to-orange-600" };
+    if (balance >= 50000) return { level: "Prosperity Seeker", icon: "💎", color: "from-purple-500 to-blue-600" };
+    if (balance >= 25000) return { level: "Growth Accelerator", icon: "🚀", color: "from-blue-500 to-green-600" };
+    if (balance >= 10000) return { level: "Momentum Builder", icon: "⚡", color: "from-green-500 to-teal-600" };
+    if (balance >= 5000) return { level: "Steady Saver", icon: "🎯", color: "from-teal-500 to-cyan-600" };
+    if (balance >= 1000) return { level: "Rising Star", icon: "⭐", color: "from-cyan-500 to-blue-500" };
+    if (balance >= 100) return { level: "First Steps", icon: "🌱", color: "from-emerald-500 to-teal-500" };
+    return { level: "Getting Started", icon: "🌟", color: "from-orange-500 to-red-500" };
+  };
 
-    setNextMilestone(milestone);
-    setMilestoneProgress(Math.min(progress, 100));
-    setWealthLevel(level);
-  }, [currentBalance]);
+  const wealthData = getWealthLevel(currentBalance);
 
-  const handleShare = () => {
-    const shareText = `🚀 I'm building wealth with Livin' Salti! Current balance: ${formatCurrency(currentBalance)} and growing! 💪 #WealthBuilding #FinancialFreedom`;
+  const handleShare = async () => {
+    const message = `I'm building my wealth with Livin Salti! Currently at ${wealthData.level} level with $${currentBalance.toLocaleString()} saved and on a ${currentStreak}-day streak! 💪 #WealthBuilding #FinancialFreedom`;
     
     if (navigator.share) {
-      navigator.share({
-        title: 'My Wealth Journey',
-        text: shareText,
-        url: window.location.origin,
-      });
+      await navigator.share({ text: message });
     } else {
-      navigator.clipboard.writeText(shareText);
-      toast.success('Share text copied to clipboard!');
+      await navigator.clipboard.writeText(message);
     }
   };
 
@@ -76,137 +57,112 @@ export default function WealthJourneyHero() {
   };
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-card via-primary/5 to-success/10 border-primary/20 shadow-xl">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 blur-xl animate-pulse" />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full bg-gradient-to-r from-success/20 to-primary/20 blur-2xl animate-pulse delay-700" />
-        <div className="absolute top-1/2 right-1/4 w-16 h-16 rounded-full bg-gradient-to-r from-accent/10 to-success/10 blur-lg animate-bounce" />
-      </div>
+    <div className="relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-success/5"></div>
+      <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-r from-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-gradient-to-l from-success/10 to-transparent rounded-full blur-2xl animate-pulse delay-1000"></div>
 
-      <CardContent className="relative p-8">
-        {/* Header with Level Badge */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              {wealthLevel === 'Diamond' && <Crown className="h-8 w-8 text-primary animate-pulse" />}
-              {wealthLevel === 'Platinum' && <Trophy className="h-8 w-8 text-primary" />}
-              {wealthLevel === 'Gold' && <Target className="h-8 w-8 text-accent" />}
-              {wealthLevel === 'Silver' && <TrendingUp className="h-8 w-8 text-muted-foreground" />}
-              {wealthLevel === 'Bronze' && <Zap className="h-8 w-8 text-warning" />}
-            </div>
+      <Card className="relative border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             
-            <div>
-              <Badge 
-                variant="secondary" 
-                className={`text-sm font-bold px-3 py-1 ${
-                  wealthLevel === 'Diamond' ? 'bg-gradient-to-r from-primary to-accent text-primary-foreground' :
-                  wealthLevel === 'Platinum' ? 'bg-gradient-to-r from-accent to-success text-accent-foreground' :
-                  wealthLevel === 'Gold' ? 'bg-gradient-to-r from-warning to-primary text-warning-foreground' :
-                  wealthLevel === 'Silver' ? 'bg-secondary text-secondary-foreground' :
-                  'bg-muted text-muted-foreground'
-                }`}
-              >
-                {wealthLevel} Wealth Builder
-              </Badge>
+            {/* Left side - Wealth Status */}
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`text-3xl bg-gradient-to-r ${wealthData.color} bg-clip-text text-transparent font-bold`}>
+                  {wealthData.icon}
+                </div>
+                <div>
+                  <Badge 
+                    variant="secondary" 
+                    className={`bg-gradient-to-r ${wealthData.color} text-white border-0 hover:shadow-lg transition-all duration-300`}
+                  >
+                    {wealthData.level}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleShare}
+                    className="ml-2 h-6 text-muted-foreground hover:text-primary"
+                  >
+                    <Share2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Current Wealth */}
+                <div className="text-center md:text-left">
+                  <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
+                    ${currentBalance.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Current Wealth</p>
+                </div>
+
+                {/* Money Working */}
+                <div className="text-center md:text-left">
+                  <div className="text-2xl md:text-3xl font-bold text-success mb-1">
+                    ${futureValue.toLocaleString()}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Money Working (40yr)</p>
+                </div>
+
+                {/* Saving Streak */}
+                <div className="text-center md:text-left">
+                  <div className="text-2xl md:text-3xl font-bold text-accent mb-1">
+                    {currentStreak} days
+                  </div>
+                  <p className="text-sm text-muted-foreground">Saving Streak</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Milestone Progress */}
+            <div className="flex-1 max-w-md space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Next Milestone</span>
+                </div>
+                <span className="text-lg font-bold text-primary">
+                  ${targetMilestone.toLocaleString()}
+                </span>
+              </div>
+              
+              <div className="space-y-2">
+                <Progress value={Math.min(progress, 100)} className="h-3" />
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>${previousMilestone.toLocaleString()}</span>
+                  <span>{Math.round(progress)}% complete</span>
+                  <span>${targetMilestone.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="text-center p-4 bg-gradient-to-r from-success/10 to-accent/10 rounded-lg border border-success/20">
+                <Sparkles className="h-5 w-5 text-success mx-auto mb-2" />
+                <p className="text-sm font-medium text-success">
+                  "Every save brings you closer to financial freedom"
+                </p>
+              </div>
             </div>
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleShare}
-            className="hover:bg-primary/10 hover:border-primary/30 transition-colors"
-          >
-            <Share2 className="h-4 w-4 mr-2" />
-            Share Journey
-          </Button>
-        </div>
-
-        {/* Main Wealth Display */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {/* Current Balance */}
-          <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-            <div className="text-sm font-medium text-muted-foreground mb-2">Current Wealth</div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              {formatCurrency(currentBalance)}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Building your future</div>
-          </div>
-
-          {/* Total Invested */}
-          <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-success/10 to-success/5 border border-success/20">
-            <div className="text-sm font-medium text-muted-foreground mb-2">Money Working</div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-success to-accent bg-clip-text text-transparent">
-              {formatCurrency(currentBalance)}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Growing daily</div>
-          </div>
-
-          {/* Saving Streak */}
-          <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 border border-accent/20">
-            <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center justify-center space-x-1">
-              <Flame className="h-4 w-4 text-primary" />
-              <span>Save Streak</span>
-            </div>
-            <div className="text-3xl font-bold bg-gradient-to-r from-accent to-success bg-clip-text text-transparent">
-              {streakInfo?.current || 0}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Days strong</div>
-          </div>
-        </div>
-
-        {/* Milestone Progress */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Next Milestone</h3>
-              <p className="text-sm text-muted-foreground">
-                Your journey to {nextMilestone}
-              </p>
-            </div>
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-              {milestoneProgress.toFixed(1)}% Complete
-            </Badge>
-          </div>
-          
-          <div className="space-y-2">
-            <Progress 
-              value={milestoneProgress} 
-              className="h-3 bg-secondary"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{formatCurrency(currentBalance)}</span>
-              <span>{nextMilestone}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Motivational Quote */}
-        <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-success/5 to-primary/5 border border-success/20">
-          <p className="text-sm italic text-center text-muted-foreground">
-            "Every dollar saved today is a step towards financial freedom tomorrow. Keep building your wealth empire! 💪"
-          </p>
-        </div>
-      </CardContent>
+        </CardContent>
+      </Card>
 
       {/* Celebration Animation */}
       <AnimatePresence>
         {showCelebration && (
           <motion.div
-            initial={{ opacity: 0, scale: 0 }}
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            className="absolute inset-0 flex items-center justify-center bg-primary/20 backdrop-blur-sm"
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none"
           >
-            <div className="text-center">
-              <Trophy className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
-              <h2 className="text-2xl font-bold text-primary">Milestone Reached!</h2>
-              <p className="text-muted-foreground">Keep up the amazing work!</p>
-            </div>
+            <div className="text-6xl">🎉</div>
           </motion.div>
         )}
       </AnimatePresence>
-    </Card>
+    </div>
   );
 }

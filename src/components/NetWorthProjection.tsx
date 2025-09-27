@@ -169,10 +169,7 @@ const NetWorthProjection = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="monthly-contribution">Monthly Contribution</Label>
-              <Input id="monthly-contribution" type="number" value={monthlyContribution} onChange={e => setMonthlyContribution(Number(e.target.value))} className="text-lg font-medium" />
-            </div>
+            
             
             <div className="space-y-2">
               <Label htmlFor="target-amount">Target Goal</Label>
@@ -211,7 +208,7 @@ const NetWorthProjection = ({
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Projections</CardTitle>
+            
             <CardDescription>Based on current savings rate</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

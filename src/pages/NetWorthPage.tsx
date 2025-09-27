@@ -8,7 +8,7 @@ import SaveImpactDashboard from "@/components/networth/SaveImpactDashboard";
 import WealthGrowthChart from "@/components/networth/WealthGrowthChart";
 import NetWorthProjection from "@/components/NetWorthProjection";
 import WealthJourneyHero from "@/components/wealth/WealthJourneyHero";
-import WealthScoreCard from "@/components/wealth/WealthScoreCard";
+
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, TrendingUp, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -66,7 +66,7 @@ export default function NetWorthPage() {
         </div>
       </header>
 
-      <main className="p-4 max-w-6xl mx-auto space-y-6">
+      <main className="p-4 max-w-4xl mx-auto space-y-4">
         {/* Hero Section */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -76,15 +76,6 @@ export default function NetWorthPage() {
           <WealthJourneyHero />
         </motion.div>
 
-        {/* Wealth Score Card */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:max-w-md"
-        >
-          <WealthScoreCard />
-        </motion.div>
 
         {/* Enhanced Tabs with Better Labels */}
         <motion.div
@@ -128,7 +119,7 @@ export default function NetWorthPage() {
               >
                 <NetWorthProjection 
                   currentSavings={(accountSummary?.current_balance_cents || 0) / 100} 
-                  accountSummary={accountSummary}
+                  ledgerHistory={ledgerHistory}
                 />
               </motion.div>
             </TabsContent>

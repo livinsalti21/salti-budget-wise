@@ -11,9 +11,14 @@ import { getUserBudgetAnalysis, generateDataDrivenScenarios, getBudgetInsights, 
 
 interface NetWorthProjectionProps {
   currentSavings: number;
+  accountSummary?: {
+    current_balance_cents: number;
+    projected_40yr_value_cents: number;
+    total_inflow_cents: number;
+  } | null;
 }
 
-const NetWorthProjection = ({ currentSavings }: NetWorthProjectionProps) => {
+const NetWorthProjection = ({ currentSavings, accountSummary }: NetWorthProjectionProps) => {
   const { user } = useAuth();
   const [monthlyContribution, setMonthlyContribution] = useState(500);
   const [targetAmount, setTargetAmount] = useState(10000);

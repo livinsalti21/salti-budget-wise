@@ -7,7 +7,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
-import GoalsOnboarding from "@/components/goals/GoalsOnboarding";
 import GoalsSummary from "@/components/goals/GoalsSummary";
 import GoalCard from "@/components/goals/GoalCard";
 import GoalCreateForm from "@/components/goals/GoalCreateForm";
@@ -34,13 +33,11 @@ export default function GoalsPage() {
   const [totalSaved, setTotalSaved] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showGoalsOnboarding, setShowGoalsOnboarding] = useState(false);
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
 
   useEffect(() => {
     if (user) {
       loadData();
-      checkGoalsOnboardingNeeds();
       
       // Set up real-time subscription for goals
       const channel = supabase
@@ -60,31 +57,6 @@ export default function GoalsPage() {
       };
     }
   }, [user]);
-
-  const checkGoalsOnboardingNeeds = async () => {
-    const completedGoalsOnboarding = localStorage.getItem('goals_onboarding_completed');
-    
-    if (!completedGoalsOnboarding) {
-      try {
-        const { data: saveData } = await supabase
-          .from('save_events')
-          .select('amount_cents')
-          .eq('user_id', user?.id)
-          .limit(5);
-
-        if (!saveData || saveData.length < 5) {
-          setShowGoalsOnboarding(true);
-        }
-      } catch (error) {
-        setShowGoalsOnboarding(true);
-      }
-    }
-  };
-
-  const handleGoalsOnboardingComplete = () => {
-    localStorage.setItem('goals_onboarding_completed', 'true');
-    setShowGoalsOnboarding(false);
-  };
 
   const loadData = async () => {
     if (!user) return;
@@ -227,14 +199,6 @@ export default function GoalsPage() {
           open={!!editingGoal}
           onOpenChange={(open) => !open && setEditingGoal(null)}
           onSuccess={handleEditComplete}
-        />
-      )}
-
-      {/* Onboarding */}
-      {showGoalsOnboarding && (
-        <GoalsOnboarding
-          onComplete={handleGoalsOnboardingComplete}
-          onSkip={handleGoalsOnboardingComplete}
         />
       )}
     </div>

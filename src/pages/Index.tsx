@@ -15,27 +15,11 @@ import NotificationCenter from '@/components/NotificationCenter';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
 import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
-import DashboardOnboarding from '@/components/dashboard/DashboardOnboarding';
 
 const Index = () => {
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
-  const [showDashboardOnboarding, setShowDashboardOnboarding] = useState(false);
-
-  useEffect(() => {
-    if (!isMobile) {
-      const completedDashboardOnboarding = localStorage.getItem('dashboard_onboarding_completed');
-      if (!completedDashboardOnboarding) {
-        setTimeout(() => setShowDashboardOnboarding(true), 1000);
-      }
-    }
-  }, [isMobile]);
-
-  const handleDashboardOnboardingComplete = () => {
-    localStorage.setItem('dashboard_onboarding_completed', 'true');
-    setShowDashboardOnboarding(false);
-  };
 
 
   // Mobile-optimized layout
@@ -136,13 +120,6 @@ const Index = () => {
         </TabsContent>
       </Tabs>
       </div>
-      
-      {showDashboardOnboarding && (
-        <DashboardOnboarding
-          onComplete={handleDashboardOnboardingComplete}
-          onSkip={handleDashboardOnboardingComplete}
-        />
-      )}
     </div>
   );
 };

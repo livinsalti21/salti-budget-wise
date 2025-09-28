@@ -56,19 +56,11 @@ export default function AuthCallback() {
           // If no profile exists or onboarding not completed, go to onboarding
           if (!profile || !profile.completed_onboarding) {
             setMessage('Email verified! Setting up your account...');
-            toast({
-              title: "Welcome!",
-              description: "Let's get your account set up...",
-            });
-            setTimeout(() => navigate('/onboarding'), 1000);
+            setTimeout(() => navigate('/onboarding'), 500);
           } else {
             // User has completed onboarding, go to app
-            setMessage('Welcome back! Redirecting to your dashboard...');
-            toast({
-              title: "Welcome back!",
-              description: "Taking you to your dashboard...",
-            });
-            setTimeout(() => navigate('/app'), 1000);
+            setMessage('Welcome back!');
+            setTimeout(() => navigate('/app'), 500);
           }
         } else {
           // No session found, but no error - might be an edge case

@@ -44,15 +44,16 @@ serve(async (req) => {
       });
     }
 
-    // Analyze spending patterns with OpenAI
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Analyze spending patterns with Lovable AI
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const openAIResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPEN AI KEY')}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',

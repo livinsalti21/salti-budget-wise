@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
-import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield } from 'lucide-react';
+import { PiggyBank, LogOut, Users, DollarSign, Target, TrendingUp, Heart, Upload, Store, Settings, Bell, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,6 +15,8 @@ import NotificationCenter from '@/components/NotificationCenter';
 import { SecurityDashboard } from '@/components/SecurityDashboard';
 import EnhancedStreaksDashboard from '@/components/EnhancedStreaksDashboard';
 import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
+import ConversationalCoach from '@/components/ai/ConversationalCoach';
+import { FeatureGate } from '@/components/core/FeatureGate';
 
 const Index = () => {
   const { signOut } = useAuth();
@@ -95,6 +97,12 @@ const Index = () => {
               <Shield className="h-4 w-4 mr-2" />
               Security
             </TabsTrigger>
+            <FeatureGate flag="LOVABLE_AI_CHAT">
+              <TabsTrigger value="ai-coach" className="scroll-snap-child shrink-0">
+                <Sparkles className="h-4 w-4 mr-2" />
+                AI Coach
+              </TabsTrigger>
+            </FeatureGate>
           </TabsList>
         </div>
 
@@ -118,6 +126,12 @@ const Index = () => {
         <TabsContent value="security">
           <SecurityDashboard />
         </TabsContent>
+
+        <FeatureGate flag="LOVABLE_AI_CHAT">
+          <TabsContent value="ai-coach">
+            <ConversationalCoach />
+          </TabsContent>
+        </FeatureGate>
       </Tabs>
       </div>
     </div>

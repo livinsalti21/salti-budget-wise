@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_sessions: {
+        Row: {
+          context: Json | null
+          created_at: string
+          id: string
+          last_message_at: string
+          message_count: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          message_count?: number
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_messages: {
         Row: {
           content: string
@@ -97,38 +159,52 @@ export type Database = {
       ai_suggestions: {
         Row: {
           category: string
+          chat_session_id: string | null
           created_at: string
           expires_at: string | null
           future_value_projection: Json | null
           id: string
           is_applied: boolean
           potential_savings_cents: number | null
+          source: string | null
           suggestion_text: string
           user_id: string
         }
         Insert: {
           category: string
+          chat_session_id?: string | null
           created_at?: string
           expires_at?: string | null
           future_value_projection?: Json | null
           id?: string
           is_applied?: boolean
           potential_savings_cents?: number | null
+          source?: string | null
           suggestion_text: string
           user_id: string
         }
         Update: {
           category?: string
+          chat_session_id?: string | null
           created_at?: string
           expires_at?: string | null
           future_value_projection?: Json | null
           id?: string
           is_applied?: boolean
           potential_savings_cents?: number | null
+          source?: string | null
           suggestion_text?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_chat_session_id_fkey"
+            columns: ["chat_session_id"]
+            isOneToOne: false
+            referencedRelation: "ai_chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       analytics_events: {
         Row: {

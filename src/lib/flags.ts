@@ -9,6 +9,9 @@ export const FLAGS = {
   PERKS: import.meta.env.VITE_FEATURE_PERKS_ENABLED === 'true',
   PRO: import.meta.env.VITE_FEATURE_PRO_ENABLED === 'true',
   TEMPLATE_PURCHASING: import.meta.env.VITE_FEATURE_TEMPLATE_PURCHASING_ENABLED === 'true',
+  // Lovable Cloud AI Features
+  LOVABLE_AI_CHAT: import.meta.env.VITE_FEATURE_LOVABLE_AI_CHAT !== 'false', // Default ON
+  AI_STREAMING: import.meta.env.VITE_FEATURE_AI_STREAMING !== 'false', // Default ON
 };
 
 export function featureEnabled(key: keyof typeof FLAGS) {

@@ -1,4 +1,4 @@
-import { Coffee, ShoppingBag, Car, Heart, PiggyBank, TrendingUp } from "lucide-react";
+import { Coffee, ShoppingBag, Car, Heart, PiggyBank, TrendingUp, Sparkles } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
@@ -16,6 +16,9 @@ import SaveHistory from "@/components/SaveHistory";
 import { ProjectionSettings } from "@/components/ProjectionSettings";
 import SaveHistoryOnboarding from "@/components/save/SaveHistoryOnboarding";
 import ProjectionOnboarding from "@/components/save/ProjectionOnboarding";
+import ConversationalCoach from "@/components/ai/ConversationalCoach";
+import { FeatureGate } from "@/components/core/FeatureGate";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 const skippedPurchases = [
   { id: 'coffee', name: 'Coffee', icon: Coffee, amount: 5.50 },
@@ -377,6 +380,21 @@ export default function SavePage() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* AI Coach Button */}
+            <FeatureGate flag="LOVABLE_AI_CHAT">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="w-full">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Ask AI Coach
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl p-0">
+                  <ConversationalCoach />
+                </DialogContent>
+              </Dialog>
+            </FeatureGate>
 
             {/* Save button */}
             <Button 

@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import FriendInviteModal from './FriendInviteModal';
+import FriendStreakCelebration from './FriendStreakCelebration';
 import { useFriendStreaks } from '@/hooks/useFriendStreaks';
 import { FLAGS } from '@/lib/flags';
 
@@ -48,8 +49,20 @@ export default function FriendMatchSection() {
   const [friends, setFriends] = useState<FriendConnection[]>([]);
   const [recentMatches, setRecentMatches] = useState<FriendMatch[]>([]);
   const [friendSaves, setFriendSaves] = useState<RecentSave[]>([]);
+  const [matchedSaveIds, setMatchedSaveIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [celebrationData, setCelebrationData] = useState<{
+    open: boolean;
+    friendName: string;
+    streakDays: number;
+    milestone: boolean;
+  }>({
+    open: false,
+    friendName: '',
+    streakDays: 0,
+    milestone: false
+  });
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -91,7 +104,16 @@ export default function FriendMatchSection() {
       setFriends([]);
     }
 
-    // Load recent friend matches 
+    // Get saves this user has already matched
+    const { data: myMatches } = await supabase
+      .from('friend_matches')
+      .select('original_save_event_id')
+      .eq('matching_user_id', user.id);
+
+    const alreadyMatchedIds = myMatches?.map(m => m.original_save_event_id) || [];
+    setMatchedSaveIds(alreadyMatchedIds);
+
+    // Load recent friend matches
     const { data: matchesData } = await supabase
       .from('friend_matches')
       .select('*')
@@ -138,12 +160,17 @@ export default function FriendMatchSection() {
           .select('id, email, display_name')
           .in('id', saveUserIds);
 
-        // Join the data
+        // Join the data and filter out already-matched saves
         const savesWithProfiles = savesData.map(s => ({
           ...s,
           profiles: saveProfilesData?.find(p => p.id === s.user_id)
         }));
-        setFriendSaves(savesWithProfiles as RecentSave[]);
+        
+        const unmatchedSaves = savesWithProfiles.filter(
+          save => !alreadyMatchedIds.includes(save.id)
+        );
+        
+        setFriendSaves(unmatchedSaves as RecentSave[]);
       } else {
         setFriendSaves([]);
       }
@@ -226,16 +253,66 @@ export default function FriendMatchSection() {
         variant: "destructive"
       });
     } else {
+      // Immediately remove from view
+      setMatchedSaveIds(prev => [...prev, friendSave.id]);
+      setFriendSaves(prev => prev.filter(s => s.id !== friendSave.id));
+
+      // Get consecutive match days for celebration
+      const { data: matchHistory } = await supabase
+        .from('friend_matches')
+        .select('created_at')
+        .or(`and(original_user_id.eq.${friendSave.user_id},matching_user_id.eq.${user.id}),and(original_user_id.eq.${user.id},matching_user_id.eq.${friendSave.user_id})`)
+        .order('created_at', { ascending: false });
+
+      const consecutiveDays = calculateConsecutiveDays(matchHistory || []);
+      const milestones = [1, 3, 7, 14, 30, 60, 100];
+      const isMilestone = milestones.includes(consecutiveDays);
+
       toast({
-        title: "🎉 Friend Match Created!",
-        description: `You matched ${friendSave.profiles?.display_name || "your friend"}'s $${(friendSave.amount_cents / 100).toFixed(2)} save!`,
+        title: "🎉 Save Matched!",
+        description: `You matched ${friendSave.profiles?.display_name || "your friend"}'s $${(friendSave.amount_cents / 100).toFixed(2)} save!${consecutiveDays > 1 ? ` ${consecutiveDays}-day streak! 🔥` : ''}`,
       });
+      
+      // Show celebration for streaks
+      if (consecutiveDays >= 1) {
+        setCelebrationData({
+          open: true,
+          friendName: friendSave.profiles?.display_name || friendSave.profiles?.email || 'your friend',
+          streakDays: consecutiveDays,
+          milestone: isMilestone
+        });
+      }
       
       // Reload data to show the new match
       loadFriendData();
     }
 
     setIsLoading(false);
+  };
+
+  const calculateConsecutiveDays = (matches: { created_at: string }[]) => {
+    if (!matches.length) return 0;
+    
+    let consecutive = 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < matches.length - 1; i++) {
+      const current = new Date(matches[i].created_at);
+      const next = new Date(matches[i + 1].created_at);
+      current.setHours(0, 0, 0, 0);
+      next.setHours(0, 0, 0, 0);
+      
+      const diffDays = Math.floor((current.getTime() - next.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        consecutive++;
+      } else {
+        break;
+      }
+    }
+    
+    return consecutive;
   };
 
   const formatCurrency = (cents: number) => {
@@ -456,6 +533,14 @@ export default function FriendMatchSection() {
       <FriendInviteModal 
         open={showInviteModal} 
         onOpenChange={setShowInviteModal}
+      />
+      
+      {/* Streak Celebration */}
+      <FriendStreakCelebration
+        open={celebrationData.open}
+        onClose={() => setCelebrationData(prev => ({ ...prev, open: false }))}
+        friendName={celebrationData.friendName}
+        streakDays={celebrationData.streakDays}
       />
     </div>
   );

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Heart, Plus, Zap } from 'lucide-react';
+import { Users, Heart, Plus, Zap, Flame } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import FriendInviteModal from './FriendInviteModal';
+import { useFriendStreaks } from '@/hooks/useFriendStreaks';
+import { FLAGS } from '@/lib/flags';
 
 interface FriendConnection {
   id: string;
@@ -51,6 +53,7 @@ export default function FriendMatchSection() {
   
   const { user } = useAuth();
   const { toast } = useToast();
+  const { friendStreaks, getStreakWithFriend } = useFriendStreaks();
 
   useEffect(() => {
     if (user) {
@@ -299,28 +302,84 @@ export default function FriendMatchSection() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {friendSaves.slice(0, 3).map((save) => (
-                <div key={save.id} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                      <Heart className="h-4 w-4 text-blue-500" />
+              {friendSaves.slice(0, 3).map((save) => {
+                const friendStreak = FLAGS.FRIEND_STREAKS ? getStreakWithFriend(save.user_id) : null;
+                
+                return (
+                  <div key={save.id} className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                        <Heart className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">
+                            {save.profiles?.display_name || save.profiles?.email} saved ${formatCurrency(save.amount_cents)}
+                          </p>
+                          {friendStreak && friendStreak.current_streak > 0 && (
+                            <Badge className="text-xs bg-orange-500/10 text-orange-600 border-orange-300">
+                              <Flame className="h-3 w-3 mr-1" />
+                              {friendStreak.current_streak} day streak
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{formatTimeAgo(save.created_at)}</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleMatchFriendSave(save)}
+                      disabled={isLoading}
+                      className="bg-blue-500 hover:bg-blue-600 text-white"
+                    >
+                      <Heart className="h-3 w-3 mr-1" />
+                      Match
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Friend Streaks Display */}
+      {FLAGS.FRIEND_STREAKS && friendStreaks.length > 0 && (
+        <Card className="bg-gradient-to-br from-orange-50 to-red-50 border-orange-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Flame className="h-5 w-5 text-orange-500" />
+              Your Friend Streaks 🔥
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {friendStreaks.slice(0, 3).map((streak) => (
+                <div key={streak.friend_id} className="flex items-center justify-between p-2 bg-white/70 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+                      <Users className="h-4 w-4 text-orange-500" />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">
-                        {save.profiles?.display_name || save.profiles?.email} saved ${formatCurrency(save.amount_cents)}
+                      <p className="font-medium text-sm">{streak.friend_name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Best: {streak.longest_streak} days
                       </p>
-                      <p className="text-xs text-muted-foreground">{formatTimeAgo(save.created_at)}</p>
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleMatchFriendSave(save)}
-                    disabled={isLoading}
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    <Heart className="h-3 w-3 mr-1" />
-                    Match ${formatCurrency(save.amount_cents)}
-                  </Button>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1">
+                      <Flame className="h-4 w-4 text-orange-500" />
+                      <span className="text-lg font-bold text-orange-600">
+                        {streak.current_streak}
+                      </span>
+                    </div>
+                    {streak.is_active && (
+                      <Badge className="text-xs bg-green-500/10 text-green-600 border-green-300">
+                        Active
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

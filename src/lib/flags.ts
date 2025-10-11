@@ -12,6 +12,8 @@ export const FLAGS = {
   // Lovable Cloud AI Features
   LOVABLE_AI_CHAT: import.meta.env.VITE_FEATURE_LOVABLE_AI_CHAT !== 'false', // Default ON
   AI_STREAMING: import.meta.env.VITE_FEATURE_AI_STREAMING !== 'false', // Default ON
+  // Friend Streaks
+  FRIEND_STREAKS: import.meta.env.VITE_FEATURE_FRIEND_STREAKS_ENABLED !== 'false', // Default ON
 };
 
 export function featureEnabled(key: keyof typeof FLAGS) {

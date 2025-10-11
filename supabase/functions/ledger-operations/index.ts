@@ -31,7 +31,7 @@ serve(async (req) => {
       })
     }
 
-    const { operation, amount_cents, transaction_type, description, reference_id } = await req.json()
+    const { operation, amount_cents, transaction_type, description, reference_id, limit = 50, offset = 0, sponsor_id, recipient_user_id, match_event_id } = await req.json()
 
     if (operation === 'create_ledger_entry') {
       // Calculate 40-year future value (8% annual return)
@@ -92,8 +92,6 @@ serve(async (req) => {
     }
 
     if (operation === 'get_ledger_history') {
-      const { limit = 50, offset = 0 } = await req.json()
-
       const { data: ledgerHistory, error: historyError } = await supabase
         .from('user_ledger')
         .select('*')
@@ -119,8 +117,6 @@ serve(async (req) => {
     }
 
     if (operation === 'create_sponsor_ledger_entry') {
-      const { sponsor_id, recipient_user_id, match_event_id } = await req.json()
-
       // Get current sponsor balance
       const { data: sponsorAccount } = await supabase
         .from('sponsor_accounts')

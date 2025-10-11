@@ -1,6 +1,7 @@
 import React from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileLayout from './MobileLayout';
+import DesktopSidebar from '@/components/navigation/DesktopSidebar';
 import { ChatWidget } from '@/components/chat/ChatWidget';
 
 interface AppWrapperProps {
@@ -20,11 +21,14 @@ export default function AppWrapper({ children, showBottomNav = true }: AppWrappe
     );
   }
 
-  // Desktop layout - keep existing behavior
+  // Desktop layout with sidebar
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background">
-      <div className="container mx-auto px-4 py-4 max-w-4xl">
-        {children}
+      <DesktopSidebar />
+      <div className="md:ml-64">
+        <div className="container mx-auto px-6 py-6 max-w-5xl">
+          {children}
+        </div>
       </div>
       <ChatWidget />
     </div>

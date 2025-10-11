@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Users, BookOpen, Sparkles, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import MobileDashboard from '@/components/mobile/MobileDashboard';
+import Dashboard from '@/components/Dashboard';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import HabitTracker from '@/components/HabitTracker';
 import SuccessStories from '@/components/SuccessStories';
@@ -21,7 +21,7 @@ const EnhancedHomePage = () => {
       <MobileLayout>
         <div className="space-y-6">
           <MissionClarityBanner />
-          <MobileDashboard />
+          <Dashboard />
           <HabitTracker />
           <SuccessStories />
         </div>

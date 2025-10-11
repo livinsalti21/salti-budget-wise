@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/PageHeader";
 import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 import { MatchPageOnboarding } from '@/components/match/MatchPageOnboarding';
-import MobileMatchSection from '@/components/mobile/MobileMatchSection';
+import MatchSection from '@/components/MatchSection';
 import FriendMatchSection from '@/components/friends/FriendMatchSection';
 import StreakMatchSection from '@/components/match/StreakMatchSection';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -99,7 +99,7 @@ export default function MatchPage() {
             </TabsContent>
 
             <TabsContent value="sponsors" className="space-y-4 mt-0">
-              <MobileMatchSection />
+              <MatchSection />
             </TabsContent>
 
             <TabsContent value="streaks" className="space-y-4 mt-0">
@@ -156,7 +156,7 @@ export default function MatchPage() {
           </TabsContent>
 
           <TabsContent value="sponsors">
-            <MobileMatchSection />
+            <MatchSection />
           </TabsContent>
 
           <TabsContent value="streaks">

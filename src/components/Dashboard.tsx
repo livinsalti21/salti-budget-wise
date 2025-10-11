@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TouchTarget } from '@/components/ui/mobile-helpers';
 import { quickProjection } from '@/simulation/futureValue';
 import BudgetProgress from '@/components/BudgetProgress';
-import MobileMatchSection from './MobileMatchSection';
+import MatchSection from './MatchSection';
 import { Link } from 'react-router-dom';
 import { track, EVENTS } from '@/analytics/analytics';
 import { ContextualTooltip } from '@/components/ui/ContextualTooltip';
@@ -28,7 +28,7 @@ interface FriendStreak {
   display_name: string;
   consecutive_days: number;
 }
-export default function MobileDashboard() {
+export default function Dashboard() {
   const {
     user
   } = useAuth();
@@ -129,20 +129,20 @@ export default function MobileDashboard() {
   };
   const getWeeklyBalance = () => data.weeklyIncome - data.weeklyExpenses;
   const isPositiveBalance = getWeeklyBalance() >= 0;
-  return <div className="space-y-3">
+  return <div className="space-y-4 md:space-y-6">
       {/* 35-Year Projection Header */}
       <Link to="/net-worth">
         <Card className="bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border-primary/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-          <CardContent className="p-4 text-center">
+          <CardContent className="p-4 md:p-6 text-center">
             <div className="flex items-center justify-center gap-2 mb-1">
-              <Crown className="h-5 w-5 text-primary" />
-              <h2 className="text-sm font-semibold text-primary">Your Future Wealth</h2>
+              <Crown className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              <h2 className="text-sm md:text-base font-semibold text-primary">Your Future Wealth</h2>
               <ChevronRight className="h-4 w-4 text-primary/60" />
             </div>
-            <p className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <p className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               ${Math.round(data.projectedNetWorth35Years / 100).toLocaleString()}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
               Your savings in 35 years at 8% growth
             </p>
           </CardContent>
@@ -152,11 +152,11 @@ export default function MobileDashboard() {
       {/* Compact Header with Refresh */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-sm">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-sm md:text-base">
             ✌🏽
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Livin Salti
             </h1>
             {lastUpdated && <p className="text-xs text-muted-foreground">
@@ -204,8 +204,8 @@ export default function MobileDashboard() {
           </Card>
         </Link>}
 
-      {/* Hero Stats - 2x2 Grid for Mobile */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Hero Stats - 2x2 Grid for Mobile, 4 columns for Desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         <Link to="/save-history">
           <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
             <CardContent className="p-4">
@@ -287,7 +287,7 @@ export default function MobileDashboard() {
 
       {/* Match Section */}
       <div className="mb-4">
-        <MobileMatchSection />
+        <MatchSection />
       </div>
 
       {/* Enhanced Top 3 Friends Streaks - Prominent Section */}

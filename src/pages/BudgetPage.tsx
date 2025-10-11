@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import type { BudgetInput } from "@/lib/budgetUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadCurrentWeekBudget } from "@/lib/budgetStorage";
+import AppWrapper from "@/components/mobile/AppWrapper";
 
 // New unified components
 import BudgetCreationFlow from "@/components/BudgetCreationFlow";
@@ -97,7 +98,7 @@ export default function BudgetPage() {
   };
 
   return (
-    <div>
+    <AppWrapper>
       <PageHeader 
         title={getPageTitle()}
         subtitle={getPageDescription()}
@@ -124,7 +125,7 @@ export default function BudgetPage() {
         ) : undefined}
       />
 
-      <main className="p-4 max-w-2xl mx-auto">
+      <main className="max-w-2xl mx-auto space-y-6">
         {isLoading ? (
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
@@ -209,6 +210,6 @@ export default function BudgetPage() {
           </div>
         </div>
       )}
-    </div>
+    </AppWrapper>
   );
 }

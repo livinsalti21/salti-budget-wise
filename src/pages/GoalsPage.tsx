@@ -11,6 +11,7 @@ import GoalsSummary from "@/components/goals/GoalsSummary";
 import GoalCard from "@/components/goals/GoalCard";
 import GoalCreateForm from "@/components/goals/GoalCreateForm";
 import GoalEditForm from "@/components/goals/GoalEditForm";
+import AppWrapper from "@/components/mobile/AppWrapper";
 
 interface Goal {
   id: string;
@@ -133,14 +134,14 @@ export default function GoalsPage() {
   }
 
   return (
-    <div>
+    <AppWrapper>
       <PageHeader 
         title="My Goals" 
         subtitle="Track your savings goals"
         backTo="/app"
       />
 
-      <main className="p-4 space-y-6 max-w-6xl mx-auto">
+      <main className="space-y-6 max-w-4xl mx-auto">
         {/* Summary */}
         <GoalsSummary goals={goals} totalSaved={totalSaved} />
 
@@ -201,6 +202,6 @@ export default function GoalsPage() {
           onSuccess={handleEditComplete}
         />
       )}
-    </div>
+    </AppWrapper>
   );
 }

@@ -8,6 +8,7 @@ import SaveImpactDashboard from "@/components/networth/SaveImpactDashboard";
 import WealthGrowthChart from "@/components/networth/WealthGrowthChart";
 import NetWorthProjection from "@/components/NetWorthProjection";
 import WealthJourneyHero from "@/components/wealth/WealthJourneyHero";
+import AppWrapper from "@/components/mobile/AppWrapper";
 
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Target, TrendingUp, Coins } from "lucide-react";
@@ -39,11 +40,12 @@ export default function NetWorthPage() {
 
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30"
-    >
+    <AppWrapper>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
       {/* Enhanced Header */}
       <header className="sticky top-0 z-10 bg-background/90 backdrop-blur-sm border-b">
         <div className="flex items-center gap-3 max-w-6xl mx-auto p-4">
@@ -159,6 +161,7 @@ export default function NetWorthPage() {
           onSkip={handleNetWorthOnboardingComplete}
         />
       )}
-    </motion.div>
+      </motion.div>
+    </AppWrapper>
   );
 }

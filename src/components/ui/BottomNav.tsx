@@ -1,7 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { Home, PiggyBank, Calculator, Users, User, Heart } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function BottomNav() {
+  const isMobile = useIsMobile();
+  
+  // Only show on mobile
+  if (!isMobile) return null;
+  
   const item = "flex-1 flex flex-col items-center justify-center text-xs py-2 gap-1 min-h-touch";
   const active = ({ isActive }: any) => isActive ? "text-primary font-medium" : "text-muted-foreground";
   

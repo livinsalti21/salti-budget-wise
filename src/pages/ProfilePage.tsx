@@ -13,6 +13,7 @@ import NotificationCenter from "@/components/NotificationCenter";
 import { SecurityDashboard } from "@/components/SecurityDashboard";
 import { ProfileOnboarding } from "@/components/profile/ProfileOnboarding";
 import { ProfileDataStatus } from "@/components/profile/ProfileDataStatus";
+import AppWrapper from "@/components/mobile/AppWrapper";
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -70,14 +71,14 @@ export default function ProfilePage() {
   const hasPro = hasProAccess(profile);
 
   return (
-    <div>
+    <AppWrapper>
       <PageHeader 
         title="Profile" 
         subtitle="Account & settings"
         backTo="/app"
       />
 
-      <main className="p-4 max-w-md mx-auto">
+      <main className="max-w-2xl mx-auto space-y-6">
         {/* Profile Onboarding Component */}
         <ProfileOnboarding 
           currentTab={currentTab}
@@ -233,6 +234,6 @@ export default function ProfilePage() {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </AppWrapper>
   );
 }

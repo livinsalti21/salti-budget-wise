@@ -19,6 +19,7 @@ import ProjectionOnboarding from "@/components/save/ProjectionOnboarding";
 import ConversationalCoach from "@/components/ai/ConversationalCoach";
 import { FeatureGate } from "@/components/core/FeatureGate";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import AppWrapper from "@/components/mobile/AppWrapper";
 
 const skippedPurchases = [
   { id: 'coffee', name: 'Coffee', icon: Coffee, amount: 5.50 },
@@ -266,14 +267,14 @@ export default function SavePage() {
   const futureValue = calculateFutureValue(displayAmount);
 
   return (
-    <div>
+    <AppWrapper showBottomNav={true}>
       <PageHeader 
         title="Save n Stack" 
         subtitle="Save, track, and grow your wealth"
         backTo="/app"
       />
 
-      <main className="p-4 max-w-md mx-auto">
+      <main className="max-w-2xl mx-auto space-y-6">
         <Tabs defaultValue="save" className="space-y-6" onValueChange={handleTabChange}>
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="save">Save</TabsTrigger>
@@ -429,6 +430,6 @@ export default function SavePage() {
           </TabsContent>
         </Tabs>
       </main>
-    </div>
+    </AppWrapper>
   );
 }

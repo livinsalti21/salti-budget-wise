@@ -94,88 +94,83 @@ export default function WealthJourneyHero() {
       <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-r from-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-0 right-1/4 w-48 h-48 bg-gradient-to-l from-success/10 to-transparent rounded-full blur-2xl animate-pulse delay-1000"></div>
 
-      <Card className="relative border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm shadow-lg">
-        <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            
-            {/* Left side - Wealth Status */}
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className={`text-3xl bg-gradient-to-r ${wealthData.color} bg-clip-text text-transparent font-bold`}>
-                  {wealthData.icon}
-                </div>
-                <div>
-                  <Badge 
-                    variant="secondary" 
-                    className={`bg-gradient-to-r ${wealthData.color} text-white border-0 hover:shadow-lg transition-all duration-300`}
-                  >
-                    {wealthData.level}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleShare}
-                    className="ml-2 h-6 text-muted-foreground hover:text-primary"
-                  >
-                    <Share2 className="h-3 w-3" />
-                  </Button>
-                </div>
+      <Card className="relative border-0 bg-gradient-to-br from-card via-card/95 to-card/90 backdrop-blur-sm shadow-xl overflow-hidden">
+        <CardContent className="p-6 md:p-8">
+          {/* Top Row - Status Badge & Share */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className={`text-4xl bg-gradient-to-r ${wealthData.color} bg-clip-text text-transparent`}>
+                {wealthData.icon}
               </div>
+              <Badge 
+                variant="secondary" 
+                className={`bg-gradient-to-r ${wealthData.color} text-white border-0 px-4 py-1.5 text-sm font-semibold`}
+              >
+                {wealthData.level}
+              </Badge>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleShare}
+              className="hover:bg-primary/10"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Current Wealth */}
-                <div className="text-center md:text-left">
-                  <div className="text-3xl md:text-4xl font-bold text-foreground mb-1">
-                    ${currentBalance.toLocaleString()}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Current Wealth</p>
-                </div>
-
-                {/* Money Working */}
-                <div className="text-center md:text-left">
-                  <div className="text-2xl md:text-3xl font-bold text-success mb-1">
-                    ${futureValue.toLocaleString()}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Money Working (40yr)</p>
-                </div>
-
-                {/* Saving Streak */}
-                <div className="text-center md:text-left">
-                  <div className="text-2xl md:text-3xl font-bold text-accent mb-1">
-                    {currentStreak} days
-                  </div>
-                  <p className="text-sm text-muted-foreground">Saving Streak</p>
-                </div>
+          {/* Main Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="text-center md:text-left space-y-1">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Current Balance</p>
+              <div className="text-3xl md:text-4xl font-bold text-foreground">
+                ${currentBalance.toLocaleString()}
               </div>
             </div>
 
-            {/* Right side - Milestone Progress */}
-            <div className="flex-1 max-w-md space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Next Milestone</span>
-                </div>
-                <span className="text-lg font-bold text-primary">
-                  ${targetMilestone.toLocaleString()}
-                </span>
+            <div className="text-center md:text-left space-y-1">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">40 Year Value</p>
+              <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-success to-accent bg-clip-text text-transparent">
+                ${futureValue.toLocaleString()}
               </div>
-              
-              <div className="space-y-2">
-                <Progress value={Math.min(progress, 100)} className="h-3" />
-                <div className="flex justify-between text-sm text-muted-foreground">
-                  <span>${previousMilestone.toLocaleString()}</span>
-                  <span>{Math.round(progress)}% complete</span>
-                  <span>${targetMilestone.toLocaleString()}</span>
-                </div>
-              </div>
+            </div>
 
-              <div className="text-center p-4 bg-gradient-to-r from-success/10 to-accent/10 rounded-lg border border-success/20">
-                <Sparkles className="h-5 w-5 text-success mx-auto mb-2" />
-                <p className="text-sm font-medium text-success">
-                  "Every save brings you closer to financial freedom"
-                </p>
+            <div className="text-center md:text-left space-y-1">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Streak</p>
+              <div className="text-3xl md:text-4xl font-bold text-accent flex items-center justify-center md:justify-start gap-2">
+                {currentStreak} 
+                <span className="text-lg">days</span>
               </div>
+            </div>
+          </div>
+
+          {/* Milestone Progress Section */}
+          <div className="space-y-4 p-6 bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border border-primary/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                <span className="text-sm font-semibold text-muted-foreground">Next Milestone</span>
+              </div>
+              <span className="text-2xl font-bold text-primary">
+                ${targetMilestone.toLocaleString()}
+              </span>
+            </div>
+            
+            <div className="space-y-2">
+              <Progress value={Math.min(progress, 100)} className="h-2" />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>${previousMilestone.toLocaleString()}</span>
+                <span className="font-semibold">{Math.round(progress)}%</span>
+                <span>${targetMilestone.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Sparkles className="h-4 w-4 text-success" />
+              <p className="text-sm text-center text-muted-foreground italic">
+                Every save brings you closer to freedom
+              </p>
             </div>
           </div>
         </CardContent>

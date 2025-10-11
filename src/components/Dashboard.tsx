@@ -68,9 +68,8 @@ export default function Dashboard() {
 
       if (accountError && accountError.code !== "PGRST116") throw accountError;
 
-      // Calculate 35-year projection from current balance
-      const currentBalance = accountSummary?.current_balance_cents || 0;
-      const projected35Years = Math.round((currentBalance / 100) * Math.pow(1.08, 35));
+      // Use stored projected value directly (NO recalculation!)
+      const projected40Years = accountSummary?.projected_40yr_value_cents || 0;
 
       // Get this week's saves
       const weekStart = new Date();
@@ -96,17 +95,17 @@ export default function Dashboard() {
       if (streakError && streakError.code !== "PGRST116") throw streakError;
 
       const newData = {
-        totalSaved: currentBalance,
+        totalSaved: accountSummary?.current_balance_cents || 0,
         weeklyIncome: 0,
         weeklyExpenses: 0,
         savingStreak: streakData?.consecutive_days || 0,
         savingsThisWeek: thisWeekSaves,
-        projectedNetWorth: Math.round((currentBalance / 100) * Math.pow(1.07, 30)) * 100,
-        projectedNetWorth35Years: projected35Years * 100,
+        projectedNetWorth: projected40Years,
+        projectedNetWorth35Years: projected40Years,
       };
 
       setData(newData);
-      projectionSpring.set(newData.projectedNetWorth35Years);
+      projectionSpring.set(projected40Years);
       setLastUpdated(new Date());
     } catch (error) {
       console.error("Error loading dashboard:", error);
@@ -139,31 +138,29 @@ export default function Dashboard() {
           console.log('💰 Account updated in real-time!', payload);
           const updatedAccount = payload.new as any;
           
-          // Calculate 35-year projection
-          const projected35Years = Math.round(
-            (updatedAccount.current_balance_cents / 100) * Math.pow(1.08, 35)
-          );
+          // Use stored value directly - NO recalculation!
+          const projected40Years = updatedAccount.projected_40yr_value_cents;
           
           const newData = {
             ...data,
             totalSaved: updatedAccount.current_balance_cents,
-            projectedNetWorth35Years: projected35Years * 100
+            projectedNetWorth: projected40Years,
+            projectedNetWorth35Years: projected40Years
           };
           
           setData(newData);
-          projectionSpring.set(newData.projectedNetWorth35Years);
+          projectionSpring.set(projected40Years);
           
           // Track wealth update
           track(EVENTS.wealth_projection_updated, {
-            new_projected_value: projected35Years,
+            new_projected_value: projected40Years / 100,
             current_balance: updatedAccount.current_balance_cents / 100,
-            growth_multiple: Math.round(projected35Years / (updatedAccount.current_balance_cents / 100))
           });
           
           // Show success notification
           toast({
             title: "💰 Wealth Updated!",
-            description: `Your future wealth projection just grew to $${projected35Years.toLocaleString()}!`,
+            description: `Future value: $${Math.round(projected40Years / 100).toLocaleString()}`,
             duration: 4000
           });
         }
@@ -222,7 +219,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* 35-Year Projection Header */}
+      {/* 40-Year Projection Header */}
       <Link to="/net-worth">
         <Card className="bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border-primary/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
           <CardContent className="p-4 md:p-6">
@@ -243,12 +240,12 @@ export default function Dashboard() {
                   ${Math.round(projectionSpring.get() / 100).toLocaleString()}
                 </motion.p>
                 <p className="text-xs md:text-sm text-muted-foreground mb-2">
-                  Projected value in 35 years at 8% annual growth
+                  Projected value in 40 years @ 10% annual growth
                 </p>
                 {data.totalSaved > 0 && (
-                  <Badge className="bg-success/20 text-success border-success/30 mb-4 animate-pulse">
+                  <Badge className="bg-blue-500/10 text-blue-600 border-blue-300 animate-pulse">
                     <TrendingUp className="h-3 w-3 mr-1" />
-                    Growing 8% annually
+                    10% Annual Growth
                   </Badge>
                 )}
               </div>

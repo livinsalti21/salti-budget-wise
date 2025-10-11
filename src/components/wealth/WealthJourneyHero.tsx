@@ -21,7 +21,7 @@ export default function WealthJourneyHero() {
   const [showCelebration, setShowCelebration] = useState(false);
 
   const currentBalance = (accountSummary?.current_balance_cents || 0) / 100;
-  const futureValue = currentBalance * 40; // Simple projection for display
+  const futureValue40Years = (accountSummary?.projected_40yr_value_cents || 0) / 100;
   const currentStreak = streakInfo?.current || 0;
 
   // Calculate milestone progress and wealth level
@@ -130,10 +130,14 @@ export default function WealthJourneyHero() {
             </div>
 
             <div className="text-center md:text-left space-y-1">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">40 Year Value</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">40 Year Value @ 10%</p>
               <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-success to-accent bg-clip-text text-transparent">
-                ${futureValue.toLocaleString()}
+                ${futureValue40Years.toLocaleString()}
               </div>
+              <Badge className="bg-blue-500/10 text-blue-600 border-blue-300 text-xs">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                10% Annual Growth
+              </Badge>
             </div>
 
             <div className="text-center md:text-left space-y-1">

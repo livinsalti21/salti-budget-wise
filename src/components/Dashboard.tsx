@@ -237,7 +237,7 @@ export default function Dashboard() {
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 0.3 }}
                 >
-                  ${Math.round(projectionSpring.get() / 100).toLocaleString()}
+                  ${Math.round(data.projectedNetWorth / 100).toLocaleString()}
                 </motion.p>
                 <p className="text-xs md:text-sm text-muted-foreground mb-2">
                   Projected value in 40 years @ 10% annual growth

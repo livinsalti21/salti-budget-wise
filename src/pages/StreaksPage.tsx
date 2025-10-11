@@ -3,8 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from "@/components/ui/PageHeader";
 import EnhancedStreaksDashboard from "@/components/EnhancedStreaksDashboard";
-import ProGate from "@/components/core/ProGate";
-import { StreaksExplainer } from '@/components/onboarding/StreaksExplainer';
 import StreaksOnboarding from '@/components/streaks/StreaksOnboarding';
 
 export default function StreaksPage() {
@@ -48,20 +46,13 @@ export default function StreaksPage() {
   return (
     <div>
       <PageHeader 
-        title="Streaks & Badges" 
-        subtitle="Track your saving habits"
+        title="Your Streak Journey" 
+        subtitle="Your personal path to financial consistency"
         backTo="/app"
       />
 
-      <main className="p-4 max-w-4xl mx-auto">
-        {/* Compact explainer for quick reference */}
-        <div className="mb-4">
-          <StreaksExplainer variant="compact" />
-        </div>
-        
-        <ProGate feature="enhanced_streaks">
-          <EnhancedStreaksDashboard />
-        </ProGate>
+      <main className="p-4 max-w-6xl mx-auto">
+        <EnhancedStreaksDashboard />
       </main>
 
       {showStreaksOnboarding && (

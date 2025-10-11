@@ -1,229 +1,97 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Flame, Users, Building, Heart, TrendingUp, Calendar, Star, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Flame, AlertCircle, TrendingUp, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import InsightCard from '@/components/ai/InsightCard';
-import { useToast } from '@/hooks/use-toast';
+import { useProfile } from '@/hooks/useProfile';
+import { useNavigate } from 'react-router-dom';
+import StreakCalendar from '@/components/streaks/StreakCalendar';
+import MilestoneTimeline from '@/components/streaks/MilestoneTimeline';
+import StreakImpactCard from '@/components/streaks/StreakImpactCard';
 import { StreaksExplainer } from '@/components/onboarding/StreaksExplainer';
-import { FeatureTooltip } from '@/components/ui/FeatureTooltip';
-
-interface StreakData {
-  streak_type: 'self' | 'friends' | 'community' | 'sponsors';
-  current_streak: number;
-  longest_streak: number;
-  last_activity_date: string | null;
-  is_active: boolean;
-}
-
-interface FriendActivity {
-  id: string;
-  name: string;
-  streak: number;
-  lastSave: string;
-  avatar?: string;
-}
-
-interface CommunityChallenge {
-  id: string;
-  title: string;
-  description: string;
-  progress: number;
-  target: number;
-  participants: number;
-  deadline: string;
-}
-
-interface SponsorMatch {
-  id: string;
-  sponsor_name: string;
-  match_percentage: number;
-  matches_received: number;
-  total_matched: number;
-  is_active: boolean;
-}
 
 const EnhancedStreaksDashboard = () => {
-  const [streaks, setStreaks] = useState<StreakData[]>([]);
-  const [friends, setFriends] = useState<FriendActivity[]>([]);
-  const [challenges, setChallenges] = useState<CommunityChallenge[]>([]);
-  const [sponsors, setSponsors] = useState<SponsorMatch[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [milestoneAchieved, setMilestoneAchieved] = useState<string | null>(null);
-  const [showExplainer, setShowExplainer] = useState(false);
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { stats } = useProfile();
+  const navigate = useNavigate();
+  const [showExplainer, setShowExplainer] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [graceStatus, setGraceStatus] = useState<'safe' | 'at_risk' | 'broken'>('safe');
 
   useEffect(() => {
     if (user) {
-      loadAllStreakData();
+      checkStreakStatus();
       
-      // Show explainer for users who haven't seen it or have low streaks
-      const personalStreak = streaks.find(s => s.streak_type === 'self');
+      // Show explainer for new users or those with no streak
       const hasSeenStreakExplainer = localStorage.getItem('hasSeenStreakExplainer');
-      
-      if (!hasSeenStreakExplainer || (personalStreak && personalStreak.current_streak === 0)) {
+      if (!hasSeenStreakExplainer || stats.currentStreak === 0) {
         setShowExplainer(true);
       }
     }
-  }, [user, streaks]);
+  }, [user, stats.currentStreak]);
 
-  const loadAllStreakData = async () => {
+  const checkStreakStatus = async () => {
     if (!user) return;
 
-    setIsLoading(true);
-    await Promise.all([
-      loadStreakTypes(),
-      loadFriendActivities(),
-      loadChallenges(),
-      loadSponsorMatches()
-    ]);
+    // Check if user saved today or yesterday
+    const { data: recentSaves } = await supabase
+      .from('save_events')
+      .select('created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (recentSaves && recentSaves.length > 0) {
+      const lastSave = new Date(recentSaves[0].created_at);
+      const now = new Date();
+      const hoursSinceLastSave = (now.getTime() - lastSave.getTime()) / (1000 * 60 * 60);
+
+      if (hoursSinceLastSave <= 24) {
+        setGraceStatus('safe');
+      } else if (hoursSinceLastSave <= 48) {
+        setGraceStatus('at_risk');
+      } else {
+        setGraceStatus('broken');
+      }
+    } else {
+      setGraceStatus('broken');
+    }
+
     setIsLoading(false);
   };
 
-  const loadStreakTypes = async () => {
-    if (!user) return;
-
-    // Initialize default streak types if they don't exist
-    const streakTypes = ['self', 'friends', 'community', 'sponsors'];
-    
-    for (const type of streakTypes) {
-      await supabase
-        .from('streak_types')
-        .upsert({
-          user_id: user.id,
-          streak_type: type,
-          current_streak: 0,
-          longest_streak: 0
-        });
-    }
-
-    const { data } = await supabase
-      .from('streak_types')
-      .select('*')
-      .eq('user_id', user.id);
-
-    if (data) {
-      setStreaks(data as StreakData[]);
-      
-      // Check for milestone achievements
-      const personalStreak = data.find(s => s.streak_type === 'self');
-      if (personalStreak && personalStreak.current_streak > 0) {
-        checkMilestone(personalStreak.current_streak);
-      }
-    }
-  };
-
-  const loadFriendActivities = async () => {
-    // Mock friend data for now - in real app this would come from friend connections
-    setFriends([
-      { id: '1', name: 'Sarah M.', streak: 12, lastSave: '2 hours ago' },
-      { id: '2', name: 'Mike R.', streak: 8, lastSave: '1 day ago' },
-      { id: '3', name: 'Emma K.', streak: 15, lastSave: '3 hours ago' },
-      { id: '4', name: 'Josh L.', streak: 5, lastSave: '2 days ago' }
-    ]);
-  };
-
-  const loadChallenges = async () => {
-    // Mock community challenge data
-    setChallenges([
-      {
-        id: '1',
-        title: 'January Savings Challenge',
-        description: 'Save $500 this month with your community',
-        progress: 67,
-        target: 100,
-        participants: 234,
-        deadline: '2025-01-31'
-      },
-      {
-        id: '2',
-        title: 'No-Spend Weekend',
-        description: 'Go the entire weekend without unnecessary purchases',
-        progress: 45,
-        target: 100,
-        participants: 156,
-        deadline: '2025-01-20'
-      }
-    ]);
-  };
-
-  const loadSponsorMatches = async () => {
-    if (!user) return;
-
-    const { data } = await supabase
-      .from('match_events')
-      .select('*')
-      .eq('recipient_user_id', user.id);
-
-    // Group by sponsor
-    const sponsorMap = new Map();
-    data?.forEach(match => {
-      const sponsorName = 'Anonymous Sponsor';
-      if (!sponsorMap.has(sponsorName)) {
-        sponsorMap.set(sponsorName, {
-          id: match.sponsor_id,
-          sponsor_name: sponsorName,
-          match_percentage: 100, // Default
-          matches_received: 0,
-          total_matched: 0,
-          is_active: true
-        });
-      }
-      const sponsor = sponsorMap.get(sponsorName);
-      sponsor.matches_received += 1;
-      sponsor.total_matched += match.match_amount_cents;
-    });
-
-    setSponsors(Array.from(sponsorMap.values()));
-  };
-
-  const checkMilestone = (currentStreak: number) => {
-    const milestones = [7, 14, 30, 50, 100];
-    const reachedMilestone = milestones.find(m => currentStreak === m);
-    
-    if (reachedMilestone) {
-      const messages = {
-        7: "🔥 One week streak! You're building momentum – small actions lead to big results!",
-        14: "🚀 Two weeks strong! Your consistency is paying off. This habit is becoming second nature.",
-        30: "🏆 30-day milestone! You've proven your commitment. This is where transformation happens!",
-        50: "⭐ 50 days! You're in the top 5% of savers. Your future self is cheering!",
-        100: "🎉 100-DAY LEGEND! You've mastered the art of consistent saving. You're unstoppable!"
+  const getStreakStatusMessage = () => {
+    if (graceStatus === 'safe') {
+      return {
+        message: "You're on track! Your streak is safe for today.",
+        color: 'text-green-600',
+        bgColor: 'bg-green-50 dark:bg-green-950',
+        borderColor: 'border-green-200 dark:border-green-800'
       };
-      setMilestoneAchieved(messages[reachedMilestone] || `Amazing ${reachedMilestone}-day streak!`);
+    } else if (graceStatus === 'at_risk') {
+      return {
+        message: "⚠️ Grace period! Save now to keep your streak alive.",
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-50 dark:bg-orange-950',
+        borderColor: 'border-orange-200 dark:border-orange-800'
+      };
+    } else {
+      return {
+        message: "Start fresh! Make a save today to begin a new streak.",
+        color: 'text-muted-foreground',
+        bgColor: 'bg-muted/50',
+        borderColor: 'border-border'
+      };
     }
-  };
-
-  const getStreakIcon = (type: string) => {
-    switch (type) {
-      case 'self': return Flame;
-      case 'friends': return Users;
-      case 'community': return Building;
-      case 'sponsors': return Star;
-      default: return TrendingUp;
-    }
-  };
-
-  const getStreakColor = (type: string) => {
-    switch (type) {
-      case 'self': return 'text-orange-500';
-      case 'friends': return 'text-blue-500';
-      case 'community': return 'text-green-500';
-      case 'sponsors': return 'text-purple-500';
-      default: return 'text-primary';
-    }
-  };
-
-  const formatStreakType = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading streaks...</div>;
+    return <div className="text-center py-8">Loading your streak journey...</div>;
   }
+
+  const statusInfo = getStreakStatusMessage();
 
   return (
     <div className="space-y-6">
@@ -238,217 +106,118 @@ const EnhancedStreaksDashboard = () => {
         />
       )}
 
-      {/* Milestone Celebration */}
-      {milestoneAchieved && (
-        <InsightCard
-          title="🎉 Milestone Achievement!"
-          description={milestoneAchieved}
-          actionLabel="Share Achievement"
-          variant="success"
-          onAccept={() => {
-            toast({
-              title: "Achievement shared! 🎊",
-              description: "Your milestone has been shared with your network."
-            });
-            setMilestoneAchieved(null);
-          }}
-          onDismiss={() => setMilestoneAchieved(null)}
-        />
+      {/* Hero Section - Current Streak */}
+      <Card className={`${statusInfo.bgColor} border-2 ${statusInfo.borderColor}`}>
+        <CardContent className="pt-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <Flame className={`h-8 w-8 ${stats.currentStreak > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Current Streak</p>
+                  <p className="text-5xl font-bold">
+                    {stats.currentStreak}
+                    <span className="text-xl ml-2">
+                      {stats.currentStreak === 1 ? 'day' : 'days'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-4">
+                <Badge variant="outline" className="text-sm">
+                  Best: {stats.longestStreak} days
+                </Badge>
+                <Badge variant="secondary" className="text-sm">
+                  {stats.totalSavesCount} total saves
+                </Badge>
+              </div>
+
+              <p className={`text-sm font-medium mt-4 ${statusInfo.color}`}>
+                {statusInfo.message}
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Button 
+                onClick={() => navigate('/save')}
+                size="lg"
+                className="gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Save Now
+              </Button>
+              {graceStatus === 'at_risk' && (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-orange-600 border-orange-200"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  Grace Period
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Saving Pattern Tips */}
+      {stats.lastSaveDate && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <CalendarIcon className="h-5 w-5 text-primary mt-0.5" />
+              <div>
+                <p className="font-semibold mb-1">💡 Your Saving Pattern</p>
+                <p className="text-sm text-muted-foreground">
+                  Last save: {new Date(stats.lastSaveDate).toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  })}
+                </p>
+                {stats.currentStreak >= 7 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    You've been consistent for over a week! Set a daily reminder to maintain momentum.
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div>
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            Enhanced Streaks Dashboard
-            <FeatureTooltip
-              title="How Streaks Work"
-              description="Streaks track consecutive days of saving. Even $1 counts! Building consistent habits is more powerful than occasional large saves."
-            >
-              <div className="text-xs text-muted-foreground mt-1 space-y-1">
-                <p><strong>Personal:</strong> Your individual streak</p>
-                <p><strong>Friends:</strong> Compete with friends</p>
-                <p><strong>Community:</strong> Group challenges</p>
-                <p><strong>Sponsors:</strong> Extra rewards for consistency</p>
-              </div>
-            </FeatureTooltip>
-          </h2>
-          <p className="text-muted-foreground">Track your streaks across different dimensions</p>
-        </div>
-      </div>
+      {/* Impact Section */}
+      <StreakImpactCard currentStreak={stats.currentStreak} />
 
-      {/* Streak Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {streaks.length === 0 && !showExplainer && (
-          <div className="col-span-full">
-            <StreaksExplainer
-              variant="first-time"
-              onDismiss={() => setShowExplainer(false)}
-            />
-          </div>
-        )}
-        
-        {streaks.map((streak) => {
-          const Icon = getStreakIcon(streak.streak_type);
-          const colorClass = getStreakColor(streak.streak_type);
-          
-          return (
-            <Card key={streak.streak_type} className="relative overflow-hidden">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Icon className={`h-4 w-4 ${colorClass}`} />
-                  {formatStreakType(streak.streak_type)} Streak
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p className={`text-2xl font-bold ${colorClass}`}>
-                    {streak.current_streak}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Best: {streak.longest_streak} days
-                  </p>
-                  <Badge variant={streak.is_active ? "default" : "secondary"} className="text-xs">
-                    {streak.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Calendar Heatmap */}
+      <StreakCalendar />
 
-      {/* Detailed Tabs */}
-      <Tabs defaultValue="friends" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="friends">Friends</TabsTrigger>
-          <TabsTrigger value="community">Community</TabsTrigger>
-          <TabsTrigger value="sponsors">Sponsors</TabsTrigger>
-        </TabsList>
+      {/* Milestone Timeline */}
+      <MilestoneTimeline 
+        currentStreak={stats.currentStreak} 
+        longestStreak={stats.longestStreak}
+      />
 
-        <TabsContent value="friends" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-500" />
-                Friend Activities
-              </CardTitle>
-              <CardDescription>
-                See how your friends are doing with their savings
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {friends.map((friend) => (
-                  <div key={friend.id} className="flex items-center justify-between p-3 bg-secondary/20 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                        <Users className="h-4 w-4 text-blue-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{friend.name}</p>
-                        <p className="text-sm text-muted-foreground">{friend.lastSave}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-blue-500">{friend.streak}</p>
-                      <p className="text-xs text-muted-foreground">day streak</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="community" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-green-500" />
-                Community Challenges
-              </CardTitle>
-              <CardDescription>
-                Join group savings challenges with the community
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {challenges.map((challenge) => (
-                  <div key={challenge.id} className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold">{challenge.title}</h4>
-                        <p className="text-sm text-muted-foreground">{challenge.description}</p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {challenge.participants} participants
-                          </Badge>
-                          <p className="text-xs text-muted-foreground">
-                            Due: {new Date(challenge.deadline).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-green-500">{challenge.progress}%</p>
-                      </div>
-                    </div>
-                    <Progress value={challenge.progress} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="sponsors" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-purple-500" />
-                Sponsor Matches
-              </CardTitle>
-              <CardDescription>
-                Track matches you've received from sponsors
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {sponsors.length === 0 ? (
-                <div className="text-center py-8">
-                  <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No sponsor matches yet</p>
-                  <p className="text-sm text-muted-foreground">Start saving to attract sponsor matches!</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sponsors.map((sponsor) => (
-                    <div key={sponsor.id} className="flex items-center justify-between p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                      <div>
-                        <h4 className="font-semibold">{sponsor.sponsor_name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {sponsor.matches_received} matches received
-                        </p>
-                        <Badge 
-                          variant={sponsor.is_active ? "default" : "secondary"} 
-                          className="mt-1 text-xs"
-                        >
-                          {sponsor.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-purple-500">
-                          ${(sponsor.total_matched / 100).toFixed(2)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">total matched</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Keep Your Momentum Going</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button onClick={() => navigate('/save')} className="flex-1 min-w-[200px]">
+            Make Today's Save
+          </Button>
+          <Button onClick={() => navigate('/net-worth')} variant="outline" className="flex-1 min-w-[200px]">
+            View Wealth Growth
+          </Button>
+          <Button onClick={() => navigate('/save-history')} variant="outline" className="flex-1 min-w-[200px]">
+            View Save History
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

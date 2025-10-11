@@ -7,10 +7,14 @@ import { Progress } from "@/components/ui/progress";
 import { useLedger } from "@/hooks/useLedger";
 import { useProfile } from "@/hooks/useProfile";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export default function WealthJourneyHero() {
   const { accountSummary } = useLedger();
   const { streakInfo } = useProfile();
+  const { user } = useAuth();
   const [milestoneProgress, setMilestoneProgress] = useState(0);
   const [nextMilestone, setNextMilestone] = useState(1000);
   const [wealthLevel, setWealthLevel] = useState("Getting Started");
@@ -55,6 +59,33 @@ export default function WealthJourneyHero() {
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
   };
+
+  // Subscribe to real-time wealth updates
+  useEffect(() => {
+    if (!user) return;
+    
+    const accountChannel = supabase
+      .channel('wealth-journey-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_accounts',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('🎉 Wealth journey updated in real-time!', payload);
+          // Trigger celebration animation on wealth update
+          triggerCelebration();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(accountChannel);
+    };
+  }, [user]);
 
   return (
     <div className="relative overflow-hidden">

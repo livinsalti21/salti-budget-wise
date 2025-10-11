@@ -166,6 +166,7 @@ export const EVENTS = {
   save_completed: 'save_completed',
   streak_milestone: 'streak_milestone',
   budget_created: 'budget_created',
+  wealth_projection_updated: 'wealth_projection_updated',
   
   // Pro feature events
   pro_upsell_view: 'pro_upsell_view',

@@ -8,12 +8,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { TouchTarget } from '@/components/ui/mobile-helpers';
-import { quickProjection } from '@/simulation/futureValue';
 import BudgetProgress from '@/components/BudgetProgress';
 import MatchSection from './MatchSection';
 import { Link } from 'react-router-dom';
 import { track, EVENTS } from '@/analytics/analytics';
 import { ContextualTooltip } from '@/components/ui/ContextualTooltip';
+import { motion, useSpring } from "framer-motion";
+
 interface DashboardData {
   totalSaved: number;
   weeklyIncome: number;
@@ -23,86 +24,172 @@ interface DashboardData {
   savingStreak: number;
   projectedNetWorth35Years: number;
 }
+
 interface FriendStreak {
   user_id: string;
   display_name: string;
   consecutive_days: number;
 }
+
 export default function Dashboard() {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
   const [data, setData] = useState<DashboardData>({
-    totalSaved: 15000,
-    // $150
-    weeklyIncome: 87500,
-    // $875
-    weeklyExpenses: 70000,
-    // $700
-    savingsThisWeek: 1250,
-    // $12.50
-    projectedNetWorth: 133000,
-    // $1330
-    savingStreak: 7,
+    totalSaved: 0,
+    weeklyIncome: 0,
+    weeklyExpenses: 0,
+    savingsThisWeek: 0,
+    projectedNetWorth: 0,
+    savingStreak: 0,
     projectedNetWorth35Years: 0
   });
+  
   const [topFriends, setTopFriends] = useState<FriendStreak[]>([]);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [shouldRefresh, setShouldRefresh] = useState(false);
   
-  useEffect(() => {
-    if (user) {
-      loadDashboardData();
-      loadTopFriends();
-    }
-  }, [user]);
+  // Animated projection value for smooth transitions
+  const projectionSpring = useSpring(0, {
+    stiffness: 50,
+    damping: 30
+  });
+
   const loadDashboardData = async () => {
     if (!user) return;
+
     try {
-      const {
-        data: saveEvents
-      } = await supabase.from('save_events').select('amount_cents, created_at').eq('user_id', user.id);
-      const {
-        data: streakData
-      } = await supabase.from('user_streaks').select('consecutive_days').eq('user_id', user.id).single();
-      if (saveEvents) {
-        const totalSaved = saveEvents.reduce((sum, save) => sum + save.amount_cents, 0);
-        const now = new Date();
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const savingsThisWeek = saveEvents.filter(save => new Date(save.created_at) >= weekAgo).reduce((sum, save) => sum + save.amount_cents, 0);
-        const projectedNetWorth = totalSaved / 100 * Math.pow(1.07, 30);
-        const projectedNetWorth35Years = quickProjection(totalSaved / 100, 35, 0.08);
-        setData(prev => ({
-          ...prev,
-          totalSaved,
-          savingsThisWeek,
-          projectedNetWorth: Math.round(projectedNetWorth * 100),
-          projectedNetWorth35Years: Math.round(projectedNetWorth35Years * 100),
-          savingStreak: streakData?.consecutive_days || 0
-        }));
-      }
+      // Fetch pre-calculated account summary from user_accounts
+      const { data: accountSummary, error: accountError } = await supabase
+        .from("user_accounts")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (accountError && accountError.code !== "PGRST116") throw accountError;
+
+      // Calculate 35-year projection from current balance
+      const currentBalance = accountSummary?.current_balance_cents || 0;
+      const projected35Years = Math.round((currentBalance / 100) * Math.pow(1.08, 35));
+
+      // Get this week's saves
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const { data: weekSaves } = await supabase
+        .from("save_events")
+        .select("amount_cents")
+        .eq("user_id", user.id)
+        .gte("created_at", weekStart.toISOString());
+
+      const thisWeekSaves = (weekSaves || []).reduce(
+        (sum, save) => sum + save.amount_cents,
+        0
+      );
+
+      // Fetch streak data
+      const { data: streakData, error: streakError } = await supabase
+        .from("user_streaks")
+        .select("consecutive_days")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (streakError && streakError.code !== "PGRST116") throw streakError;
+
+      const newData = {
+        totalSaved: currentBalance,
+        weeklyIncome: 0,
+        weeklyExpenses: 0,
+        savingStreak: streakData?.consecutive_days || 0,
+        savingsThisWeek: thisWeekSaves,
+        projectedNetWorth: Math.round((currentBalance / 100) * Math.pow(1.07, 30)) * 100,
+        projectedNetWorth35Years: projected35Years * 100,
+      };
+
+      setData(newData);
+      projectionSpring.set(newData.projectedNetWorth35Years);
       setLastUpdated(new Date());
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error("Error loading dashboard:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
     }
   };
+
+  useEffect(() => {
+    if (!user) return;
+    
+    loadDashboardData();
+    loadTopFriends();
+    
+    // Subscribe to real-time account updates
+    const accountChannel = supabase
+      .channel('user-account-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_accounts',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('💰 Account updated in real-time!', payload);
+          const updatedAccount = payload.new as any;
+          
+          // Calculate 35-year projection
+          const projected35Years = Math.round(
+            (updatedAccount.current_balance_cents / 100) * Math.pow(1.08, 35)
+          );
+          
+          const newData = {
+            ...data,
+            totalSaved: updatedAccount.current_balance_cents,
+            projectedNetWorth35Years: projected35Years * 100
+          };
+          
+          setData(newData);
+          projectionSpring.set(newData.projectedNetWorth35Years);
+          
+          // Track wealth update
+          track(EVENTS.wealth_projection_updated, {
+            new_projected_value: projected35Years,
+            current_balance: updatedAccount.current_balance_cents / 100,
+            growth_multiple: Math.round(projected35Years / (updatedAccount.current_balance_cents / 100))
+          });
+          
+          // Show success notification
+          toast({
+            title: "💰 Wealth Updated!",
+            description: `Your future wealth projection just grew to $${projected35Years.toLocaleString()}!`,
+            duration: 4000
+          });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(accountChannel);
+    };
+  }, [user]);
+
   const loadTopFriends = async () => {
     if (!user) return;
     try {
-      // Get top 3 friend streaks - mock data for now
-      // In a real app, this would query a friends table joined with user_streaks
-      const {
-        data: streaks
-      } = await supabase.from('user_streaks').select(`
+      const { data: streaks } = await supabase
+        .from('user_streaks')
+        .select(`
           user_id,
           consecutive_days,
           profiles!user_streaks_user_id_fkey (display_name)
-        `).neq('user_id', user.id).gt('consecutive_days', 0).order('consecutive_days', {
-        ascending: false
-      }).limit(3);
+        `)
+        .neq('user_id', user.id)
+        .gt('consecutive_days', 0)
+        .order('consecutive_days', { ascending: false })
+        .limit(3);
+
       if (streaks) {
         const friendStreaks = streaks.map(streak => ({
           user_id: streak.user_id,
@@ -115,6 +202,7 @@ export default function Dashboard() {
       console.error('Error loading friend streaks:', error);
     }
   };
+
   const handleRefreshClick = () => {
     loadDashboardData();
     loadTopFriends();
@@ -124,27 +212,47 @@ export default function Dashboard() {
       description: "Latest data loaded"
     });
   };
+
   const formatCurrency = (cents: number) => {
     return (cents / 100).toFixed(2);
   };
+
   const getWeeklyBalance = () => data.weeklyIncome - data.weeklyExpenses;
   const isPositiveBalance = getWeeklyBalance() >= 0;
-  return <div className="space-y-4 md:space-y-6">
+
+  return (
+    <div className="space-y-4 md:space-y-6">
       {/* 35-Year Projection Header */}
       <Link to="/net-worth">
         <Card className="bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border-primary/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-          <CardContent className="p-4 md:p-6 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Crown className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-              <h2 className="text-sm md:text-base font-semibold text-primary">Your Future Wealth</h2>
-              <ChevronRight className="h-4 w-4 text-primary/60" />
+          <CardContent className="p-4 md:p-6">
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-success/20 animate-pulse" />
+              <div className="relative text-center">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Crown className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  <h2 className="text-sm md:text-base font-semibold text-primary">Your Future Wealth</h2>
+                  <ChevronRight className="h-4 w-4 text-primary/60" />
+                </div>
+                <motion.p 
+                  className="text-2xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
+                  initial={{ scale: 1 }}
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 0.3 }}
+                >
+                  ${Math.round(projectionSpring.get() / 100).toLocaleString()}
+                </motion.p>
+                <p className="text-xs md:text-sm text-muted-foreground mb-2">
+                  Projected value in 35 years at 8% annual growth
+                </p>
+                {data.totalSaved > 0 && (
+                  <Badge className="bg-success/20 text-success border-success/30 mb-4 animate-pulse">
+                    <TrendingUp className="h-3 w-3 mr-1" />
+                    Growing 8% annually
+                  </Badge>
+                )}
+              </div>
             </div>
-            <p className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              ${Math.round(data.projectedNetWorth35Years / 100).toLocaleString()}
-            </p>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">
-              Your savings in 35 years at 8% growth
-            </p>
           </CardContent>
         </Card>
       </Link>
@@ -159,9 +267,11 @@ export default function Dashboard() {
             <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               Livin Salti
             </h1>
-            {lastUpdated && <p className="text-xs text-muted-foreground">
+            {lastUpdated && (
+              <p className="text-xs text-muted-foreground">
                 {lastUpdated.toLocaleTimeString()}
-              </p>}
+              </p>
+            )}
           </div>
         </div>
         
@@ -173,7 +283,8 @@ export default function Dashboard() {
       </div>
 
       {/* Enhanced Streak Display */}
-      {data.savingStreak > 0 ? <Link to="/streaks">
+      {data.savingStreak > 0 ? (
+        <Link to="/streaks">
           <Card className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
             <CardContent className="p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -188,7 +299,9 @@ export default function Dashboard() {
               <p className="text-xs text-orange-700">Keep the momentum going! 🚀</p>
             </CardContent>
           </Card>
-        </Link> : <Link to="/streaks">
+        </Link>
+      ) : (
+        <Link to="/streaks">
           <Card className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
             <CardContent className="p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -202,7 +315,8 @@ export default function Dashboard() {
               <p className="text-xs text-orange-600">Tap to learn about streaks 🔥</p>
             </CardContent>
           </Card>
-        </Link>}
+        </Link>
+      )}
 
       {/* Hero Stats - 2x2 Grid for Mobile, 4 columns for Desktop */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
@@ -273,11 +387,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Link>
-      </div>
-
-      {/* Quick Save Section */}
-      <div className="mb-4">
-        
       </div>
 
       {/* Budget Progress - Mobile Optimized */}
@@ -372,5 +481,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>}
 
-    </div>;
+    </div>
+  );
 }

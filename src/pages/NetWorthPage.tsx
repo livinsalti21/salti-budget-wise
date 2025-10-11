@@ -18,6 +18,10 @@ import { motion } from "framer-motion";
 export default function NetWorthPage() {
   const { user } = useAuth();
   const { accountSummary, ledgerHistory } = useLedger();
+  
+  // Current savings from account summary
+  const currentSavings = (accountSummary?.current_balance_cents || 0) / 100;
+  const futureValue40Years = (accountSummary?.projected_40yr_value_cents || 0) / 100;
   const [showNetWorthOnboarding, setShowNetWorthOnboarding] = useState(false);
 
   useEffect(() => {

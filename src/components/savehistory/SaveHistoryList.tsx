@@ -32,7 +32,7 @@ export default function SaveHistoryList({ saves, title, description, projectionR
     return date.toLocaleDateString();
   };
 
-  const calculateFutureValue = (amount: number, years: number = 10) => {
+  const calculateFutureValue = (amount: number, years: number = 35) => {
     const principal = amount / 100;
     const annualRate = projectionRate / 100;
     return principal * Math.pow(1 + annualRate, years);
@@ -77,7 +77,7 @@ export default function SaveHistoryList({ saves, title, description, projectionR
                   <p className="text-sm font-medium text-success">
                     ${calculateFutureValue(save.amount_cents).toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground">in 10 years</p>
+                  <p className="text-xs text-muted-foreground">in 35 years</p>
                   <Progress 
                     value={(save.amount_cents / maxAmount) * 100} 
                     className="h-1 w-16"

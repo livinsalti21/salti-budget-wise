@@ -53,15 +53,16 @@ export default function AuthCallback() {
 
           setStatus('success');
           
-          // If no profile exists or onboarding not completed, go to onboarding
-          if (!profile || !profile.completed_onboarding) {
-            setMessage('Email verified! Setting up your account...');
-            setTimeout(() => navigate('/onboarding'), 500);
-          } else {
-            // User has completed onboarding, go to app
-            setMessage('Welcome back!');
-            setTimeout(() => navigate('/app'), 500);
+          // Auto-complete onboarding for new users (streamlined flow)
+          if (!profile?.completed_onboarding) {
+            await supabase
+              .from('profiles')
+              .update({ completed_onboarding: true })
+              .eq('id', data.session.user.id);
           }
+
+          setMessage('Redirecting to app...');
+          setTimeout(() => navigate('/app'), 1000);
         } else {
           // No session found, but no error - might be an edge case
           setStatus('error');

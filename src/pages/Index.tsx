@@ -6,6 +6,7 @@ import Dashboard from '@/components/Dashboard';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import AppWrapper from '@/components/mobile/AppWrapper';
 import { FloatingSaveButton } from '@/components/ui/FloatingSaveButton';
+import { WelcomeTooltip } from '@/components/onboarding/WelcomeTooltip';
 
 const Index = () => {
   const { signOut } = useAuth();
@@ -16,6 +17,7 @@ const Index = () => {
     <AppWrapper>
       <Dashboard />
       {location.pathname === '/app' && isMobile && <FloatingSaveButton />}
+      <WelcomeTooltip />
     </AppWrapper>
   );
 };

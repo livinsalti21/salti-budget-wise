@@ -78,7 +78,7 @@ export default function AppStyleLanding() {
               onClick={handleGetStarted}
               className="bg-gradient-to-r from-primary to-accent text-white"
             >
-              {user ? "Dashboard" : "Start Free"}
+              {user ? "Dashboard" : "Sign In"}
             </Button>
           </TouchTarget>
         </div>
@@ -346,7 +346,7 @@ export default function AppStyleLanding() {
                 onClick={handleGetStarted} 
                 className="w-full text-lg py-6 bg-gradient-to-r from-primary to-accent shadow-lg"
               >
-                {user ? "Go to Dashboard" : "Start Free Today"}
+                {user ? "Go to Dashboard" : "Get Started - It's Free"}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </TouchTarget>

@@ -116,13 +116,43 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
 
   const projections = calculateProjections();
 
-  // Calculate time to reach goal
+  // Calculate time to reach goal with compound interest
   const calculateMonthsToGoal = () => {
-    if (targetAmount <= currentSavings) return 0;
-    return Math.ceil((targetAmount - currentSavings) / monthlyContribution);
+    if (targetAmount <= currentSavings) return -1; // Already achieved
+    
+    const monthlyRate = interestRate / 100 / 12;
+    
+    // If no interest, use simple division
+    if (interestRate === 0 || monthlyRate === 0) {
+      return Math.ceil((targetAmount - currentSavings) / monthlyContribution);
+    }
+    
+    // Solve for n using logarithmic formula: FV = PV(1+r)^n + PMT[(1+r)^n - 1]/r
+    const fv = targetAmount;
+    const pv = currentSavings;
+    const pmt = monthlyContribution;
+    const r = monthlyRate;
+    
+    // Check if goal is mathematically reachable
+    const numerator = (fv * r / pmt + 1);
+    const denominator = (pv * r / pmt + 1);
+    
+    if (numerator <= denominator || pmt <= 0) {
+      return Infinity; // Goal unreachable with current params
+    }
+    
+    const months = Math.log(numerator / denominator) / Math.log(1 + r);
+    
+    return Math.ceil(months);
   };
 
   const monthsToGoal = calculateMonthsToGoal();
+  const monthsWithoutInterest = targetAmount > currentSavings && monthlyContribution > 0
+    ? Math.ceil((targetAmount - currentSavings) / monthlyContribution)
+    : 0;
+  const monthsSaved = monthsToGoal > 0 && monthsToGoal !== Infinity 
+    ? monthsWithoutInterest - monthsToGoal 
+    : 0;
 
   // Quick preset buttons for interest rates
   const ratePresets = [
@@ -143,194 +173,285 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
         </CardDescription>
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        {/* Controls Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left: Input Controls */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="monthly-contribution">Monthly Contribution: ${monthlyContribution}</Label>
-              <Slider 
-                id="monthly-contribution"
-                min={50} 
-                max={2000} 
-                step={25} 
-                value={[monthlyContribution]} 
-                onValueChange={(value) => setMonthlyContribution(value[0])}
-                className="w-full" 
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>$50</span>
-                <span>$2,000</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="time-horizon">Time Horizon: {timeHorizon} years</Label>
-              <Slider 
-                id="time-horizon"
-                min={1} 
-                max={50} 
-                step={1} 
-                value={[timeHorizon]} 
-                onValueChange={(value) => setTimeHorizon(value[0])}
-                className="w-full" 
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>1 year</span>
-                <span>50 years</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="target-amount">Target Goal</Label>
-              <Input 
-                id="target-amount" 
-                type="number" 
-                value={targetAmount} 
-                onChange={(e) => setTargetAmount(Number(e.target.value))} 
-                className="text-lg font-medium" 
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label>Expected Annual Return: {interestRate}%</Label>
-              <Slider 
-                min={1} 
-                max={15} 
-                step={0.5} 
-                value={[interestRate]} 
-                onValueChange={(value) => setInterestRate(value[0])}
-                className="w-full" 
-              />
-              
-              {/* Quick Presets */}
-              <div className="flex gap-2">
-                {ratePresets.map((preset) => (
-                  <Button
-                    key={preset.label}
-                    variant={interestRate === preset.rate ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setInterestRate(preset.rate)}
-                    className="text-xs"
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
-              </div>
+      <CardContent className="space-y-8">
+        {/* Section 1: Input Controls - Horizontal Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6 bg-muted/20 rounded-xl">
+          <div className="space-y-2">
+            <Label htmlFor="monthly-contribution" className="text-sm font-medium">
+              Monthly Contribution
+            </Label>
+            <div className="text-2xl font-bold text-primary">${monthlyContribution}</div>
+            <Slider 
+              id="monthly-contribution"
+              min={50} 
+              max={2000} 
+              step={25} 
+              value={[monthlyContribution]} 
+              onValueChange={(value) => setMonthlyContribution(value[0])}
+              className="w-full" 
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>$50</span>
+              <span>$2,000</span>
             </div>
           </div>
 
-          {/* Middle & Right: Chart Visualization */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="p-4 rounded-lg border bg-card">
-              <h3 className="text-sm font-medium mb-4">Compound Growth Over Time</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={generateChartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis 
-                    dataKey="year" 
-                    label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
-                    className="text-xs"
-                  />
-                  <YAxis 
-                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
-                    className="text-xs"
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => `$${value.toLocaleString()}`}
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                  />
-                  <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="totalValue" 
-                    stroke="hsl(var(--primary))" 
-                    strokeWidth={3}
-                    name="Total Value"
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="contributions" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Contributions"
-                    dot={false}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="growth" 
-                    stroke="hsl(var(--success))" 
-                    strokeWidth={2}
-                    name="Growth"
-                    dot={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="space-y-2">
+            <Label htmlFor="time-horizon" className="text-sm font-medium">
+              Time Horizon
+            </Label>
+            <div className="text-2xl font-bold text-primary">{timeHorizon} years</div>
+            <Slider 
+              id="time-horizon"
+              min={1} 
+              max={50} 
+              step={1} 
+              value={[timeHorizon]} 
+              onValueChange={(value) => setTimeHorizon(value[0])}
+              className="w-full" 
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>1yr</span>
+              <span>50yrs</span>
             </div>
+          </div>
 
-            {/* Dynamic Projection Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/20">
-                <p className="text-xs text-muted-foreground mb-1">1 Year</p>
-                <p className="text-lg font-bold text-primary">${Math.round(projections.oneYear).toLocaleString()}</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
-                <p className="text-xs text-muted-foreground mb-1">{projections.quarterYear} Years</p>
-                <p className="text-lg font-bold text-success">${Math.round(projections.quarter).toLocaleString()}</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-accent/10 border border-accent/20">
-                <p className="text-xs text-muted-foreground mb-1">{projections.halfYear} Years</p>
-                <p className="text-lg font-bold text-accent">${Math.round(projections.half).toLocaleString()}</p>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <p className="text-xs text-muted-foreground mb-1">{timeHorizon} Years</p>
-                <p className="text-lg font-bold text-warning">${Math.round(projections.final).toLocaleString()}</p>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="target-amount" className="text-sm font-medium">
+              Target Goal
+            </Label>
+            <Input 
+              id="target-amount" 
+              type="number" 
+              value={targetAmount} 
+              onChange={(e) => setTargetAmount(Number(e.target.value))} 
+              className="text-xl font-bold h-12" 
+            />
+          </div>
 
-            {/* Goal Progress */}
-            <div className="p-4 rounded-lg border bg-gradient-to-r from-success/5 to-success/10">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="h-4 w-4 text-success" />
-                <span className="font-medium">Time to Goal</span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                You'll reach your ${targetAmount.toLocaleString()} goal in{' '}
-                <span className="font-bold text-success">
-                  {monthsToGoal} months
-                </span>
-                {monthsToGoal > 12 && (
-                  <span className="text-muted-foreground"> ({Math.round(monthsToGoal/12 * 10)/10} years)</span>
-                )}
-              </p>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="flex justify-between text-sm p-3 bg-muted/30 rounded-lg">
-              <div className="text-center">
-                <div className="font-bold text-primary">${currentSavings.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Current</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-accent">${Math.round(projections.final - currentSavings - (monthlyContribution * timeHorizon * 12)).toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Growth ({timeHorizon}yr)</div>
-              </div>
-              <div className="text-center">
-                <div className="font-bold text-success">{currentSavings > 0 ? ((projections.final / currentSavings - 1) * 100).toFixed(0) : '0'}%</div>
-                <div className="text-xs text-muted-foreground">Return</div>
-              </div>
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Annual Return: {interestRate}%
+            </Label>
+            <Slider 
+              min={1} 
+              max={15} 
+              step={0.5} 
+              value={[interestRate]} 
+              onValueChange={(value) => setInterestRate(value[0])}
+              className="w-full mt-5" 
+            />
+            <div className="flex gap-2 flex-wrap">
+              {ratePresets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant={interestRate === preset.rate ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setInterestRate(preset.rate)}
+                  className="text-xs flex-1"
+                >
+                  {preset.rate}%
+                </Button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Motivational Message */}
-        <div className="text-center p-3 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20">
+        {/* Section 2: Chart Visualization */}
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Compound Growth Over Time
+            </CardTitle>
+            <CardDescription>
+              See how your wealth grows with contributions and compound interest
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={generateChartData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="year" 
+                  label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                  className="text-xs"
+                />
+                <YAxis 
+                  tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                  className="text-xs"
+                />
+                <Tooltip 
+                  formatter={(value: number) => `$${value.toLocaleString()}`}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="totalValue" 
+                  stroke="hsl(var(--primary))" 
+                  strokeWidth={3}
+                  name="Total Value"
+                  dot={false}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="contributions" 
+                  stroke="hsl(var(--muted-foreground))" 
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  name="Your Contributions"
+                  dot={false}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="growth" 
+                  stroke="hsl(var(--success))" 
+                  strokeWidth={2}
+                  name="Interest Growth"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Section 3: Projection Milestone Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="text-center p-4 bg-primary/5 border-primary/20">
+            <CardContent className="p-0 space-y-1">
+              <p className="text-sm text-muted-foreground">1 Year</p>
+              <p className="text-xl font-bold text-primary">${Math.round(projections.oneYear).toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center p-4 bg-success/5 border-success/20">
+            <CardContent className="p-0 space-y-1">
+              <p className="text-sm text-muted-foreground">{projections.quarterYear} Years</p>
+              <p className="text-xl font-bold text-success">${Math.round(projections.quarter).toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center p-4 bg-accent/5 border-accent/20">
+            <CardContent className="p-0 space-y-1">
+              <p className="text-sm text-muted-foreground">{projections.halfYear} Years</p>
+              <p className="text-xl font-bold text-accent">${Math.round(projections.half).toLocaleString()}</p>
+            </CardContent>
+          </Card>
+          <Card className="text-center p-4 bg-warning/5 border-warning/20">
+            <CardContent className="p-0 space-y-1">
+              <p className="text-sm text-muted-foreground">{timeHorizon} Years</p>
+              <p className="text-xl font-bold text-warning">${Math.round(projections.final).toLocaleString()}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Section 4: Goal & Stats - Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Time to Goal Card */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Target className="h-5 w-5 text-success" />
+                Time to Goal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {monthsToGoal === -1 ? (
+                <div className="text-center py-4">
+                  <div className="text-4xl mb-2">🎉</div>
+                  <div className="text-xl font-bold text-success">Goal Already Achieved!</div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    You've reached ${targetAmount.toLocaleString()}
+                  </p>
+                </div>
+              ) : monthsToGoal === Infinity ? (
+                <div className="text-center py-4">
+                  <div className="text-4xl mb-2">⚠️</div>
+                  <div className="text-lg font-bold text-destructive">Goal Unreachable</div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Increase monthly contribution or adjust your timeline
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center">
+                    <div className="text-4xl font-bold text-success">{monthsToGoal}</div>
+                    <div className="text-lg text-muted-foreground">months</div>
+                    <div className="text-sm text-muted-foreground">
+                      ({(monthsToGoal / 12).toFixed(1)} years)
+                    </div>
+                  </div>
+                  
+                  {interestRate > 0 && monthsToGoal < monthsWithoutInterest && (
+                    <div className="p-4 bg-success/10 rounded-lg space-y-2 border border-success/20">
+                      <div className="text-sm font-medium">Impact of Compound Interest:</div>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Without interest:</span>
+                          <span className="font-medium">{monthsWithoutInterest} months</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>With {interestRate}% returns:</span>
+                          <span className="font-medium text-success">{monthsToGoal} months</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-success/20">
+                        <div className="text-base font-bold text-success flex items-center gap-2">
+                          <span>⚡</span>
+                          <span>Saves you {monthsSaved} months!</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quick Stats Card */}
+          <Card className="shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Calculator className="h-5 w-5 text-primary" />
+                Quick Stats
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-primary/10 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">${currentSavings.toLocaleString()}</div>
+                  <div className="text-sm text-muted-foreground mt-1">Starting Balance</div>
+                </div>
+                <div className="text-center p-4 bg-accent/10 rounded-lg">
+                  <div className="text-2xl font-bold text-accent">
+                    ${Math.round(projections.final - currentSavings - (monthlyContribution * timeHorizon * 12)).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Total Growth</div>
+                </div>
+                <div className="text-center p-4 bg-success/10 rounded-lg">
+                  <div className="text-2xl font-bold text-success">
+                    {currentSavings > 0 ? ((projections.final / currentSavings - 1) * 100).toFixed(0) : '0'}%
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Total Return</div>
+                </div>
+                <div className="text-center p-4 bg-warning/10 rounded-lg">
+                  <div className="text-2xl font-bold text-warning">
+                    ${(monthlyContribution * timeHorizon * 12).toLocaleString()}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Your Contributions</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Motivational Footer */}
+        <div className="text-center p-4 bg-gradient-to-r from-accent/10 to-primary/10 rounded-lg border border-accent/20">
           <p className="text-sm font-medium text-accent">
-            💡 Every save compounds your future wealth. Keep building!
+            💡 Every save compounds your future wealth. Small consistent actions create massive results!
           </p>
         </div>
       </CardContent>

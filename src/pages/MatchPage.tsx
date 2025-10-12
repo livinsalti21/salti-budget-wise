@@ -5,6 +5,7 @@ import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 import { MatchPageOnboarding } from '@/components/match/MatchPageOnboarding';
 import MatchSection from '@/components/MatchSection';
 import FriendMatchSection from '@/components/friends/FriendMatchSection';
+import FriendRequestsList from '@/components/friends/FriendRequestsList';
 import StreakMatchSection from '@/components/match/StreakMatchSection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,6 +96,7 @@ export default function MatchPage() {
             </TabsList>
 
             <TabsContent value="friends" className="space-y-4 mt-0">
+              <FriendRequestsList />
               <FriendMatchSection />
             </TabsContent>
 
@@ -152,7 +154,10 @@ export default function MatchPage() {
           </TabsList>
 
           <TabsContent value="friends">
-            <FriendMatchSection />
+            <div className="space-y-6">
+              <FriendRequestsList />
+              <FriendMatchSection />
+            </div>
           </TabsContent>
 
           <TabsContent value="sponsors">

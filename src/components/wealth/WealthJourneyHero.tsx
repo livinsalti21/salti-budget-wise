@@ -10,16 +10,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-
 export default function WealthJourneyHero() {
-  const { accountSummary } = useLedger();
-  const { streakInfo } = useProfile();
-  const { user } = useAuth();
+  const {
+    accountSummary
+  } = useLedger();
+  const {
+    streakInfo
+  } = useProfile();
+  const {
+    user
+  } = useAuth();
   const [milestoneProgress, setMilestoneProgress] = useState(0);
   const [nextMilestone, setNextMilestone] = useState(1000);
   const [wealthLevel, setWealthLevel] = useState("Getting Started");
   const [showCelebration, setShowCelebration] = useState(false);
-
   const currentBalance = (accountSummary?.current_balance_cents || 0) / 100;
   const futureValue40Years = (accountSummary?.projected_40yr_value_cents || 0) / 100;
   const currentStreak = streakInfo?.current || 0;
@@ -29,32 +33,62 @@ export default function WealthJourneyHero() {
   const currentMilestoneIndex = milestones.findIndex(milestone => currentBalance < milestone);
   const targetMilestone = currentMilestoneIndex === -1 ? 250000 : milestones[currentMilestoneIndex];
   const previousMilestone = currentMilestoneIndex <= 0 ? 0 : milestones[currentMilestoneIndex - 1];
-  const progress = ((currentBalance - previousMilestone) / (targetMilestone - previousMilestone)) * 100;
+  const progress = (currentBalance - previousMilestone) / (targetMilestone - previousMilestone) * 100;
 
   // Determine wealth level
   const getWealthLevel = (balance: number) => {
-    if (balance >= 100000) return { level: "Wealth Builder", icon: "👑", color: "from-yellow-500 to-orange-600" };
-    if (balance >= 50000) return { level: "Prosperity Seeker", icon: "💎", color: "from-purple-500 to-blue-600" };
-    if (balance >= 25000) return { level: "Growth Accelerator", icon: "🚀", color: "from-blue-500 to-green-600" };
-    if (balance >= 10000) return { level: "Momentum Builder", icon: "⚡", color: "from-green-500 to-teal-600" };
-    if (balance >= 5000) return { level: "Steady Saver", icon: "🎯", color: "from-teal-500 to-cyan-600" };
-    if (balance >= 1000) return { level: "Rising Star", icon: "⭐", color: "from-cyan-500 to-blue-500" };
-    if (balance >= 100) return { level: "First Steps", icon: "🌱", color: "from-emerald-500 to-teal-500" };
-    return { level: "Getting Started", icon: "🌟", color: "from-orange-500 to-red-500" };
+    if (balance >= 100000) return {
+      level: "Wealth Builder",
+      icon: "👑",
+      color: "from-yellow-500 to-orange-600"
+    };
+    if (balance >= 50000) return {
+      level: "Prosperity Seeker",
+      icon: "💎",
+      color: "from-purple-500 to-blue-600"
+    };
+    if (balance >= 25000) return {
+      level: "Growth Accelerator",
+      icon: "🚀",
+      color: "from-blue-500 to-green-600"
+    };
+    if (balance >= 10000) return {
+      level: "Momentum Builder",
+      icon: "⚡",
+      color: "from-green-500 to-teal-600"
+    };
+    if (balance >= 5000) return {
+      level: "Steady Saver",
+      icon: "🎯",
+      color: "from-teal-500 to-cyan-600"
+    };
+    if (balance >= 1000) return {
+      level: "Rising Star",
+      icon: "⭐",
+      color: "from-cyan-500 to-blue-500"
+    };
+    if (balance >= 100) return {
+      level: "First Steps",
+      icon: "🌱",
+      color: "from-emerald-500 to-teal-500"
+    };
+    return {
+      level: "Getting Started",
+      icon: "🌟",
+      color: "from-orange-500 to-red-500"
+    };
   };
-
   const wealthData = getWealthLevel(currentBalance);
-
   const handleShare = async () => {
     const message = `I'm building my wealth with Livin Salti! Currently at ${wealthData.level} level with $${currentBalance.toLocaleString()} saved and on a ${currentStreak}-day streak! 💪 #WealthBuilding #FinancialFreedom`;
-    
     if (navigator.share) {
-      await navigator.share({ text: message });
+      await navigator.share({
+        text: message
+      });
     } else {
       await navigator.clipboard.writeText(message);
     }
   };
-
   const triggerCelebration = () => {
     setShowCelebration(true);
     setTimeout(() => setShowCelebration(false), 3000);
@@ -63,32 +97,21 @@ export default function WealthJourneyHero() {
   // Subscribe to real-time wealth updates
   useEffect(() => {
     if (!user) return;
-    
-    const accountChannel = supabase
-      .channel('wealth-journey-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'user_accounts',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          console.log('🎉 Wealth journey updated in real-time!', payload);
-          // Trigger celebration animation on wealth update
-          triggerCelebration();
-        }
-      )
-      .subscribe();
-    
+    const accountChannel = supabase.channel('wealth-journey-updates').on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'user_accounts',
+      filter: `user_id=eq.${user.id}`
+    }, payload => {
+      console.log('🎉 Wealth journey updated in real-time!', payload);
+      // Trigger celebration animation on wealth update
+      triggerCelebration();
+    }).subscribe();
     return () => {
       supabase.removeChannel(accountChannel);
     };
   }, [user]);
-
-  return (
-    <div className="relative overflow-hidden">
+  return <div className="relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-success/5"></div>
       <div className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-r from-primary/10 to-transparent rounded-full blur-3xl animate-pulse"></div>
@@ -99,25 +122,10 @@ export default function WealthJourneyHero() {
           {/* Top Row - Status Badge & Share */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className={`text-4xl bg-gradient-to-r ${wealthData.color} bg-clip-text text-transparent`}>
-                {wealthData.icon}
-              </div>
-              <Badge 
-                variant="secondary" 
-                className={`bg-gradient-to-r ${wealthData.color} text-white border-0 px-4 py-1.5 text-sm font-semibold`}
-              >
-                {wealthData.level}
-              </Badge>
+              
+              
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleShare}
-              className="hover:bg-primary/10"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
+            
           </div>
 
           {/* Main Stats Grid */}
@@ -182,17 +190,18 @@ export default function WealthJourneyHero() {
 
       {/* Celebration Animation */}
       <AnimatePresence>
-        {showCelebration && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          >
+        {showCelebration && <motion.div initial={{
+        opacity: 0,
+        scale: 0.8
+      }} animate={{
+        opacity: 1,
+        scale: 1
+      }} exit={{
+        opacity: 0,
+        scale: 0.8
+      }} className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-6xl">🎉</div>
-          </motion.div>
-        )}
+          </motion.div>}
       </AnimatePresence>
-    </div>
-  );
+    </div>;
 }

@@ -30,31 +30,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener FIRST
+    // Set up auth state listener FIRST (synchronous; defer side-effects)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
-        
         console.log('Auth state changed:', event, session?.user?.id);
-        
+
         if (event === 'SIGNED_OUT') {
           setSession(null);
           setUser(null);
+          setProfile(null);
           setLoading(false);
           return;
         }
 
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-          // Fetch or create user profile
-          fetchUserProfile(session.user.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
         } else {
-          setSession(null);
-          setUser(null);
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     );
@@ -185,7 +185,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/app`;
+    const redirectUrl = `${window.location.origin}/auth/callback`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -200,24 +200,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
     
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: redirectUrl
+        redirectTo: redirectUrl,
+        skipBrowserRedirect: true,
       }
     });
+
+    if (data?.url) {
+      const target = window.top ?? window;
+      target.location.href = data.url;
+    }
+
     return { error };
   };
 
   const signInWithApple = async () => {
     const redirectUrl = `${window.location.origin}/auth/callback`;
     
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: redirectUrl
+        redirectTo: redirectUrl,
+        skipBrowserRedirect: true,
       }
     });
+
+    if (data?.url) {
+      const target = window.top ?? window;
+      target.location.href = data.url;
+    }
+
     return { error };
   };
 

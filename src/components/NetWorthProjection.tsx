@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Calculator, Target, DollarSign } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 interface LedgerEntry {
   id: string;
@@ -28,6 +29,7 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
   const [monthlyContribution, setMonthlyContribution] = useState(500);
   const [targetAmount, setTargetAmount] = useState(10000);
   const [interestRate, setInterestRate] = useState(8);
+  const [timeHorizon, setTimeHorizon] = useState(40);
 
   // Calculate real monthly contribution from user's actual saves
   useEffect(() => {
@@ -58,25 +60,57 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
     }
   }, [ledgerHistory]);
 
-  // Real-time projection calculations
+  // Generate year-by-year chart data
+  const generateChartData = useMemo(() => {
+    const monthlyRate = interestRate / 100 / 12;
+    const data = [];
+    
+    for (let year = 0; year <= timeHorizon; year++) {
+      let balance = currentSavings;
+      let totalContributions = 0;
+      
+      // Calculate month by month for this year
+      for (let month = 1; month <= year * 12; month++) {
+        balance += monthlyContribution;
+        totalContributions += monthlyContribution;
+        balance += balance * monthlyRate;
+      }
+      
+      const growth = balance - currentSavings - totalContributions;
+      
+      data.push({
+        year,
+        totalValue: Math.round(balance),
+        contributions: Math.round(currentSavings + totalContributions),
+        growth: Math.round(growth)
+      });
+    }
+    
+    return data;
+  }, [currentSavings, monthlyContribution, interestRate, timeHorizon]);
+
+  // Real-time projection calculations with dynamic milestones
   const calculateProjections = () => {
     const monthlyRate = interestRate / 100 / 12;
     const currentSavingsValue = currentSavings;
     
-    // Calculate future values with compound interest
-    const weeklyValue = currentSavingsValue + (monthlyContribution / 4);
-    const yearlyValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 1) + 
-                       monthlyContribution * (Math.pow(1 + monthlyRate, 12) - 1) / monthlyRate;
-    const tenYearValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 10) + 
-                        monthlyContribution * (Math.pow(1 + monthlyRate, 120) - 1) / monthlyRate;
-    const fortyYearValue = currentSavingsValue * Math.pow(1 + interestRate / 100, 40) + 
-                          monthlyContribution * (Math.pow(1 + monthlyRate, 480) - 1) / monthlyRate;
+    // Dynamic milestone years based on time horizon
+    const quarterYear = Math.round(timeHorizon / 4);
+    const halfYear = Math.round(timeHorizon / 2);
+    
+    const calculateFutureValue = (years: number) => {
+      const months = years * 12;
+      return currentSavingsValue * Math.pow(1 + interestRate / 100, years) + 
+             monthlyContribution * (Math.pow(1 + monthlyRate, months) - 1) / monthlyRate;
+    };
 
     return {
-      weekly: weeklyValue,
-      yearly: yearlyValue,
-      tenYear: tenYearValue,
-      fortyYear: fortyYearValue
+      oneYear: calculateFutureValue(1),
+      quarter: calculateFutureValue(quarterYear),
+      half: calculateFutureValue(halfYear),
+      final: calculateFutureValue(timeHorizon),
+      quarterYear,
+      halfYear
     };
   };
 
@@ -110,10 +144,10 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Compact Controls Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Controls Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Left: Controls */}
+          {/* Left: Input Controls */}
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="monthly-contribution">Monthly Contribution: ${monthlyContribution}</Label>
@@ -128,8 +162,24 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>$50</span>
-                <span>Based on your saves</span>
                 <span>$2,000</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="time-horizon">Time Horizon: {timeHorizon} years</Label>
+              <Slider 
+                id="time-horizon"
+                min={1} 
+                max={50} 
+                step={1} 
+                value={[timeHorizon]} 
+                onValueChange={(value) => setTimeHorizon(value[0])}
+                className="w-full" 
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>1 year</span>
+                <span>50 years</span>
               </div>
             </div>
 
@@ -172,24 +222,73 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
             </div>
           </div>
 
-          {/* Right: Projections */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
-                <p className="text-xs text-muted-foreground mb-1">Weekly</p>
-                <p className="text-lg font-bold text-success">${projections.weekly.toFixed(0)}</p>
-              </div>
+          {/* Middle & Right: Chart Visualization */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="p-4 rounded-lg border bg-card">
+              <h3 className="text-sm font-medium mb-4">Compound Growth Over Time</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={generateChartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="year" 
+                    label={{ value: 'Years', position: 'insideBottom', offset: -5 }}
+                    className="text-xs"
+                  />
+                  <YAxis 
+                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    className="text-xs"
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => `$${value.toLocaleString()}`}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="totalValue" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={3}
+                    name="Total Value"
+                    dot={false}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="contributions" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    name="Contributions"
+                    dot={false}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="growth" 
+                    stroke="hsl(var(--success))" 
+                    strokeWidth={2}
+                    name="Growth"
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Dynamic Projection Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="text-center p-3 rounded-lg bg-primary/10 border border-primary/20">
                 <p className="text-xs text-muted-foreground mb-1">1 Year</p>
-                <p className="text-lg font-bold text-primary">${projections.yearly.toLocaleString()}</p>
+                <p className="text-lg font-bold text-primary">${Math.round(projections.oneYear).toLocaleString()}</p>
+              </div>
+              <div className="text-center p-3 rounded-lg bg-success/10 border border-success/20">
+                <p className="text-xs text-muted-foreground mb-1">{projections.quarterYear} Years</p>
+                <p className="text-lg font-bold text-success">${Math.round(projections.quarter).toLocaleString()}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-accent/10 border border-accent/20">
-                <p className="text-xs text-muted-foreground mb-1">10 Years</p>
-                <p className="text-lg font-bold text-accent">${projections.tenYear.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mb-1">{projections.halfYear} Years</p>
+                <p className="text-lg font-bold text-accent">${Math.round(projections.half).toLocaleString()}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-warning/10 border border-warning/20">
-                <p className="text-xs text-muted-foreground mb-1">40 Years</p>
-                <p className="text-lg font-bold text-warning">${projections.fortyYear.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mb-1">{timeHorizon} Years</p>
+                <p className="text-lg font-bold text-warning">${Math.round(projections.final).toLocaleString()}</p>
               </div>
             </div>
 
@@ -217,11 +316,11 @@ const NetWorthProjection = ({ currentSavings, ledgerHistory }: NetWorthProjectio
                 <div className="text-xs text-muted-foreground">Current</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-accent">${(projections.fortyYear - currentSavings).toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Growth (40yr)</div>
+                <div className="font-bold text-accent">${Math.round(projections.final - currentSavings - (monthlyContribution * timeHorizon * 12)).toLocaleString()}</div>
+                <div className="text-xs text-muted-foreground">Growth ({timeHorizon}yr)</div>
               </div>
               <div className="text-center">
-                <div className="font-bold text-success">{((projections.fortyYear / currentSavings - 1) * 100).toFixed(0)}%</div>
+                <div className="font-bold text-success">{currentSavings > 0 ? ((projections.final / currentSavings - 1) * 100).toFixed(0) : '0'}%</div>
                 <div className="text-xs text-muted-foreground">Return</div>
               </div>
             </div>

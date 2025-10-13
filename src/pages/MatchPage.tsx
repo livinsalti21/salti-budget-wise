@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
 import { MatchExplainer } from '@/components/onboarding/MatchExplainer';
 import { MatchPageOnboarding } from '@/components/match/MatchPageOnboarding';
+import { FriendStreakDetailedGuide } from '@/components/onboarding/FriendStreakDetailedGuide';
+import { SponsorDetailedGuide } from '@/components/onboarding/SponsorDetailedGuide';
 import MatchSection from '@/components/MatchSection';
 import FriendMatchSection from '@/components/friends/FriendMatchSection';
 import FriendRequestsList from '@/components/friends/FriendRequestsList';
@@ -10,7 +14,7 @@ import StreakMatchSection from '@/components/match/StreakMatchSection';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Heart, Flame } from 'lucide-react';
+import { Users, Heart, Flame, Info } from 'lucide-react';
 
 export default function MatchPage() {
   const isMobile = useIsMobile();
@@ -71,10 +75,24 @@ export default function MatchPage() {
         />
 
         <div className="p-4 space-y-4">
-          {/* Quick Explainer */}
+          {/* Quick Explainer with Learn More Button */}
           {!showOnboarding && (
-            <div className="mb-4">
+            <div className="mb-4 space-y-3">
               <MatchExplainer variant="compact" />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Info className="h-4 w-4 mr-2" />
+                    Learn About Friend Streaks & Sponsor Matches
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <div className="space-y-4">
+                    <FriendStreakDetailedGuide />
+                    <SponsorDetailedGuide />
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
           
@@ -132,8 +150,24 @@ export default function MatchPage() {
 
       <main className="p-6 max-w-6xl mx-auto">
         {!showOnboarding && (
-          <div className="mb-6">
-            <MatchExplainer variant="full" />
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <MatchExplainer variant="full" />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Info className="h-4 w-4 mr-2" />
+                    Learn More
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <div className="space-y-4">
+                    <FriendStreakDetailedGuide />
+                    <SponsorDetailedGuide />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         )}
         

@@ -12,10 +12,37 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
+    // Authenticate the user first
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - No authorization header' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Create client with user's auth to verify identity
+    const supabaseAuth = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     )
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
+    
+    if (authError || !user) {
+      console.error('Auth error:', authError)
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
 
     const { user_id } = await req.json()
 
@@ -28,6 +55,24 @@ serve(async (req) => {
         }
       )
     }
+
+    // Verify the authenticated user can only delete their own account
+    if (user_id !== user.id) {
+      console.error(`User ${user.id} attempted to delete account ${user_id}`)
+      return new Response(
+        JSON.stringify({ error: 'Forbidden - Can only delete your own account' }),
+        { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Now use service role client for actual deletion
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
     // Delete user data in order (respecting foreign key constraints)
     const tables = [

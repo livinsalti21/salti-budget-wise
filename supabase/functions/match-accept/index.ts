@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateUUID } from '../_shared/validation.ts';
+import { logSecurityEvent } from '../_shared/securityLogger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,8 +36,19 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { invite_id, push_id } = body;
 
-    if (!invite_id) {
-      return new Response('Invite ID required', { status: 400, headers: corsHeaders });
+    // PHASE 3: Input validation
+    if (!invite_id || !validateUUID(invite_id)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid invite_id format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (push_id && !validateUUID(push_id)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid push_id format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get the invite and verify it belongs to the user
@@ -139,6 +152,21 @@ Deno.serve(async (req) => {
       inviter_id: invite.inviter_id,
       amount_cents: invite.amount_cents
     });
+
+    // PHASE 5: Security logging
+    await logSecurityEvent(
+      supabase,
+      'match_invite_accepted',
+      'info',
+      {
+        invite_id,
+        amount_cents: invite.amount_cents,
+        inviter_id: invite.inviter_id,
+        ip_address: req.headers.get('x-forwarded-for'),
+        user_agent: req.headers.get('user-agent')
+      },
+      user.id
+    );
 
     return new Response(
       JSON.stringify({ 

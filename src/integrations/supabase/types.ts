@@ -926,6 +926,48 @@ export type Database = {
         }
         Relationships: []
       }
+      friend_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          friend_user_id: string
+          id: string
+          is_active: boolean
+          last_matched_date: string | null
+          longest_streak: number
+          total_matched_cents: number
+          total_matches: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          friend_user_id: string
+          id?: string
+          is_active?: boolean
+          last_matched_date?: string | null
+          longest_streak?: number
+          total_matched_cents?: number
+          total_matches?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          friend_user_id?: string
+          id?: string
+          is_active?: boolean
+          last_matched_date?: string | null
+          longest_streak?: number
+          total_matched_cents?: number
+          total_matches?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       goals: {
         Row: {
           created_at: string
@@ -2969,9 +3011,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_ledger_detailed: {
+        Row: {
+          amount_cents: number | null
+          created_at: string | null
+          description: string | null
+          friend_match_name: string | null
+          future_value_40yr_cents: number | null
+          has_friend_match: boolean | null
+          id: string | null
+          original_save_amount_cents: number | null
+          reference_id: string | null
+          running_balance_cents: number | null
+          sponsor_name: string | null
+          transaction_type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          created_at?: string | null
+          description?: string | null
+          friend_match_name?: never
+          future_value_40yr_cents?: number | null
+          has_friend_match?: never
+          id?: string | null
+          original_save_amount_cents?: never
+          reference_id?: string | null
+          running_balance_cents?: number | null
+          sponsor_name?: never
+          transaction_type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          created_at?: string | null
+          description?: string | null
+          friend_match_name?: never
+          future_value_40yr_cents?: number | null
+          has_friend_match?: never
+          id?: string | null
+          original_save_amount_cents?: never
+          reference_id?: string | null
+          running_balance_cents?: number | null
+          sponsor_name?: never
+          transaction_type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      calculate_friend_streak: {
+        Args: { p_friend_id: string; p_user_id: string }
+        Returns: number
+      }
       calculate_sponsor_growth_metrics: {
         Args: { target_sponsor_id: string }
         Returns: undefined

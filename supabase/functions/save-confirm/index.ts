@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateAmount, validateUUID } from '../_shared/validation.ts';
+import { logFinancialEvent } from '../_shared/securityLogger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,8 +36,19 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { amount_cents, source = 'manual', push_id, idempotency_key } = body;
 
-    if (!amount_cents || amount_cents <= 0) {
-      return new Response('Invalid amount', { status: 400, headers: corsHeaders });
+    // PHASE 3: Input validation
+    if (!validateAmount(amount_cents)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid amount (must be 1-100000000 cents)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (push_id && !validateUUID(push_id)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid push_id format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Check for existing save with same idempotency key
@@ -127,6 +140,22 @@ Deno.serve(async (req) => {
       source,
       push_id
     });
+
+    // PHASE 5: Security logging for large saves
+    if (amount_cents > 100000) { // $1000+
+      await logFinancialEvent(
+        supabase,
+        'save_event',
+        amount_cents,
+        {
+          save_event_id: saveEvent.id,
+          source,
+          ip_address: req.headers.get('x-forwarded-for'),
+          user_agent: req.headers.get('user-agent')
+        },
+        user.id
+      );
+    }
 
     return new Response(
       JSON.stringify({ 

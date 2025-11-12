@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -14,6 +14,8 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('notify-snooze');
 
   try {
     const supabase = createClient(
@@ -73,7 +75,7 @@ Deno.serve(async (req) => {
     // This would typically involve a background job or scheduler
     // For MVP, we'll just log the snooze and rely on daily trigger checks
 
-    console.log('Notification snoozed:', {
+    logger.info('Notification snoozed', {
       user_id: user.id,
       push_id,
       duration_hours,
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in notify-snooze:', error);
+    logger.error('Notify snooze failed', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

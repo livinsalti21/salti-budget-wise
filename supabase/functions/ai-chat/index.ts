@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('ai-chat');
 
   try {
     const supabaseClient = createClient(
@@ -33,7 +36,7 @@ serve(async (req) => {
       throw new Error('Message is required');
     }
 
-    console.log('AI Chat request from user:', user.id);
+    logger.info('AI Chat request', { user_id: user.id, session_id: sessionId });
 
     // Get or create session
     let session;
@@ -131,7 +134,7 @@ Guidelines:
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Lovable AI error:', error);
+      logger.error('Lovable AI error', { status: response.status, error });
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ 
@@ -192,7 +195,7 @@ Guidelines:
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
                   }
                 } catch (e) {
-                  console.error('Parse error:', e);
+                  logger.warn('Stream parse error', e);
                 }
               }
             }
@@ -219,7 +222,7 @@ Guidelines:
           controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
           controller.close();
         } catch (error) {
-          console.error('Stream error:', error);
+          logger.error('Stream error', error);
           controller.error(error);
         }
       },
@@ -235,7 +238,7 @@ Guidelines:
     });
 
   } catch (error) {
-    console.error('Error in ai-chat function:', error);
+    logger.error('AI chat failed', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

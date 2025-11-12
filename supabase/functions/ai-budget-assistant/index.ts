@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('ai-budget-assistant');
 
   try {
     const supabaseClient = createClient(
@@ -35,7 +38,7 @@ serve(async (req) => {
       throw new Error('Input text is required');
     }
 
-    console.log('Processing budget input for user:', user.id);
+    logger.info('Processing budget input', { user_id: user.id });
 
     // Create AI prompt for budget extraction
     const systemPrompt = `You are the Livin Salti Budget Assistant. Extract financial information from user text into structured JSON format.
@@ -80,21 +83,21 @@ Respond ONLY with valid JSON matching this schema:
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
+      logger.error('AI API error', { status: response.status, error });
       throw new Error('Failed to process budget input');
     }
 
     const data = await response.json();
     const extractedContent = data.choices[0].message.content;
 
-    console.log('AI extracted content:', extractedContent);
+    logger.debug('AI extracted content', { content_length: extractedContent.length });
 
     // Parse the JSON response
     let budgetData;
     try {
       budgetData = JSON.parse(extractedContent);
     } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
+      logger.error('Failed to parse AI response', parseError);
       throw new Error('Failed to parse budget information');
     }
 
@@ -125,7 +128,7 @@ Respond ONLY with valid JSON matching this schema:
       });
 
     if (insertError) {
-      console.error('Database insert error:', insertError);
+      logger.error('Database insert failed', insertError);
       throw new Error('Failed to save budget data');
     }
 
@@ -231,7 +234,7 @@ Respond ONLY with valid JSON matching this schema:
     );
 
   } catch (error) {
-    console.error('Error in ai-budget-assistant function:', error);
+    logger.error('Budget assistant failed', error);
     return new Response(
       JSON.stringify({ 
         error: error.message,

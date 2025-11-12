@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,10 +55,11 @@ const verifyHMACSignature = async (
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('generate-secure-deeplink');
 
   try {
     const { action, ...params } = await req.json();
@@ -156,7 +158,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in generate-secure-deeplink function:', error);
+    logger.error('Generate secure deeplink failed', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
+
+  const logger = new EdgeFunctionLogger('delete-account');
 
   try {
     // Authenticate the user first
@@ -34,7 +37,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser()
     
     if (authError || !user) {
-      console.error('Auth error:', authError)
+      logger.warn('Auth failed', { error: authError });
       return new Response(
         JSON.stringify({ error: 'Unauthorized - Invalid token' }),
         { 
@@ -58,7 +61,7 @@ serve(async (req) => {
 
     // Verify the authenticated user can only delete their own account
     if (user_id !== user.id) {
-      console.error(`User ${user.id} attempted to delete account ${user_id}`)
+      logger.warn('Unauthorized deletion attempt', { requester: user.id, target: user_id });
       return new Response(
         JSON.stringify({ error: 'Forbidden - Can only delete your own account' }),
         { 
@@ -95,7 +98,7 @@ serve(async (req) => {
         .eq('user_id', user_id)
       
       if (error) {
-        console.error(`Error deleting from ${table}:`, error)
+        logger.warn(`Failed to delete from ${table}`, { table, error });
         // Continue with other tables even if one fails
       }
     }
@@ -104,7 +107,7 @@ serve(async (req) => {
     const { error: authError } = await supabaseClient.auth.admin.deleteUser(user_id)
     
     if (authError) {
-      console.error('Error deleting auth user:', authError)
+      logger.error('Failed to delete auth user', authError);
       return new Response(
         JSON.stringify({ error: 'Failed to delete user account' }),
         { 
@@ -113,6 +116,8 @@ serve(async (req) => {
         }
       )
     }
+
+    logger.info('Account deleted', { user_id });
 
     return new Response(
       JSON.stringify({ success: true, message: 'Account deleted successfully' }),
@@ -123,7 +128,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Delete account error:', error)
+    logger.error('Delete account failed', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 

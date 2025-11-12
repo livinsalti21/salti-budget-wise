@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,6 +45,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new EdgeFunctionLogger('link-account');
+
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -82,7 +85,7 @@ serve(async (req) => {
     const plaidData = await plaidResponse.json();
 
     if (!plaidResponse.ok) {
-      console.error('Plaid exchange error:', plaidData);
+      logger.error('Plaid token exchange failed', { status: plaidResponse.status, error: plaidData });
       throw new Error(`Plaid API error: ${plaidData.error_message || 'Unknown error'}`);
     }
 
@@ -104,7 +107,7 @@ serve(async (req) => {
     const accountsData = await accountsResponse.json();
 
     if (!accountsResponse.ok) {
-      console.error('Plaid accounts error:', accountsData);
+      logger.error('Plaid accounts fetch failed', { status: accountsResponse.status, error: accountsData });
       throw new Error(`Failed to fetch accounts: ${accountsData.error_message || 'Unknown error'}`);
     }
 
@@ -168,7 +171,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in link-account function:', error);
+    logger.error('Link account failed', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

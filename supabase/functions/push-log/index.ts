@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -14,6 +14,8 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('push-log');
 
   try {
     const supabase = createClient(
@@ -50,11 +52,7 @@ Deno.serve(async (req) => {
 
     if (insertError) throw insertError;
 
-    console.log('Push metric logged:', {
-      profile_id: user.id,
-      push_id,
-      event
-    });
+    logger.info('Push metric logged', { profile_id: user.id, push_id, event });
 
     return new Response(
       JSON.stringify({ status: 'ok' }),
@@ -64,7 +62,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in push-log:', error);
+    logger.error('Push log failed', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

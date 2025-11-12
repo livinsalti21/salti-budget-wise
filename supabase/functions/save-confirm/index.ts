@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validateAmount, validateUUID } from '../_shared/validation.ts';
 import { logFinancialEvent } from '../_shared/securityLogger.ts';
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -16,6 +16,8 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('save-confirm');
 
   try {
     const supabase = createClient(
@@ -61,7 +63,7 @@ Deno.serve(async (req) => {
         .single();
 
       if (existingSave) {
-        console.log('Returning existing save for idempotency key:', idempotency_key);
+        logger.info('Returning existing save for idempotency', { idempotency_key });
         return new Response(
           JSON.stringify({ save: existingSave, status: 'existing' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -133,7 +135,7 @@ Deno.serve(async (req) => {
         });
     }
 
-    console.log('Save confirmed:', {
+    logger.info('Save confirmed', {
       user_id: user.id,
       save_id: saveEvent.id,
       amount_cents,
@@ -169,7 +171,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in save-confirm:', error);
+    logger.error('Save confirm failed', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

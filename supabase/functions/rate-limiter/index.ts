@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +32,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new EdgeFunctionLogger('rate-limiter');
+
   try {
     const { action, identifier, type = 'api_request', userAgent, ip } = await req.json();
     
@@ -55,7 +58,7 @@ serve(async (req) => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error checking rate limit:', error);
+        logger.warn('Error checking rate limit', { type, identifier, error });
         return new Response(
           JSON.stringify({ allowed: true, remaining: config.maxAttempts }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -106,7 +109,7 @@ serve(async (req) => {
         });
 
       if (error) {
-        console.error('Error recording rate limit attempt:', error);
+        logger.warn('Error recording rate limit attempt', { type, identifier, error });
       }
 
       return new Response(
@@ -121,7 +124,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in rate-limiter function:', error);
+    logger.error('Rate limiter failed', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

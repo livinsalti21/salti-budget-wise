@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,8 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('ai-expense-coach');
 
   try {
     const supabaseClient = createClient(
@@ -78,7 +81,7 @@ serve(async (req) => {
     const aiData = await openAIResponse.json();
     
     if (!openAIResponse.ok) {
-      console.error('OpenAI API error:', aiData);
+      logger.error('AI API error', { status: openAIResponse.status, error: aiData });
       throw new Error(`OpenAI API error: ${aiData.error?.message || 'Unknown error'}`);
     }
 
@@ -109,7 +112,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in ai-expense-coach function:', error);
+    logger.error('Expense coach failed', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

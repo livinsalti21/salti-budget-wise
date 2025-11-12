@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
@@ -15,6 +16,7 @@ const PLAN_MAPPING = {
 };
 
 serve(async (req) => {
+  const logger = new EdgeFunctionLogger('stripe-webhook');
   const signature = req.headers.get("Stripe-Signature");
   const body = await req.text();
   
@@ -51,7 +53,7 @@ serve(async (req) => {
         const userId = session.client_reference_id || session.metadata?.user_id;
         
         if (!userId) {
-          console.error("No user ID found in checkout session");
+          logger.warn("No user ID in checkout session", { session_id: session.id });
           break;
         }
 
@@ -69,7 +71,7 @@ serve(async (req) => {
             })
             .eq("id", userId);
 
-          console.log(`Updated user ${userId} to ${planInfo.plan} plan`);
+          logger.info('Subscription activated', { user_id: userId, plan: planInfo.plan });
         }
         break;
       }
@@ -89,7 +91,7 @@ serve(async (req) => {
             })
             .eq("stripe_customer_id", customerId);
 
-          console.log(`Updated subscription for customer ${customerId} to ${planInfo.plan}`);
+          logger.info('Subscription updated', { customer_id: customerId, plan: planInfo.plan });
         }
         break;
       }
@@ -106,7 +108,7 @@ serve(async (req) => {
           })
           .eq("stripe_customer_id", customerId);
 
-        console.log(`Downgraded customer ${customerId} to Free plan`);
+        logger.info('Subscription cancelled', { customer_id: customerId });
         break;
       }
 
@@ -114,16 +116,15 @@ serve(async (req) => {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
         
-        // You could add notification logic here
-        console.log(`Payment failed for customer ${customerId}`);
+        logger.warn('Payment failed', { customer_id: customerId, invoice_id: invoice.id });
         break;
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        logger.debug('Unhandled event type', { event_type: event.type });
     }
   } catch (error) {
-    console.error(`Error processing webhook: ${error.message}`);
+    logger.error('Webhook processing failed', error);
     return new Response(`Webhook processing failed: ${error.message}`, {
       status: 500,
     });

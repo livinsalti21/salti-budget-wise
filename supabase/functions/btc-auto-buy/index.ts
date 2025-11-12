@@ -1,14 +1,10 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[BTC-AUTO-BUY] ${step}${detailsStr}`);
 };
 
 serve(async (req) => {
@@ -16,8 +12,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new EdgeFunctionLogger('btc-auto-buy');
+
   try {
-    logStep("BTC auto-buy triggered");
 
     const supabaseServiceClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -26,7 +23,7 @@ serve(async (req) => {
     );
 
     const { amount_cents, user_id, stacklet_id, match_event_id } = await req.json();
-    logStep("Processing BTC buy", { amount_cents, user_id, stacklet_id, match_event_id });
+    logger.info('BTC auto-buy initiated', { amount_cents, user_id, stacklet_id, match_event_id });
 
     // Mock BTC purchase for now - would integrate with Strike/River/Zero Hash API
     const mockBtcPrice = 45000; // $45,000 per BTC
@@ -43,7 +40,7 @@ serve(async (req) => {
       status: 'completed'
     };
 
-    logStep("Mock BTC purchase completed", tradeResult);
+    logger.debug('BTC purchase completed', tradeResult);
 
     // Update match event if provided
     if (match_event_id) {
@@ -58,7 +55,7 @@ serve(async (req) => {
         .eq('id', match_event_id);
 
       if (updateError) throw new Error(`Error updating match event: ${updateError.message}`);
-      logStep("Updated match event with BTC trade data");
+      logger.info('Match event updated with BTC trade data', { match_event_id });
     }
 
     return new Response(JSON.stringify({
@@ -72,7 +69,7 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in btc-auto-buy", { message: errorMessage });
+    logger.error('BTC auto-buy failed', error);
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

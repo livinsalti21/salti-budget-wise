@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,6 +10,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  const logger = new EdgeFunctionLogger('friend-streak-notifications');
 
   try {
     const supabase = createClient(
@@ -54,14 +57,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Friend streak milestone notifications sent: ${notificationsSent}`);
+    logger.info('Friend streak notifications sent', { notifications_sent: notificationsSent });
 
     return new Response(
       JSON.stringify({ success: true, notifications_sent: notificationsSent }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in friend-streak-notifications:', error);
+    logger.error('Friend streak notifications failed', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

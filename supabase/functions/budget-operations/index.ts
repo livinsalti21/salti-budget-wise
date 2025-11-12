@@ -161,13 +161,13 @@ async function getBalanceSheet(supabase: any, { userId, weekStart }: any) {
     return new Response(JSON.stringify({ balance_sheet: balanceSheet }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Error getting balance sheet:', error);
-    throw error;
+    } catch (error) {
+      logger.error('Error getting balance sheet', error);
+      throw error;
+    }
   }
-}
-
-async function getBudgetAnalytics(supabase: any, { userId, weeksBack = 8 }: any) {
+  
+  async function getBudgetAnalytics(supabase: any, { userId, weeksBack = 8 }: any, logger: any) {
   try {
     // Get budget history
     const { data: budgets } = await supabase
@@ -212,13 +212,13 @@ async function getBudgetAnalytics(supabase: any, { userId, weeksBack = 8 }: any)
     return new Response(JSON.stringify({ analytics }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Error getting budget analytics:', error);
-    throw error;
+    } catch (error) {
+      logger.error('Error getting budget analytics', error);
+      throw error;
+    }
   }
-}
-
-async function exportBudget(supabase: any, { userId, budgetId, format }: any) {
+  
+  async function exportBudget(supabase: any, { userId, budgetId, format }: any, logger: any) {
   try {
     // Get budget data
     const { data: budget } = await supabase
@@ -250,13 +250,13 @@ async function exportBudget(supabase: any, { userId, budgetId, format }: any) {
     return new Response(JSON.stringify({ budget }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error('Error exporting budget:', error);
-    throw error;
+    } catch (error) {
+      logger.error('Error exporting budget', error);
+      throw error;
+    }
   }
-}
-
-async function calculateBudget(supabase: any, { userId, budgetData }: any) {
+  
+  async function calculateBudget(supabase: any, { userId, budgetData }: any, logger: any) {
   try {
     // Server-side budget calculations with enhanced logic
     const weeklyIncome = budgetData.incomes.reduce((sum: number, income: any) => {

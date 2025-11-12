@@ -1,24 +1,22 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[MATCH-ENGINE] ${step}${detailsStr}`);
-};
-
 serve(async (req) => {
+  const logger = new EdgeFunctionLogger('match-engine');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    logStep("Match engine triggered");
+    logger.info("Match engine triggered");
 
     const supabaseServiceClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -33,7 +31,6 @@ serve(async (req) => {
 
     const body = await req.json();
     
-    // Enhanced input validation with sanitization
     const { save_event_id, user_id, amount_cents } = body;
     
     if (!save_event_id || typeof save_event_id !== 'string') {
@@ -48,13 +45,11 @@ serve(async (req) => {
       throw new Error('Invalid amount_cents');
     }
 
-    // Validate UUIDs format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(save_event_id) || !uuidRegex.test(user_id)) {
       throw new Error('Invalid UUID format');
     }
 
-    // Rate limiting check
     const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
     const { count: recentMatches } = await supabaseServiceClient
       .from('match_events')
@@ -66,9 +61,8 @@ serve(async (req) => {
       throw new Error('Rate limit exceeded for match events');
     }
 
-    logStep("Processing save event", { save_event_id, user_id, amount_cents });
+    logger.info("Processing save event", { save_event_id, user_id, amount_cents });
 
-    // Get active match rules for this user
     const { data: matchRules, error: rulesError } = await supabaseServiceClient
       .from('match_rules')
       .select(`
@@ -80,26 +74,23 @@ serve(async (req) => {
 
     if (rulesError) throw new Error(`Error fetching match rules: ${rulesError.message}`);
     if (!matchRules || matchRules.length === 0) {
-      logStep("No active match rules found");
+      logger.info("No active match rules found");
       return new Response(JSON.stringify({ message: "No match rules" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    logStep("Found match rules", { count: matchRules.length });
+    logger.info("Found match rules", { count: matchRules.length });
 
-    // Process each match rule
     for (const rule of matchRules) {
       try {
-        logStep("Processing match rule", { rule_id: rule.id, percent: rule.percent });
+        logger.info("Processing match rule", { rule_id: rule.id, percent: rule.percent });
 
-        // Calculate match amount
         const matchAmount = Math.round((amount_cents * rule.percent) / 100);
         
-        // Check weekly cap using secure RPC function with validated parameters
         const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week (Sunday)
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         weekStart.setHours(0, 0, 0, 0);
 
         const { data: weeklySpend, error: capError } = await supabaseServiceClient
@@ -109,14 +100,14 @@ serve(async (req) => {
           });
 
         if (capError) {
-          logStep('Error checking weekly cap', capError);
+          logger.warn('Error checking weekly cap', capError);
           continue;
         }
 
         const remainingCap = rule.cap_cents_weekly - (weeklySpend || 0);
         const finalMatchAmount = Math.min(matchAmount, Math.max(0, remainingCap));
 
-        logStep("Match calculation", {
+        logger.info("Match calculation", {
           matchAmount,
           weeklySpend,
           remainingCap,
@@ -124,11 +115,10 @@ serve(async (req) => {
         });
 
         if (finalMatchAmount <= 0) {
-          logStep("Weekly cap reached, skipping match");
+          logger.info("Weekly cap reached, skipping match");
           continue;
         }
 
-        // Create match event
         const { data: matchEvent, error: matchError } = await supabaseServiceClient
           .from('match_events')
           .insert({
@@ -144,9 +134,8 @@ serve(async (req) => {
           .single();
 
         if (matchError) throw new Error(`Error creating match event: ${matchError.message}`);
-        logStep("Created match event", { match_event_id: matchEvent.id });
+        logger.info("Created match event", { match_event_id: matchEvent.id });
 
-        // Process Stripe payment
         if (rule.sponsors?.stripe_customer_id) {
           try {
             const paymentIntent = await stripe.paymentIntents.create({
@@ -163,9 +152,8 @@ serve(async (req) => {
               }
             });
 
-            logStep("Stripe payment created", { payment_intent_id: paymentIntent.id });
+            logger.info("Stripe payment created", { payment_intent_id: paymentIntent.id });
 
-            // Update match event with payment intent
             await supabaseServiceClient
               .from('match_events')
               .update({
@@ -175,9 +163,8 @@ serve(async (req) => {
               .eq('id', matchEvent.id);
 
             if (paymentIntent.status === 'succeeded') {
-              logStep("Payment succeeded immediately");
+              logger.info("Payment succeeded immediately");
               
-              // Log security event
               await supabaseServiceClient.from('security_audit_log').insert({
                 user_id,
                 event_type: 'match_processed',
@@ -190,18 +177,15 @@ serve(async (req) => {
                 user_agent: req.headers.get('User-Agent')
               });
               
-              // If CASH match, transfer to recipient (would need Stripe Connect setup)
               if (rule.asset_type === 'CASH') {
-                logStep("CASH match completed");
+                logger.info("CASH match completed");
               } else if (rule.asset_type === 'BTC') {
-                // Trigger BTC purchase
-                logStep("Triggering BTC purchase for match");
-                // Would call BTC auto-buy function here
+                logger.info("Triggering BTC purchase for match");
               }
             }
 
           } catch (stripeError) {
-            logStep("Stripe payment failed", { error: stripeError.message });
+            logger.error("Stripe payment failed", stripeError);
             
             await supabaseServiceClient
               .from('match_events')
@@ -213,11 +197,11 @@ serve(async (req) => {
         }
 
       } catch (ruleError) {
-        logStep("Error processing rule", { rule_id: rule.id, error: ruleError.message });
+        logger.error("Error processing rule", ruleError);
       }
     }
 
-    logStep("Match engine completed");
+    logger.info("Match engine completed");
     return new Response(JSON.stringify({ message: "Match processing completed" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
@@ -225,7 +209,7 @@ serve(async (req) => {
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in match-engine", { message: errorMessage });
+    logger.error("ERROR in match-engine", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

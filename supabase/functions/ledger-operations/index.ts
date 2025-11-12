@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,24 +8,23 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  const logger = new EdgeFunctionLogger('ledger-operations');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Get user from auth header
     const authHeader = req.headers.get('Authorization')!
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     
     if (userError || !user) {
-      console.error('Auth error:', userError)
+      logger.error('Auth error', userError);
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -34,12 +34,10 @@ serve(async (req) => {
     const { operation, amount_cents, transaction_type, description, reference_id, limit = 50, offset = 0, sponsor_id, recipient_user_id, match_event_id } = await req.json()
 
     if (operation === 'create_ledger_entry') {
-      // Calculate 40-year future value (8% annual return)
       const annualRate = 0.08
       const years = 40
       const futureValue40yr = Math.round(amount_cents * Math.pow(1 + annualRate, years))
 
-      // Get current balance
       const { data: currentAccount } = await supabase
         .from('user_accounts')
         .select('current_balance_cents')
@@ -49,7 +47,6 @@ serve(async (req) => {
       const currentBalance = currentAccount?.current_balance_cents || 0
       const newBalance = currentBalance + amount_cents
 
-      // Create ledger entry
       const { data: ledgerEntry, error: ledgerError } = await supabase
         .from('user_ledger')
         .insert({
@@ -65,21 +62,20 @@ serve(async (req) => {
         .single()
 
       if (ledgerError) {
-        console.error('Ledger error:', ledgerError)
+        logger.error('Ledger error', ledgerError);
         return new Response(JSON.stringify({ error: 'Failed to create ledger entry' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      // Get updated account balance
       const { data: updatedAccount } = await supabase
         .from('user_accounts')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
-      console.log('Created ledger entry:', ledgerEntry)
+      logger.info('Created ledger entry', { ledger_entry_id: ledgerEntry.id });
       
       return new Response(JSON.stringify({ 
         success: true, 
@@ -100,7 +96,7 @@ serve(async (req) => {
         .range(offset, offset + limit - 1)
 
       if (historyError) {
-        console.error('History error:', historyError)
+        logger.error('History error', historyError);
         return new Response(JSON.stringify({ error: 'Failed to fetch ledger history' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -117,7 +113,6 @@ serve(async (req) => {
     }
 
     if (operation === 'create_sponsor_ledger_entry') {
-      // Get current sponsor balance
       const { data: sponsorAccount } = await supabase
         .from('sponsor_accounts')
         .select('current_outstanding_cents')
@@ -127,7 +122,6 @@ serve(async (req) => {
       const currentBalance = sponsorAccount?.current_outstanding_cents || 0
       const newBalance = currentBalance + amount_cents
 
-      // Create sponsor ledger entry
       const { data: sponsorLedgerEntry, error: sponsorLedgerError } = await supabase
         .from('sponsor_ledger')
         .insert({
@@ -143,14 +137,14 @@ serve(async (req) => {
         .single()
 
       if (sponsorLedgerError) {
-        console.error('Sponsor ledger error:', sponsorLedgerError)
+        logger.error('Sponsor ledger error', sponsorLedgerError);
         return new Response(JSON.stringify({ error: 'Failed to create sponsor ledger entry' }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         })
       }
 
-      console.log('Created sponsor ledger entry:', sponsorLedgerEntry)
+      logger.info('Created sponsor ledger entry', { sponsor_ledger_entry_id: sponsorLedgerEntry.id });
       
       return new Response(JSON.stringify({ 
         success: true, 
@@ -167,7 +161,7 @@ serve(async (req) => {
     })
 
   } catch (error) {
-    console.error('Function error:', error)
+    logger.error('Function error', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

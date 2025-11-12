@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { validateUUID } from '../_shared/validation.ts';
 import { logSecurityEvent } from '../_shared/securityLogger.ts';
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,7 +9,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+  const logger = new EdgeFunctionLogger('match-accept');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -36,7 +38,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { invite_id, push_id } = body;
 
-    // PHASE 3: Input validation
     if (!invite_id || !validateUUID(invite_id)) {
       return new Response(
         JSON.stringify({ error: 'Invalid invite_id format' }),
@@ -51,7 +52,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get the invite and verify it belongs to the user
     const { data: invite, error: inviteError } = await supabase
       .from('match_invites')
       .select('*')
@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if invite has expired
     if (new Date(invite.expires_at) < new Date()) {
       await supabase
         .from('match_invites')
@@ -80,7 +79,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Accept the invite
     const { error: updateError } = await supabase
       .from('match_invites')
       .update({ 
@@ -91,7 +89,6 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Mark push as acted if provided
     if (push_id) {
       await supabase
         .from('push_events')
@@ -102,7 +99,6 @@ Deno.serve(async (req) => {
         .eq('id', push_id)
         .eq('user_id', user.id);
 
-      // Log the action
       await supabase
         .from('push_action_logs')
         .insert({
@@ -116,7 +112,6 @@ Deno.serve(async (req) => {
         });
     }
 
-    // Create a coop push for the inviter
     const coopPayload = {
       type: 'match_coop',
       title: 'Match Accepted! 🎉',
@@ -142,18 +137,16 @@ Deno.serve(async (req) => {
       });
 
     if (pushError) {
-      console.error('Error creating coop push:', pushError);
-      // Don't fail the main operation if push creation fails
+      logger.error('Error creating coop push', pushError);
     }
 
-    console.log('Match invite accepted:', {
+    logger.info('Match invite accepted', {
       invite_id,
       invitee_id: user.id,
       inviter_id: invite.inviter_id,
       amount_cents: invite.amount_cents
     });
 
-    // PHASE 5: Security logging
     await logSecurityEvent(
       supabase,
       'match_invite_accepted',
@@ -182,7 +175,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in match-accept:', error);
+    logger.error('Error in match-accept', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { EdgeFunctionLogger } from '../_shared/logger.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,8 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+  const logger = new EdgeFunctionLogger('notification-triggers');
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -21,28 +23,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Running notification triggers...');
+    logger.info('Running notification triggers');
 
-    // Get current time for scheduling logic
     const now = new Date();
     const currentHour = now.getHours();
-    const currentDay = now.getDay(); // 0 = Sunday, 5 = Friday
 
-    // 1. PAYDAY TRIGGERS
-    await checkPaydayTriggers(supabase, now);
+    await checkPaydayTriggers(supabase, now, logger);
+    await checkRoundupTriggers(supabase, logger);
 
-    // 2. ROUNDUP TRIGGERS
-    await checkRoundupTriggers(supabase);
-
-    // 3. STREAK GUARD TRIGGERS (6-8pm local time)
     if (currentHour >= 18 && currentHour <= 20) {
-      await checkStreakGuardTriggers(supabase, now);
+      await checkStreakGuardTriggers(supabase, now, logger);
     }
 
-    // 4. MATCH INVITE EXPIRATION CLEANUP
-    await cleanupExpiredInvites(supabase);
+    await cleanupExpiredInvites(supabase, logger);
 
-    console.log('Notification triggers completed successfully');
+    logger.info('Notification triggers completed successfully');
 
     return new Response(
       JSON.stringify({ status: 'success', timestamp: now.toISOString() }),
@@ -50,7 +45,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in notification triggers:', error);
+    logger.error('Error in notification triggers', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -58,10 +53,9 @@ Deno.serve(async (req) => {
   }
 });
 
-async function checkPaydayTriggers(supabase: any, now: Date) {
-  console.log('Checking payday triggers...');
+async function checkPaydayTriggers(supabase: any, now: Date, logger: any) {
+  logger.info('Checking payday triggers');
 
-  // Get active payday rules that are due
   const { data: paydayRules, error } = await supabase
     .from('payday_rules')
     .select(`
@@ -73,15 +67,14 @@ async function checkPaydayTriggers(supabase: any, now: Date) {
     .lte('next_run_at', now.toISOString());
 
   if (error) {
-    console.error('Error fetching payday rules:', error);
+    logger.error('Error fetching payday rules', error);
     return;
   }
 
   for (const rule of paydayRules || []) {
     try {
-      await createPaydayPush(supabase, rule);
+      await createPaydayPush(supabase, rule, logger);
       
-      // Update next run time based on cadence
       const nextRun = calculateNextRun(rule.trigger_cadence, now);
       await supabase
         .from('payday_rules')
@@ -89,13 +82,13 @@ async function checkPaydayTriggers(supabase: any, now: Date) {
         .eq('id', rule.id);
 
     } catch (error) {
-      console.error(`Error creating payday push for rule ${rule.id}:`, error);
+      logger.error(`Error creating payday push for rule ${rule.id}`, error);
     }
   }
 }
 
-async function createPaydayPush(supabase: any, rule: any) {
-  const suggestedAmount = Math.max(500, Math.min(rule.amount_cents, 5000)); // $5-$50
+async function createPaydayPush(supabase: any, rule: any, logger: any) {
+  const suggestedAmount = Math.max(500, Math.min(rule.amount_cents, 5000));
   const impact30Year = calculateImpact(suggestedAmount);
 
   const payload = {
@@ -133,13 +126,12 @@ async function createPaydayPush(supabase: any, rule: any) {
     });
 
   if (error) throw error;
-  console.log(`Created payday push for user ${rule.user_id}`);
+  logger.info(`Created payday push for user ${rule.user_id}`);
 }
 
-async function checkRoundupTriggers(supabase: any) {
-  console.log('Checking roundup triggers...');
+async function checkRoundupTriggers(supabase: any, logger: any) {
+  logger.info('Checking roundup triggers');
 
-  // Get users with accumulated roundups >= $5 and auto-convert disabled
   const { data: roundups, error } = await supabase
     .from('roundup_accumulator')
     .select('*')
@@ -147,13 +139,12 @@ async function checkRoundupTriggers(supabase: any) {
     .eq('auto_convert_enabled', false);
 
   if (error) {
-    console.error('Error fetching roundups:', error);
+    logger.error('Error fetching roundups', error);
     return;
   }
 
   for (const roundup of roundups || []) {
     try {
-      // Check if user already saved today (suppress if so)
       const today = new Date().toISOString().split('T')[0];
       const { data: todaySaves } = await supabase
         .from('save_events')
@@ -162,19 +153,19 @@ async function checkRoundupTriggers(supabase: any) {
         .gte('created_at', `${today}T00:00:00Z`);
 
       if (todaySaves && todaySaves.length > 0) {
-        console.log(`User ${roundup.user_id} already saved today, skipping roundup trigger`);
+        logger.debug(`User ${roundup.user_id} already saved today, skipping roundup trigger`);
         continue;
       }
 
-      await createRoundupPush(supabase, roundup);
+      await createRoundupPush(supabase, roundup, logger);
 
     } catch (error) {
-      console.error(`Error creating roundup push for user ${roundup.user_id}:`, error);
+      logger.error(`Error creating roundup push for user ${roundup.user_id}`, error);
     }
   }
 }
 
-async function createRoundupPush(supabase: any, roundup: any) {
+async function createRoundupPush(supabase: any, roundup: any, logger: any) {
   const payload = {
     type: 'roundup',
     title: 'Round-ups Ready! 💰',
@@ -209,13 +200,12 @@ async function createRoundupPush(supabase: any, roundup: any) {
     });
 
   if (error) throw error;
-  console.log(`Created roundup push for user ${roundup.user_id}`);
+  logger.info(`Created roundup push for user ${roundup.user_id}`);
 }
 
-async function checkStreakGuardTriggers(supabase: any, now: Date) {
-  console.log('Checking streak guard triggers...');
+async function checkStreakGuardTriggers(supabase: any, now: Date, logger: any) {
+  logger.info('Checking streak guard triggers');
 
-  // Get users with active streaks who haven't saved today
   const today = new Date().toISOString().split('T')[0];
   
   const { data: streaks, error } = await supabase
@@ -225,13 +215,12 @@ async function checkStreakGuardTriggers(supabase: any, now: Date) {
     .gt('consecutive_days', 0);
 
   if (error) {
-    console.error('Error fetching streaks:', error);
+    logger.error('Error fetching streaks', error);
     return;
   }
 
   for (const streak of streaks || []) {
     try {
-      // Check if user saved today
       const { data: todaySaves } = await supabase
         .from('save_events')
         .select('id')
@@ -239,18 +228,18 @@ async function checkStreakGuardTriggers(supabase: any, now: Date) {
         .gte('created_at', `${today}T00:00:00Z`);
 
       if (todaySaves && todaySaves.length > 0) {
-        continue; // User already saved today
+        continue;
       }
 
-      await createStreakGuardPush(supabase, streak);
+      await createStreakGuardPush(supabase, streak, logger);
 
     } catch (error) {
-      console.error(`Error creating streak guard push for user ${streak.user_id}:`, error);
+      logger.error(`Error creating streak guard push for user ${streak.user_id}`, error);
     }
   }
 }
 
-async function createStreakGuardPush(supabase: any, streak: any) {
+async function createStreakGuardPush(supabase: any, streak: any, logger: any) {
   const payload = {
     type: 'streak_guard',
     title: 'Protect Your Streak! 🔥',
@@ -285,11 +274,11 @@ async function createStreakGuardPush(supabase: any, streak: any) {
     });
 
   if (error) throw error;
-  console.log(`Created streak guard push for user ${streak.user_id}`);
+  logger.info(`Created streak guard push for user ${streak.user_id}`);
 }
 
-async function cleanupExpiredInvites(supabase: any) {
-  console.log('Cleaning up expired invites...');
+async function cleanupExpiredInvites(supabase: any, logger: any) {
+  logger.info('Cleaning up expired invites');
 
   const { error } = await supabase
     .from('match_invites')
@@ -298,7 +287,7 @@ async function cleanupExpiredInvites(supabase: any) {
     .lt('expires_at', new Date().toISOString());
 
   if (error) {
-    console.error('Error cleaning up expired invites:', error);
+    logger.error('Error cleaning up expired invites', error);
   }
 }
 

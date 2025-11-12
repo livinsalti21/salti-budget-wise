@@ -37,6 +37,7 @@ const MatchPage = lazy(() => import("./pages/MatchPage"));
 const StreaksPage = lazy(() => import("./pages/StreaksPage"));
 const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
 const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
+const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
 
 const queryClient = new QueryClient();
 
@@ -107,6 +108,7 @@ const AppContent = () => {
         <Route path="/account-delete" element={<RequireAuth><AppWrapper showBottomNav={false}><Suspense fallback={<div>Loading...</div>}><AccountDeletePage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/sponsor/auth" element={<SponsorAuth />} />
         <Route path="/sponsor-dashboard" element={<SponsorDashboard />} />
+        <Route path="/monitoring" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><MonitoringPage /></Suspense></AppWrapper></RequireAuth>} />
 
         {/* Utility routes */}
         <Route path="/app/save/choose" element={<RequireAuth><AppWrapper showBottomNav={false}><SaveChoose /></AppWrapper></RequireAuth>} />

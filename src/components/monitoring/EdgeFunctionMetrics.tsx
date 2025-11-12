@@ -3,12 +3,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, CheckCircle, Clock, TrendingUp, Download, FileJson, FileSpreadsheet, Calendar as CalendarIcon } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, TrendingUp, Download, FileJson, FileSpreadsheet, Calendar as CalendarIcon, Search } from 'lucide-react';
 import { ErrorLogger } from '@/utils/errorLogger';
 import { useToast } from '@/hooks/use-toast';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { ErrorLogViewerModal } from './ErrorLogViewerModal';
 
 interface FunctionMetrics {
   function_name: string;
@@ -34,6 +35,7 @@ export const EdgeFunctionMetrics = () => {
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [rawData, setRawData] = useState<any[]>([]);
+  const [showLogViewer, setShowLogViewer] = useState(false);
 
   useEffect(() => {
     loadMetrics();
@@ -291,13 +293,17 @@ export const EdgeFunctionMetrics = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={exportToCSV} variant="outline" size="sm">
+          <Button onClick={exportToCSV} variant="outline" size="sm" disabled={loading || rawData.length === 0}>
             <FileSpreadsheet className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
-          <Button onClick={exportToJSON} variant="outline" size="sm">
+          <Button onClick={exportToJSON} variant="outline" size="sm" disabled={loading || rawData.length === 0}>
             <FileJson className="w-4 h-4 mr-2" />
             Export JSON
+          </Button>
+          <Button onClick={() => setShowLogViewer(true)} variant="outline" size="sm">
+            <Search className="w-4 h-4 mr-2" />
+            View Logs
           </Button>
         </div>
       </div>
@@ -465,6 +471,11 @@ export const EdgeFunctionMetrics = () => {
           </div>
         </CardContent>
       </Card>
+
+      <ErrorLogViewerModal 
+        open={showLogViewer} 
+        onOpenChange={setShowLogViewer} 
+      />
     </div>
   );
 };

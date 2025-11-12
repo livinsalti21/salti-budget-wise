@@ -2200,7 +2200,7 @@ export type Database = {
           event_details: Json | null
           event_type: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resolved_at: string | null
           severity: string | null
           user_agent: string | null
@@ -2212,7 +2212,7 @@ export type Database = {
           event_details?: Json | null
           event_type: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resolved_at?: string | null
           severity?: string | null
           user_agent?: string | null
@@ -2224,7 +2224,7 @@ export type Database = {
           event_details?: Json | null
           event_type?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resolved_at?: string | null
           severity?: string | null
           user_agent?: string | null
@@ -3086,10 +3086,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
-      current_user_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      current_user_id: { Args: never; Returns: string }
       decrypt_sensitive_data: {
         Args: { encrypted_obj: Json; key_name: string }
         Returns: string
@@ -3098,10 +3095,7 @@ export type Database = {
         Args: { key_name: string; plain_text: string }
         Returns: Json
       }
-      generate_group_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_group_code: { Args: never; Returns: string }
       get_user_community_stats: {
         Args: { target_user_id: string }
         Returns: {
@@ -3113,10 +3107,7 @@ export type Database = {
           total_saves_count: number
         }[]
       }
-      get_week_start: {
-        Args: { input_date?: string }
-        Returns: string
-      }
+      get_week_start: { Args: { input_date?: string }; Returns: string }
       get_weekly_match_spend: {
         Args: { rule_id: string; week_start: string }
         Returns: number
@@ -3136,10 +3127,7 @@ export type Database = {
         Args: { target_group_id: string; target_user_id: string }
         Returns: boolean
       }
-      is_parent_of: {
-        Args: { child: string }
-        Returns: boolean
-      }
+      is_parent_of: { Args: { child: string }; Returns: boolean }
       log_security_event: {
         Args: {
           p_event_details?: Json

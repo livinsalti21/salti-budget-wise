@@ -14,6 +14,9 @@ import { Link } from 'react-router-dom';
 import { track, EVENTS } from '@/analytics/analytics';
 import { ContextualTooltip } from '@/components/ui/ContextualTooltip';
 import { motion, useSpring } from "framer-motion";
+import { ErrorStatusWidget } from '@/components/monitoring/ErrorStatusWidget';
+import { useProfile } from '@/hooks/useProfile';
+import { isAdmin } from '@/lib/permissions/roleCheck';
 
 interface DashboardData {
   totalSaved: number;
@@ -34,6 +37,7 @@ interface FriendStreak {
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isAdminUser, setIsAdminUser] = useState(false);
   
   const [data, setData] = useState<DashboardData>({
     totalSaved: 0,
@@ -121,6 +125,9 @@ export default function Dashboard() {
     
     loadDashboardData();
     loadTopFriends();
+    
+    // Check admin status
+    isAdmin(user.id).then(setIsAdminUser);
     
     // Subscribe to real-time account updates
     const accountChannel = supabase
@@ -383,6 +390,13 @@ export default function Dashboard() {
           </Card>
         </Link>
       </div>
+
+      {/* System Health Widget - Admin Only */}
+      {isAdminUser && (
+        <div className="mb-4">
+          <ErrorStatusWidget />
+        </div>
+      )}
 
       {/* Budget Progress - Mobile Optimized */}
       <div className="mb-4">

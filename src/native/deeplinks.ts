@@ -12,27 +12,20 @@ class CapacitorDeepLinkHandler implements DeepLinkHandler {
 
   initialize(): void {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Deep links not available on web');
       return;
     }
 
-    // Listen for app URL opens
     App.addListener('appUrlOpen', (event: URLOpenListenerEvent) => {
-      console.log('App opened via deep link:', event.url);
       this.handleDeepLink(event.url);
     }).then(listener => {
       this.listeners.push(() => listener.remove());
     });
 
-    // Handle the case where app was opened from a cold start with a URL
     App.getLaunchUrl().then((result) => {
       if (result?.url) {
-        console.log('App launched with URL:', result.url);
         this.handleDeepLink(result.url);
       }
     });
-
-    console.log('Deep link handler initialized');
   }
 
   handleDeepLink(url: string): void {
@@ -50,10 +43,8 @@ class CapacitorDeepLinkHandler implements DeepLinkHandler {
         this.handleUniversalLink(parsedUrl);
         return;
       }
-
-      console.warn('Unhandled deep link:', url);
     } catch (error) {
-      console.error('Failed to parse deep link URL:', error);
+      // Silent fail
     }
   }
 
@@ -112,17 +103,9 @@ class CapacitorDeepLinkHandler implements DeepLinkHandler {
 }
 
 class WebDeepLinkHandler implements DeepLinkHandler {
-  initialize(): void {
-    console.log('Web deep link handler initialized (no-op)');
-  }
-
-  handleDeepLink(url: string): void {
-    console.log('Web deep link handling (no-op):', url);
-  }
-
-  cleanup(): void {
-    // No-op for web
-  }
+  initialize(): void {}
+  handleDeepLink(url: string): void {}
+  cleanup(): void {}
 }
 
 // Export singleton instance

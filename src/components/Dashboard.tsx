@@ -108,7 +108,6 @@ export default function Dashboard() {
       projectionSpring.set(projected40Years);
       setLastUpdated(new Date());
     } catch (error) {
-      console.error("Error loading dashboard:", error);
       toast({
         title: "Error",
         description: "Failed to load dashboard data",
@@ -135,7 +134,6 @@ export default function Dashboard() {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          console.log('💰 Account updated in real-time!', payload);
           const updatedAccount = payload.new as any;
           
           // Use stored value directly - NO recalculation!
@@ -196,7 +194,7 @@ export default function Dashboard() {
         setTopFriends(friendStreaks);
       }
     } catch (error) {
-      console.error('Error loading friend streaks:', error);
+      // Silent fail
     }
   };
 

@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { config } from '@/lib/config';
 
 export interface AnalyticsEvent {
   event: string;
@@ -22,25 +23,24 @@ class PostHogAnalytics implements AnalyticsService {
     const host = import.meta.env.VITE_POSTHOG_HOST || 'https://app.posthog.com';
 
     if (!apiKey) {
-      console.warn('PostHog API key not found, analytics disabled');
       return;
     }
 
     try {
-      // Dynamically import PostHog to avoid build issues
       const { default: posthog } = await import('posthog-js');
       
       posthog.init(apiKey, {
         api_host: host,
         person_profiles: 'identified_only',
-        capture_pageview: false, // We'll handle this manually
+        capture_pageview: false,
         autocapture: false,
       });
 
       this.posthog = posthog;
-      console.log('PostHog analytics initialized');
     } catch (error) {
-      console.error('Failed to initialize PostHog:', error);
+      if (config.logging.enableConsoleErrors) {
+        console.error('Failed to initialize PostHog:', error);
+      }
     }
   }
 
@@ -79,63 +79,33 @@ class PostHogAnalytics implements AnalyticsService {
 }
 
 class FirebaseAnalytics implements AnalyticsService {
-  private analytics: any = null;
-
   async initialize(): Promise<void> {
-    if (!Capacitor.isNativePlatform()) {
-      console.log('Firebase Analytics only available on native platforms');
-      return;
-    }
-
-    try {
-      // This would be implemented with Firebase Analytics Capacitor plugin
-      console.log('Firebase Analytics would be initialized here');
-    } catch (error) {
-      console.error('Failed to initialize Firebase Analytics:', error);
-    }
+    // Firebase Analytics stub for native platforms
   }
 
   async track(event: string, properties?: Record<string, any>): Promise<void> {
-    // Implementation would go here
-    console.log('Firebase track:', event, properties);
+    // Placeholder for Firebase implementation
   }
 
   async identify(userId: string, traits?: Record<string, any>): Promise<void> {
-    // Implementation would go here
-    console.log('Firebase identify:', userId, traits);
+    // Placeholder for Firebase implementation
   }
 
   async page(name: string, properties?: Record<string, any>): Promise<void> {
-    // Implementation would go here
-    console.log('Firebase page:', name, properties);
+    // Placeholder for Firebase implementation
   }
 
   async reset(): Promise<void> {
-    // Implementation would go here
-    console.log('Firebase reset');
+    // Placeholder for Firebase implementation
   }
 }
 
 class NoOpAnalytics implements AnalyticsService {
-  async initialize(): Promise<void> {
-    console.log('Analytics disabled (no-op)');
-  }
-
-  async track(event: string, properties?: Record<string, any>): Promise<void> {
-    console.log('Analytics track (no-op):', event, properties);
-  }
-
-  async identify(userId: string, traits?: Record<string, any>): Promise<void> {
-    console.log('Analytics identify (no-op):', userId, traits);
-  }
-
-  async page(name: string, properties?: Record<string, any>): Promise<void> {
-    console.log('Analytics page (no-op):', name, properties);
-  }
-
-  async reset(): Promise<void> {
-    console.log('Analytics reset (no-op)');
-  }
+  async initialize(): Promise<void> {}
+  async track(event: string, properties?: Record<string, any>): Promise<void> {}
+  async identify(userId: string, traits?: Record<string, any>): Promise<void> {}
+  async page(name: string, properties?: Record<string, any>): Promise<void> {}
+  async reset(): Promise<void> {}
 }
 
 // Create analytics instance based on environment
@@ -177,13 +147,9 @@ export const EVENTS = {
 // Simple track helper that works with current system
 export function track(event: string, properties: Record<string, any> = {}) {
   try {
-    // Use existing analytics system or console for development
-    console.log('[analytics]', event, properties);
-    
-    // Hook up to existing analytics if available
     analytics.track(event, properties);
   } catch (error) {
-    console.error('Analytics error:', error);
+    // Silent fail in production
   }
 }
 

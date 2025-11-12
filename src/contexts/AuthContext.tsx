@@ -34,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted) return;
-        console.log('Auth state changed:', event, session?.user?.id);
 
         if (event === 'SIGNED_OUT') {
           setSession(null);
@@ -67,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
         
         if (error) {
-          console.error('Error getting session:', error);
+          // Silent fail
         }
         
         setSession(session);
@@ -77,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setLoading(false);
       } catch (error) {
-        console.error('Error in getSession:', error);
         if (mounted) {
           setLoading(false);
         }
@@ -113,13 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching profile:', error);
         return;
       }
 
       setProfile(data);
     } catch (error) {
-      console.error('Unexpected error fetching profile:', error);
+      // Silent fail
     }
   };
 
@@ -133,14 +130,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id);
 
       if (error) {
-        console.error('Error updating profile:', error);
         return;
       }
 
-      // Refresh profile data
       await fetchUserProfile(user.id);
     } catch (error) {
-      console.error('Unexpected error updating profile:', error);
+      // Silent fail
     }
   };
 

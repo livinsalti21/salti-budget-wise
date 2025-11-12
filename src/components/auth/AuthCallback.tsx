@@ -17,7 +17,6 @@ export default function AuthCallback() {
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Auth callback error:', error);
           setStatus('error');
           setMessage('Email verification failed. The link may have expired or been used already.');
           
@@ -33,9 +32,6 @@ export default function AuthCallback() {
         }
 
         if (data.session) {
-          console.log('Auth callback success, user authenticated');
-          
-          // Check user profile and onboarding status
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('completed_onboarding')
@@ -43,8 +39,6 @@ export default function AuthCallback() {
             .single();
 
           if (profileError && profileError.code !== 'PGRST116') {
-            // Error fetching profile (not including "no rows" error)
-            console.error('Error fetching profile:', profileError);
             setStatus('error');
             setMessage('Unable to verify your account. Please try signing in again.');
             setTimeout(() => navigate('/auth'), 3000);
@@ -70,7 +64,6 @@ export default function AuthCallback() {
           setTimeout(() => navigate('/auth'), 3000);
         }
       } catch (err) {
-        console.error('Unexpected error in auth callback:', err);
         setStatus('error');
         setMessage('An unexpected error occurred. Please try again.');
         setTimeout(() => navigate('/auth'), 3000);

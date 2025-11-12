@@ -7,22 +7,21 @@ export default function usePushNotifications() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // Initialize push notifications for mobile
     const initPush = async () => {
       try {
-        await PushNotifications.addListener('registration', (token) => {
-          console.log('Push token:', token.value);
+        await PushNotifications.addListener('registration', () => {
+          // Silent registration
         });
 
-        await PushNotifications.addListener('pushNotificationReceived', (notification) => {
-          console.log('Push received:', notification);
+        await PushNotifications.addListener('pushNotificationReceived', () => {
+          // Silent receive
         });
 
-        await PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-          console.log('Push action:', notification);
+        await PushNotifications.addListener('pushNotificationActionPerformed', () => {
+          // Silent action
         });
       } catch (error) {
-        console.error('Push setup error:', error);
+        // Silent fail
       }
     };
 

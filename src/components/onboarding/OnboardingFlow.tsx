@@ -114,7 +114,6 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
         description: `Your ${goalName} goal is set up`,
       });
     } catch (error) {
-      console.error('Error creating goal:', error);
       toast({
         title: "Error",
         description: "Failed to create goal",
@@ -158,7 +157,6 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
         description: `Congrats! You saved $${saveAmount} and started a Day 1 streak!`,
       });
     } catch (error) {
-      console.error('Error creating save:', error);
       toast({
         title: "Error",
         description: "Failed to create save",
@@ -189,7 +187,6 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
         description: "We'll use this to keep you motivated and informed",
       });
     } catch (error) {
-      console.error('Error saving contact info:', error);
       toast({
         title: "Error",
         description: "Failed to save contact info",
@@ -202,15 +199,11 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
 
   const completeOnboarding = async () => {
     if (!user) {
-      console.error('❌ No user found during onboarding completion');
       return;
     }
     
     setLoading(true);
     try {
-      console.log('🎯 Completing onboarding for user:', user.id);
-      
-      // First ensure the user profile exists
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
@@ -218,7 +211,6 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
         .maybeSingle();
 
       if (!existingProfile) {
-        console.log('📝 Creating profile during onboarding completion');
         const { error: createError } = await supabase
           .from('profiles')
           .insert({
@@ -231,11 +223,9 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
           });
 
         if (createError) {
-          console.error('❌ Error creating profile:', createError);
           throw createError;
         }
       } else {
-        // Update existing profile
         const { error } = await supabase
           .from('profiles')
           .update({ 
@@ -246,12 +236,10 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
           .eq('id', user.id);
 
         if (error) {
-          console.error('❌ Error updating profile:', error);
           throw error;
         }
       }
 
-      // Verify the update was successful
       const { data: updatedProfile, error: verifyError } = await supabase
         .from('profiles')
         .select('completed_onboarding')
@@ -259,31 +247,25 @@ export default function OnboardingFlow({ onComplete, mode = 'standard' }: Onboar
         .maybeSingle();
 
       if (verifyError || !updatedProfile?.completed_onboarding) {
-        console.error('❌ Database update verification failed:', verifyError);
         throw new Error('Database update verification failed');
       }
-      
-      console.log('✅ Onboarding completed successfully');
       
       toast({
         title: "🎉 Welcome to Livin Salti!",
         description: "You're all set up and ready to start stacking!",
       });
 
-      // Add a small delay to ensure database changes propagate
       setTimeout(() => {
         onComplete();
       }, 500);
       
     } catch (error) {
-      console.error('❌ Error completing onboarding:', error);
       toast({
         title: "Error",
         description: "Failed to complete onboarding. Please try again.",
         variant: "destructive",
       });
       
-      // Retry logic
       setTimeout(() => {
         completeOnboarding();
       }, 2000);

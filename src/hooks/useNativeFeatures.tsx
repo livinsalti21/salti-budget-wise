@@ -12,31 +12,22 @@ export const useNativeFeatures = () => {
 
   const initializeServices = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Native features not available on web platform');
       return;
     }
 
     try {
-      // Initialize analytics
       await analytics.initialize();
-
-      // Initialize notifications
       await notificationService.initialize();
-
-      // Initialize deep links
       deepLinkHandler.initialize();
 
-      // Set up notification handler
       notificationService.onMessage((notification) => {
         toast({
           title: notification.title || 'New Notification',
           description: notification.body || 'You have a new notification',
         });
       });
-
-      console.log('Native services initialized successfully');
     } catch (error) {
-      console.error('Failed to initialize native services:', error);
+      // Silent fail
     }
   }, [toast]);
 
@@ -49,8 +40,7 @@ export const useNativeFeatures = () => {
       const granted = await notificationService.requestPermission();
       
       if (granted) {
-        const token = await notificationService.getToken();
-        console.log('Push notification permission granted, token:', token);
+        await notificationService.getToken();
         
         toast({
           title: "Notifications enabled! 🔔",
@@ -66,7 +56,6 @@ export const useNativeFeatures = () => {
       
       return granted;
     } catch (error) {
-      console.error('Failed to request notification permission:', error);
       return false;
     }
   }, [toast]);
@@ -75,7 +64,7 @@ export const useNativeFeatures = () => {
     try {
       await analytics.track(event, properties);
     } catch (error) {
-      console.error('Failed to track analytics event:', error);
+      // Silent fail
     }
   }, []);
 
@@ -83,7 +72,7 @@ export const useNativeFeatures = () => {
     try {
       await analytics.identify(userId, traits);
     } catch (error) {
-      console.error('Failed to identify user:', error);
+      // Silent fail
     }
   }, []);
 

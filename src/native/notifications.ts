@@ -26,20 +26,14 @@ class CapacitorNotificationService implements NotificationService {
 
   async initialize(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Not on native platform, skipping push notification setup');
       return;
     }
 
     try {
-      // Request permissions for local notifications
       await LocalNotifications.requestPermissions();
-
-      // Set up push notification listeners
       this.setupPushListeners();
-      
-      console.log('Push notification service initialized');
     } catch (error) {
-      console.error('Failed to initialize push notifications:', error);
+      // Silent fail
     }
   }
 
@@ -52,7 +46,6 @@ class CapacitorNotificationService implements NotificationService {
       const result = await PushNotifications.requestPermissions();
       return result.receive === 'granted';
     } catch (error) {
-      console.error('Permission request failed:', error);
       return false;
     }
   }
@@ -70,7 +63,6 @@ class CapacitorNotificationService implements NotificationService {
         });
       });
     } catch (error) {
-      console.error('Failed to get push token:', error);
       return null;
     }
   }
@@ -87,7 +79,6 @@ class CapacitorNotificationService implements NotificationService {
 
   async scheduleLocal(options: LocalNotificationOptions): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
-      console.log('Local notifications not available on web');
       return;
     }
 
@@ -102,32 +93,24 @@ class CapacitorNotificationService implements NotificationService {
         }]
       });
     } catch (error) {
-      console.error('Failed to schedule local notification:', error);
+      // Silent fail
     }
   }
 
   private setupPushListeners(): void {
-    // Handle registration success
     PushNotifications.addListener('registration', async (token: Token) => {
-      console.log('Push registration success, token: ' + token.value);
       await this.saveTokenToDatabase(token.value);
     });
 
-    // Handle registration errors
-    PushNotifications.addListener('registrationError', (error) => {
-      console.error('Error on registration: ' + JSON.stringify(error));
+    PushNotifications.addListener('registrationError', () => {
+      // Silent fail
     });
 
-    // Handle incoming notifications when app is in foreground
-    PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
-      console.log('Push notification received: ', notification);
+    PushNotifications.addListener('pushNotificationReceived', () => {
+      // Silent processing
     });
 
-    // Handle notification action
     PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
-      console.log('Push notification action performed: ', notification);
-      
-      // Handle deep link navigation
       if (notification.notification.data?.deep_link) {
         window.location.href = notification.notification.data.deep_link;
       }
@@ -152,7 +135,7 @@ class CapacitorNotificationService implements NotificationService {
           });
       }
     } catch (error) {
-      console.error('Failed to save token to database:', error);
+      // Silent fail
     }
   }
 
@@ -165,7 +148,7 @@ class CapacitorNotificationService implements NotificationService {
 // Web fallback service
 class WebNotificationService implements NotificationService {
   async initialize(): Promise<void> {
-    console.log('Web notification service initialized (no-op)');
+    // No-op for web
   }
 
   async requestPermission(): Promise<boolean> {

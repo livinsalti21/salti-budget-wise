@@ -36,6 +36,7 @@ const NetWorthPage = lazy(() => import("./pages/NetWorthPage"));
 const MatchPage = lazy(() => import("./pages/MatchPage"));
 const StreaksPage = lazy(() => import("./pages/StreaksPage"));
 const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
+const SaveSnapsPage = lazy(() => import("./pages/SaveSnapsPage"));
 const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
 
@@ -83,6 +84,7 @@ const AppContent = () => {
         <Route path="/budget" element={<RequireAuth><AppWrapper><BudgetPage /></AppWrapper></RequireAuth>} />
         <Route path="/save" element={<RequireAuth><AppWrapper><SavePage /></AppWrapper></RequireAuth>} />
         <Route path="/save-history" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveHistoryPage /></Suspense></AppWrapper></RequireAuth>} />
+        <Route path="/save-snaps" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveSnapsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/goals" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/net-worth" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></AppWrapper></RequireAuth>} />
         

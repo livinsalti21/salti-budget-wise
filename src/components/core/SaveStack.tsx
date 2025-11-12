@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { PiggyBank, TrendingUp, Target, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import SaveSnapUpload from "@/components/saveSnap/SaveSnapUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ImpactProjection {
   oneYear: number;
@@ -24,6 +27,8 @@ export default function SaveStack() {
   const [loading, setLoading] = useState(false);
   const [totalSaved, setTotalSaved] = useState(0);
   const [saveCount, setSaveCount] = useState(0);
+  const [photoUrl, setPhotoUrl] = useState<string>();
+  const [generatingCaption, setGeneratingCaption] = useState(false);
 
   const calculateImpactProjection = (amountCents: number): ImpactProjection => {
     const annualRate = 0.08; // 8% annual return
@@ -49,13 +54,35 @@ export default function SaveStack() {
     e.preventDefault();
     
     if (!user || !amount || parseFloat(amount) <= 0) {
-      alert("Please enter a valid amount");
+      toast.error("Please enter a valid amount");
       return;
     }
 
     setLoading(true);
     try {
       const amountCents = Math.round(parseFloat(amount) * 100);
+      
+      // Generate AI caption if photo is uploaded
+      let aiCaption: string | undefined;
+      if (photoUrl) {
+        setGeneratingCaption(true);
+        const { data: captionData, error: captionError } = await supabase.functions.invoke(
+          'generate-save-caption',
+          {
+            body: {
+              amount_cents: amountCents,
+              note: note || undefined,
+              photo_url: photoUrl,
+            },
+          }
+        );
+
+        if (!captionError && captionData?.caption) {
+          aiCaption = captionData.caption;
+        }
+        setGeneratingCaption(false);
+      }
+
       const projection40Year = calculate40YearProjection(amountCents);
       
       // Store locally for demo
@@ -63,15 +90,17 @@ export default function SaveStack() {
       setTotalSaved(newTotal);
       setSaveCount(saveCount + 1);
       
-      alert(`💎 Wealth Builder Move!\n$${amount} invested in your future → $${projection40Year.toFixed(2)} compound wealth in 40 years! 🚀`);
+      const message = aiCaption || `💎 Wealth Builder Move! $${amount} invested in your future → $${projection40Year.toFixed(2)} compound wealth in 40 years! 🚀`;
+      toast.success(message);
 
       // Reset form
       setAmount('');
       setNote('');
+      setPhotoUrl(undefined);
       
     } catch (error) {
       console.error('Error saving:', error);
-      alert("Failed to save your money. Please try again.");
+      toast.error("Failed to save your money. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -159,8 +188,14 @@ export default function SaveStack() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full" size="lg">
-              {loading ? "Building Wealth..." : "Accelerate My Wealth"}
+            <SaveSnapUpload
+              onPhotoUploaded={setPhotoUrl}
+              onPhotoRemoved={() => setPhotoUrl(undefined)}
+              currentPhotoUrl={photoUrl}
+            />
+
+            <Button type="submit" disabled={loading || generatingCaption} className="w-full" size="lg">
+              {generatingCaption ? "Generating caption..." : loading ? "Building Wealth..." : "Accelerate My Wealth"}
               <Sparkles className="h-4 w-4 ml-2" />
             </Button>
           </form>

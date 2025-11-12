@@ -1990,33 +1990,39 @@ export type Database = {
       }
       save_events: {
         Row: {
+          ai_caption: string | null
           amount_cents: number
           created_at: string
           future_value_cents: number | null
           id: string
           note: string | null
+          photo_url: string | null
           reason: string | null
           source: string
           stacklet_id: string
           user_id: string
         }
         Insert: {
+          ai_caption?: string | null
           amount_cents: number
           created_at?: string
           future_value_cents?: number | null
           id?: string
           note?: string | null
+          photo_url?: string | null
           reason?: string | null
           source?: string
           stacklet_id: string
           user_id: string
         }
         Update: {
+          ai_caption?: string | null
           amount_cents?: number
           created_at?: string
           future_value_cents?: number | null
           id?: string
           note?: string | null
+          photo_url?: string | null
           reason?: string | null
           source?: string
           stacklet_id?: string

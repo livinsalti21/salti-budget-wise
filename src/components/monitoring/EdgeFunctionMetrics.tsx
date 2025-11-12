@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertCircle, CheckCircle, Clock, TrendingUp, Download, FileJson, FileSpreadsheet, Calendar as CalendarIcon } from 'lucide-react';
 import { ErrorLogger } from '@/utils/errorLogger';
+import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 interface FunctionMetrics {
   function_name: string;
@@ -21,16 +26,24 @@ interface ErrorByLevel {
 }
 
 export const EdgeFunctionMetrics = () => {
+  const { toast } = useToast();
   const [metrics, setMetrics] = useState<FunctionMetrics[]>([]);
   const [errorsByLevel, setErrorsByLevel] = useState<ErrorByLevel[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d'>('24h');
+  const [timeRange, setTimeRange] = useState<'1h' | '24h' | '7d' | 'custom'>('24h');
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [rawData, setRawData] = useState<any[]>([]);
 
   useEffect(() => {
     loadMetrics();
-  }, [timeRange]);
+  }, [timeRange, startDate, endDate]);
 
   const getTimeRangeDate = () => {
+    if (timeRange === 'custom' && startDate) {
+      return startDate;
+    }
+    
     const now = new Date();
     switch (timeRange) {
       case '1h':
@@ -39,22 +52,36 @@ export const EdgeFunctionMetrics = () => {
         return new Date(now.getTime() - 24 * 60 * 60 * 1000);
       case '7d':
         return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      default:
+        return new Date(now.getTime() - 24 * 60 * 60 * 1000);
     }
+  };
+
+  const getEndDate = () => {
+    if (timeRange === 'custom' && endDate) {
+      return endDate;
+    }
+    return new Date();
   };
 
   const loadMetrics = async () => {
     try {
       setLoading(true);
       const startTime = getTimeRangeDate().toISOString();
+      const endTime = getEndDate().toISOString();
 
       // Query edge function logs from security_audit_log
       const { data: logs, error } = await supabase
         .from('security_audit_log')
         .select('*')
         .gte('created_at', startTime)
+        .lte('created_at', endTime)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Store raw data for export
+      setRawData(logs || []);
 
       // Aggregate metrics by function name
       const functionMap = new Map<string, {
@@ -125,6 +152,70 @@ export const EdgeFunctionMetrics = () => {
     }
   };
 
+  const exportToCSV = () => {
+    const headers = ['Function Name', 'Timestamp', 'Event Type', 'Severity', 'User ID', 'IP Address', 'Details'];
+    const rows = rawData.map(log => [
+      (log.event_details as any)?.function_name || log.event_type || 'unknown',
+      log.created_at,
+      log.event_type || '',
+      log.severity || '',
+      log.user_id || '',
+      log.ip_address || '',
+      JSON.stringify((log.event_details as any) || {})
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edge-function-logs-${format(getTimeRangeDate(), 'yyyy-MM-dd')}-to-${format(getEndDate(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Successful",
+      description: `Exported ${rawData.length} log entries to CSV`,
+    });
+  };
+
+  const exportToJSON = () => {
+    const exportData = {
+      metadata: {
+        exported_at: new Date().toISOString(),
+        start_date: getTimeRangeDate().toISOString(),
+        end_date: getEndDate().toISOString(),
+        total_entries: rawData.length,
+        time_range: timeRange
+      },
+      summary: {
+        total_calls: metrics.reduce((sum, m) => sum + m.total_calls, 0),
+        total_errors: metrics.reduce((sum, m) => sum + m.error_count, 0),
+        functions: metrics.length,
+        errors_by_level: errorsByLevel
+      },
+      function_metrics: metrics,
+      raw_logs: rawData
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edge-function-logs-${format(getTimeRangeDate(), 'yyyy-MM-dd')}-to-${format(getEndDate(), 'yyyy-MM-dd')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export Successful",
+      description: `Exported ${rawData.length} log entries to JSON`,
+    });
+  };
+
   const getSeverityColor = (level: string) => {
     switch (level.toLowerCase()) {
       case 'error':
@@ -162,33 +253,103 @@ export const EdgeFunctionMetrics = () => {
 
   return (
     <div className="space-y-6">
-      {/* Time Range Selector */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setTimeRange('1h')}
-          className={`px-3 py-1 rounded text-sm ${
-            timeRange === '1h' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-          }`}
-        >
-          Last Hour
-        </button>
-        <button
-          onClick={() => setTimeRange('24h')}
-          className={`px-3 py-1 rounded text-sm ${
-            timeRange === '24h' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-          }`}
-        >
-          Last 24 Hours
-        </button>
-        <button
-          onClick={() => setTimeRange('7d')}
-          className={`px-3 py-1 rounded text-sm ${
-            timeRange === '7d' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-          }`}
-        >
-          Last 7 Days
-        </button>
+      {/* Time Range Selector and Export */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setTimeRange('1h')}
+            className={`px-3 py-1 rounded text-sm ${
+              timeRange === '1h' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            }`}
+          >
+            Last Hour
+          </button>
+          <button
+            onClick={() => setTimeRange('24h')}
+            className={`px-3 py-1 rounded text-sm ${
+              timeRange === '24h' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            }`}
+          >
+            Last 24 Hours
+          </button>
+          <button
+            onClick={() => setTimeRange('7d')}
+            className={`px-3 py-1 rounded text-sm ${
+              timeRange === '7d' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            }`}
+          >
+            Last 7 Days
+          </button>
+          <button
+            onClick={() => setTimeRange('custom')}
+            className={`px-3 py-1 rounded text-sm ${
+              timeRange === 'custom' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            }`}
+          >
+            Custom Range
+          </button>
+        </div>
+
+        <div className="flex gap-2">
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <FileSpreadsheet className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button onClick={exportToJSON} variant="outline" size="sm">
+            <FileJson className="w-4 h-4 mr-2" />
+            Export JSON
+          </Button>
+        </div>
       </div>
+
+      {/* Custom Date Range Picker */}
+      {timeRange === 'custom' && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Start:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {startDate ? format(startDate, 'PPP') : 'Pick a date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">End:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {endDate ? format(endDate, 'PPP') : 'Pick a date'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

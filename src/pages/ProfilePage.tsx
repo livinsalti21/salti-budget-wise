@@ -1,4 +1,4 @@
-import { User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield, Heart } from "lucide-react";
+import { User, Settings, HelpCircle, LogOut, UserPlus, Crown, Edit3, CreditCard, Bell, Shield, Heart, Activity } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
@@ -195,6 +195,18 @@ export default function ProfilePage() {
                     <div className="flex-1">
                       <p className="font-medium">Help & Support</p>
                       <p className="text-sm text-muted-foreground">FAQs, contact us, tutorials</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              <Link to="/monitoring">
+                <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                  <CardContent className="flex items-center gap-3 py-4">
+                    <Activity className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex-1">
+                      <p className="font-medium">System Monitoring</p>
+                      <p className="text-sm text-muted-foreground">View edge function health and error metrics</p>
                     </div>
                   </CardContent>
                 </Card>

@@ -84,3 +84,9 @@ verify_jwt = true
 
 [functions.link-account]
 verify_jwt = true
+
+[functions.challenge-operations]
+verify_jwt = true
+
+[functions.update-challenge-scores]
+verify_jwt = false

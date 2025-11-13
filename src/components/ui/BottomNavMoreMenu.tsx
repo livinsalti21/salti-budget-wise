@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Camera, Calculator, Activity, MoreHorizontal } from "lucide-react";
+import { Camera, Calculator, Activity, Trophy, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Sheet,
@@ -43,6 +43,16 @@ export function BottomNavMoreMenu() {
       border: "border-green-500/20",
       iconBg: "bg-green-500/20",
       iconColor: "text-green-600",
+    },
+    {
+      to: "/challenge-arena",
+      icon: Trophy,
+      title: "Challenge Arena",
+      description: "Compete and win prizes",
+      gradient: "from-yellow-500/10 to-orange-500/10",
+      border: "border-yellow-500/20",
+      iconBg: "bg-yellow-500/20",
+      iconColor: "text-yellow-600",
     },
   ];
 

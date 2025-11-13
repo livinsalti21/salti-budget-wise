@@ -14,6 +14,8 @@ export const FLAGS = {
   AI_STREAMING: import.meta.env.VITE_FEATURE_AI_STREAMING !== 'false', // Default ON
   // Friend Streaks
   FRIEND_STREAKS: import.meta.env.VITE_FEATURE_FRIEND_STREAKS_ENABLED !== 'false', // Default ON
+  // Challenge Arena
+  CHALLENGES: import.meta.env.VITE_FEATURE_CHALLENGES_ENABLED !== 'false', // Default ON
 };
 
 export function featureEnabled(key: keyof typeof FLAGS) {

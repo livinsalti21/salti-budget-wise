@@ -445,6 +445,168 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_activities: {
+        Row: {
+          activity_type: string
+          amount_cents: number | null
+          challenge_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          participant_id: string
+          save_event_id: string | null
+        }
+        Insert: {
+          activity_type: string
+          amount_cents?: number | null
+          challenge_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          participant_id: string
+          save_event_id?: string | null
+        }
+        Update: {
+          activity_type?: string
+          amount_cents?: number | null
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          participant_id?: string
+          save_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_activities_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_activities_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_activities_save_event_id_fkey"
+            columns: ["save_event_id"]
+            isOneToOne: false
+            referencedRelation: "save_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          entry_fee_paid_cents: number
+          id: string
+          joined_at: string
+          rank: number | null
+          reward_cents: number
+          reward_claimed: boolean
+          save_count: number
+          score: number
+          streak_days: number
+          total_saved_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          entry_fee_paid_cents?: number
+          id?: string
+          joined_at?: string
+          rank?: number | null
+          reward_cents?: number
+          reward_claimed?: boolean
+          save_count?: number
+          score?: number
+          streak_days?: number
+          total_saved_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          entry_fee_paid_cents?: number
+          id?: string
+          joined_at?: string
+          rank?: number | null
+          reward_cents?: number
+          reward_claimed?: boolean
+          save_count?: number
+          score?: number
+          streak_days?: number
+          total_saved_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          current_participants: number | null
+          description: string
+          end_date: string
+          entry_fee_cents: number
+          id: string
+          max_participants: number | null
+          prize_pool_cents: number
+          scoring_rules: Json
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          current_participants?: number | null
+          description: string
+          end_date: string
+          entry_fee_cents?: number
+          id?: string
+          max_participants?: number | null
+          prize_pool_cents?: number
+          scoring_rules?: Json
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          current_participants?: number | null
+          description?: string
+          end_date?: string
+          entry_fee_cents?: number
+          id?: string
+          max_participants?: number | null
+          prize_pool_cents?: number
+          scoring_rules?: Json
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           author_id: string
@@ -3024,6 +3186,33 @@ export type Database = {
       }
     }
     Views: {
+      challenge_leaderboards: {
+        Row: {
+          avatar_url: string | null
+          challenge_end_date: string | null
+          challenge_id: string | null
+          challenge_status: string | null
+          challenge_title: string | null
+          display_name: string | null
+          rank: number | null
+          reward_cents: number | null
+          reward_claimed: boolean | null
+          save_count: number | null
+          score: number | null
+          streak_days: number | null
+          total_saved_cents: number | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_ledger_detailed: {
         Row: {
           amount_cents: number | null
@@ -3074,6 +3263,15 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_challenge_score: {
+        Args: {
+          p_save_count: number
+          p_scoring_rules: Json
+          p_streak_days: number
+          p_total_saved_cents: number
+        }
+        Returns: number
+      }
       calculate_friend_streak: {
         Args: { p_friend_id: string; p_user_id: string }
         Returns: number
@@ -3103,6 +3301,10 @@ export type Database = {
       decrypt_sensitive_data: {
         Args: { encrypted_obj: Json; key_name: string }
         Returns: string
+      }
+      distribute_challenge_rewards: {
+        Args: { p_challenge_id: string }
+        Returns: undefined
       }
       encrypt_sensitive_data: {
         Args: { key_name: string; plain_text: string }
@@ -3148,6 +3350,10 @@ export type Database = {
           p_severity?: string
           p_user_id?: string
         }
+        Returns: undefined
+      }
+      update_challenge_rankings: {
+        Args: { p_challenge_id: string }
         Returns: undefined
       }
       update_friend_streaks: {

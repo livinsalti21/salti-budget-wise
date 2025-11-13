@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight, Camera, Calculator, Activity } from "lucide-react";
+import { Trophy, TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight, Camera, Calculator, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
@@ -394,7 +394,7 @@ export default function Dashboard() {
       {/* Feature Discovery Cards */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-muted-foreground px-1">Explore Features</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link to="/save-snaps">
             <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
               <CardContent className="p-4">
@@ -441,6 +441,23 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground">Visualize your consistency</p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-green-500/60" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/challenge-arena">
+            <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Challenge Arena</h4>
+                    <p className="text-xs text-muted-foreground">Compete and win prizes</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-yellow-500/60" />
                 </div>
               </CardContent>
             </Card>

@@ -39,6 +39,7 @@ const SaveHistoryPage = lazy(() => import("./pages/SaveHistoryPage"));
 const SaveSnapsPage = lazy(() => import("./pages/SaveSnapsPage"));
 const WhatIfPage = lazy(() => import("./pages/WhatIfPage"));
 const HabitHeatmapPage = lazy(() => import("./pages/HabitHeatmapPage"));
+const ChallengeArenaPage = lazy(() => import("./pages/ChallengeArenaPage"));
 const AccountDeletePage = lazy(() => import("./pages/AccountDeletePage"));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage"));
 
@@ -89,6 +90,7 @@ const AppContent = () => {
         <Route path="/save-snaps" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><SaveSnapsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/what-if" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><WhatIfPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/habit-heatmap" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><HabitHeatmapPage /></Suspense></AppWrapper></RequireAuth>} />
+        <Route path="/challenge-arena" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><ChallengeArenaPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/goals" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><GoalsPage /></Suspense></AppWrapper></RequireAuth>} />
         <Route path="/net-worth" element={<RequireAuth><AppWrapper><Suspense fallback={<div>Loading...</div>}><NetWorthPage /></Suspense></AppWrapper></RequireAuth>} />
         

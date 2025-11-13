@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight, Camera, Calculator, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
@@ -389,6 +389,63 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </Link>
+      </div>
+
+      {/* Feature Discovery Cards */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground px-1">Explore Features</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Link to="/save-snaps">
+            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                    <Camera className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Save Snaps</h4>
+                    <p className="text-xs text-muted-foreground">Capture your savings journey</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-blue-500/60" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/what-if">
+            <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <Calculator className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">What If Calculator</h4>
+                    <p className="text-xs text-muted-foreground">Model your financial future</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-purple-500/60" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/habit-heatmap">
+            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-foreground">Habit Heatmap</h4>
+                    <p className="text-xs text-muted-foreground">Visualize your consistency</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-green-500/60" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
       </div>
 
       {/* System Health Widget - Admin Only */}

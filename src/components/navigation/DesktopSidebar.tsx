@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, PiggyBank, Calculator, Heart, User, LogOut, UserPlus, Flame } from "lucide-react";
+import { Home, PiggyBank, Calculator, User, LogOut, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,9 +11,9 @@ export default function DesktopSidebar() {
 
   const navItems = [
     { to: "/app", icon: Home, label: "Home" },
-    { to: "/save", icon: PiggyBank, label: "Save n Stack" },
+    { to: "/save", icon: PiggyBank, label: "Save" },
     { to: "/budget", icon: Calculator, label: "Budget" },
-    { to: "/match", icon: Heart, label: "Match" },
+    { to: "/streaks", icon: Flame, label: "Streaks" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
 
@@ -23,90 +23,51 @@ export default function DesktopSidebar() {
   };
 
   return (
-    <aside className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-64 bg-background/95 backdrop-blur border-r z-40">
-      {/* Logo Header */}
-      <div className="p-6 border-b">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-lg">
-            ✌🏽
-          </div>
-          <div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Livin Salti
-            </h1>
-            <p className="text-xs text-muted-foreground">Build your wealth</p>
-          </div>
+    <aside className="hidden md:flex flex-col fixed left-0 top-0 h-screen w-56 bg-background border-r z-40">
+      <div className="p-5 border-b">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-sm">✌🏽</div>
+          <h1 className="text-lg font-bold text-foreground">Livin Salti</h1>
         </div>
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.to);
-          
           return (
             <NavLink
               key={item.to}
               to={item.to}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                 active
-                  ? "bg-primary/10 text-primary font-semibold"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4" />
               <span>{item.label}</span>
             </NavLink>
           );
         })}
-
-        <Separator className="my-4" />
-
-        {/* Streaks Quick Link */}
-        <NavLink
-          to="/streaks"
-          className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-            isActive("/streaks")
-              ? "bg-orange-500/10 text-orange-600 font-semibold"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          }`}
-        >
-          <Flame className="h-5 w-5" />
-          <span>Streaks</span>
-        </NavLink>
       </nav>
 
-      {/* User Profile & Actions */}
-      <div className="p-4 border-t space-y-3">
-        <div className="flex items-center gap-3 px-2 py-2">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary text-sm">
+      <div className="p-3 border-t space-y-2">
+        <div className="flex items-center gap-2 px-2 py-1.5">
+          <Avatar className="h-7 w-7">
+            <AvatarFallback className="bg-muted text-muted-foreground text-xs">
               {user?.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.email}</p>
-          </div>
+          <p className="text-xs text-muted-foreground truncate flex-1">{user?.email}</p>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full justify-start"
-          onClick={() => {/* TODO: Implement invite */}}
-        >
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite Friends
-        </Button>
-
         <Button
           variant="ghost"
           size="sm"
-          className="w-full justify-start text-muted-foreground hover:text-destructive"
+          className="w-full justify-start text-muted-foreground hover:text-destructive text-xs"
           onClick={signOut}
         >
-          <LogOut className="h-4 w-4 mr-2" />
+          <LogOut className="h-3.5 w-3.5 mr-2" />
           Sign Out
         </Button>
       </div>

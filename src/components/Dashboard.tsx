@@ -1,37 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Trophy, TrendingUp, TrendingDown, DollarSign, Target, PiggyBank, Calendar, RefreshCw, Flame, Crown, ChevronRight, Camera, Calculator, Activity } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { PiggyBank, TrendingUp, Flame, RefreshCw, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { TouchTarget } from '@/components/ui/mobile-helpers';
 import BudgetProgress from '@/components/BudgetProgress';
-import MatchSection from './MatchSection';
 import { Link } from 'react-router-dom';
 import { track, EVENTS } from '@/analytics/analytics';
-import { ContextualTooltip } from '@/components/ui/ContextualTooltip';
-import { motion, useSpring } from "framer-motion";
 import { ErrorStatusWidget } from '@/components/monitoring/ErrorStatusWidget';
 import { useProfile } from '@/hooks/useProfile';
 import { isAdmin } from '@/lib/permissions/roleCheck';
 
 interface DashboardData {
   totalSaved: number;
-  weeklyIncome: number;
-  weeklyExpenses: number;
   savingsThisWeek: number;
   projectedNetWorth: number;
   savingStreak: number;
-  projectedNetWorth35Years: number;
-}
-
-interface FriendStreak {
-  user_id: string;
-  display_name: string;
-  consecutive_days: number;
 }
 
 export default function Dashboard() {
@@ -41,29 +25,15 @@ export default function Dashboard() {
   
   const [data, setData] = useState<DashboardData>({
     totalSaved: 0,
-    weeklyIncome: 0,
-    weeklyExpenses: 0,
     savingsThisWeek: 0,
     projectedNetWorth: 0,
     savingStreak: 0,
-    projectedNetWorth35Years: 0
-  });
-  
-  const [topFriends, setTopFriends] = useState<FriendStreak[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [shouldRefresh, setShouldRefresh] = useState(false);
-  
-  // Animated projection value for smooth transitions
-  const projectionSpring = useSpring(0, {
-    stiffness: 50,
-    damping: 30
   });
 
   const loadDashboardData = async () => {
     if (!user) return;
 
     try {
-      // Fetch pre-calculated account summary from user_accounts
       const { data: accountSummary, error: accountError } = await supabase
         .from("user_accounts")
         .select("*")
@@ -72,10 +42,8 @@ export default function Dashboard() {
 
       if (accountError && accountError.code !== "PGRST116") throw accountError;
 
-      // Use stored projected value directly (NO recalculation!)
       const projected40Years = accountSummary?.projected_40yr_value_cents || 0;
 
-      // Get this week's saves
       const weekStart = new Date();
       weekStart.setDate(weekStart.getDate() - weekStart.getDay());
       const { data: weekSaves } = await supabase
@@ -89,7 +57,6 @@ export default function Dashboard() {
         0
       );
 
-      // Fetch streak data
       const { data: streakData, error: streakError } = await supabase
         .from("user_streaks")
         .select("consecutive_days")
@@ -98,19 +65,12 @@ export default function Dashboard() {
 
       if (streakError && streakError.code !== "PGRST116") throw streakError;
 
-      const newData = {
+      setData({
         totalSaved: accountSummary?.current_balance_cents || 0,
-        weeklyIncome: 0,
-        weeklyExpenses: 0,
         savingStreak: streakData?.consecutive_days || 0,
         savingsThisWeek: thisWeekSaves,
         projectedNetWorth: projected40Years,
-        projectedNetWorth35Years: projected40Years,
-      };
-
-      setData(newData);
-      projectionSpring.set(projected40Years);
-      setLastUpdated(new Date());
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -122,14 +82,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    
     loadDashboardData();
-    loadTopFriends();
-    
-    // Check admin status
     isAdmin(user.id).then(setIsAdminUser);
-    
-    // Subscribe to real-time account updates
+
     const accountChannel = supabase
       .channel('user-account-changes')
       .on(
@@ -141,429 +96,99 @@ export default function Dashboard() {
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
-          const updatedAccount = payload.new as any;
-          
-          // Use stored value directly - NO recalculation!
-          const projected40Years = updatedAccount.projected_40yr_value_cents;
-          
-          const newData = {
-            ...data,
-            totalSaved: updatedAccount.current_balance_cents,
-            projectedNetWorth: projected40Years,
-            projectedNetWorth35Years: projected40Years
-          };
-          
-          setData(newData);
-          projectionSpring.set(projected40Years);
-          
-          // Track wealth update
+          const updated = payload.new as any;
+          setData(prev => ({
+            ...prev,
+            totalSaved: updated.current_balance_cents,
+            projectedNetWorth: updated.projected_40yr_value_cents,
+          }));
+
           track(EVENTS.wealth_projection_updated, {
-            new_projected_value: projected40Years / 100,
-            current_balance: updatedAccount.current_balance_cents / 100,
-          });
-          
-          // Show success notification
-          toast({
-            title: "💰 Wealth Updated!",
-            description: `Future value: $${Math.round(projected40Years / 100).toLocaleString()}`,
-            duration: 4000
+            new_projected_value: updated.projected_40yr_value_cents / 100,
+            current_balance: updated.current_balance_cents / 100,
           });
         }
       )
       .subscribe();
-    
-    return () => {
-      supabase.removeChannel(accountChannel);
-    };
+
+    return () => { supabase.removeChannel(accountChannel); };
   }, [user]);
 
-  const loadTopFriends = async () => {
-    if (!user) return;
-    try {
-      const { data: streaks } = await supabase
-        .from('user_streaks')
-        .select(`
-          user_id,
-          consecutive_days,
-          profiles!user_streaks_user_id_fkey (display_name)
-        `)
-        .neq('user_id', user.id)
-        .gt('consecutive_days', 0)
-        .order('consecutive_days', { ascending: false })
-        .limit(3);
-
-      if (streaks) {
-        const friendStreaks = streaks.map(streak => ({
-          user_id: streak.user_id,
-          display_name: (streak.profiles as any)?.display_name || 'Friend',
-          consecutive_days: streak.consecutive_days
-        }));
-        setTopFriends(friendStreaks);
-      }
-    } catch (error) {
-      // Silent fail
-    }
-  };
-
-  const handleRefreshClick = () => {
-    loadDashboardData();
-    loadTopFriends();
-    setShouldRefresh(false);
-    toast({
-      title: "Refreshed",
-      description: "Latest data loaded"
-    });
-  };
-
-  const formatCurrency = (cents: number) => {
-    return (cents / 100).toFixed(2);
-  };
-
-  const getWeeklyBalance = () => data.weeklyIncome - data.weeklyExpenses;
-  const isPositiveBalance = getWeeklyBalance() >= 0;
+  const formatCurrency = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      {/* 40-Year Projection Header */}
-      <Link to="/net-worth">
-        <Card className="bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border-primary/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-          <CardContent className="p-4 md:p-6">
-            <div className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-success/20 animate-pulse" />
-              <div className="relative text-center">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Crown className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                  <h2 className="text-sm md:text-base font-semibold text-primary">Your Future Wealth</h2>
-                  <ChevronRight className="h-4 w-4 text-primary/60" />
-                </div>
-                <motion.p 
-                  className="text-2xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
-                  initial={{ scale: 1 }}
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 0.3 }}
-                >
-                  ${Math.round(data.projectedNetWorth / 100).toLocaleString()}
-                </motion.p>
-                <p className="text-xs md:text-sm text-muted-foreground mb-2">
-                  Projected value in 40 years @ 10% annual growth
-                </p>
-                {data.totalSaved > 0 && (
-                  <Badge className="bg-blue-500/10 text-blue-600 border-blue-300 animate-pulse">
-                    <TrendingUp className="h-3 w-3 mr-1" />
-                    10% Annual Growth
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Compact Header with Refresh */}
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-primary to-accent rounded-full flex items-center justify-center text-sm md:text-base">
-            ✌🏽
-          </div>
-          <div>
-            <h1 className="text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Livin Salti
-            </h1>
-            {lastUpdated && (
-              <p className="text-xs text-muted-foreground">
-                {lastUpdated.toLocaleTimeString()}
-              </p>
-            )}
-          </div>
+          <div className="w-9 h-9 bg-primary/10 rounded-full flex items-center justify-center text-sm">✌🏽</div>
+          <h1 className="text-xl font-bold text-foreground">Livin Salti</h1>
         </div>
-        
-        <TouchTarget asChild>
-          <button onClick={handleRefreshClick} className="p-2 rounded-full bg-muted/50 hover:bg-muted transition-colors">
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </button>
-        </TouchTarget>
+        <button onClick={loadDashboardData} className="p-2 rounded-full hover:bg-muted transition-colors">
+          <RefreshCw className="h-4 w-4 text-muted-foreground" />
+        </button>
       </div>
 
-      {/* Enhanced Streak Display */}
-      {data.savingStreak > 0 ? (
-        <Link to="/streaks">
-          <Card className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Flame className="h-8 w-8 text-orange-500 animate-pulse" />
-                <div>
-                  <p className="text-3xl font-bold text-orange-500">{data.savingStreak}</p>
-                  <p className="text-sm font-semibold text-orange-600">Day Streak!</p>
-                </div>
-                <Flame className="h-8 w-8 text-orange-500 animate-pulse" />
-                <ChevronRight className="h-4 w-4 text-orange-500/60" />
-              </div>
-              <p className="text-xs text-orange-700">Keep the momentum going! 🚀</p>
-            </CardContent>
-          </Card>
-        </Link>
-      ) : (
-        <Link to="/streaks">
-          <Card className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border-orange-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-            <CardContent className="p-4 text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Flame className="h-6 w-6 text-orange-400" />
-                <div>
-                  <p className="text-lg font-semibold text-orange-600">Start Your Streak!</p>
-                  <p className="text-xs text-orange-500">Save daily to build momentum</p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-orange-500/60" />
-              </div>
-              <p className="text-xs text-orange-600">Tap to learn about streaks 🔥</p>
-            </CardContent>
-          </Card>
-        </Link>
-      )}
-
-      {/* Hero Stats - 2x2 Grid for Mobile, 4 columns for Desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {/* Key Stats */}
+      <div className="grid grid-cols-2 gap-3">
         <Link to="/save-history">
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
+          <Card className="hover:shadow-sm transition-shadow">
             <CardContent className="p-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <PiggyBank className="h-5 w-5 text-primary" />
-                  <ChevronRight className="h-3 w-3 text-primary/60" />
-                </div>
-                <p className="text-xs text-muted-foreground font-medium">Total Saved</p>
-                <p className="text-lg font-bold text-primary">
-                  ${formatCurrency(data.totalSaved)}
-                </p>
+              <div className="flex items-center gap-2 mb-1">
+                <PiggyBank className="h-4 w-4 text-primary" />
+                <span className="text-xs text-muted-foreground">Total Saved</span>
               </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to="/budget">
-          <Card className={`bg-gradient-to-br ${isPositiveBalance ? 'from-success/10 to-success/5 border-success/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'} hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch`}>
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  {isPositiveBalance ? <TrendingUp className="h-5 w-5 text-success" /> : <TrendingDown className="h-5 w-5 text-destructive" />}
-                  <ChevronRight className={`h-3 w-3 ${isPositiveBalance ? 'text-success/60' : 'text-destructive/60'}`} />
-                </div>
-                <p className="text-xs text-muted-foreground font-medium">Weekly Balance</p>
-                <p className={`text-lg font-bold ${isPositiveBalance ? 'text-success' : 'text-destructive'}`}>
-                  ${formatCurrency(getWeeklyBalance())}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
-        <Link to="/goals">
-          <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <Calendar className="h-5 w-5 text-accent" />
-                  <ChevronRight className="h-3 w-3 text-accent/60" />
-                </div>
-                <p className="text-xs text-muted-foreground font-medium">This Week</p>
-                <p className="text-lg font-bold text-accent">
-                  ${formatCurrency(data.savingsThisWeek)}
-                </p>
-              </div>
+              <p className="text-xl font-bold text-foreground">{formatCurrency(data.totalSaved)}</p>
             </CardContent>
           </Card>
         </Link>
 
         <Link to="/net-worth">
-          <Card className="bg-gradient-to-br from-warning/10 to-warning/5 border-warning/20 hover:shadow-md transition-all duration-200 active:scale-[0.98] min-h-touch">
+          <Card className="hover:shadow-sm transition-shadow">
             <CardContent className="p-4">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  <Target className="h-5 w-5 text-warning" />
-                  <ChevronRight className="h-3 w-3 text-warning/60" />
-                </div>
-                <p className="text-xs text-muted-foreground font-medium">30Y Goal</p>
-                <p className="text-sm font-bold text-warning">
-                  ${Math.round(data.projectedNetWorth / 100).toLocaleString()}
-                </p>
+              <div className="flex items-center gap-2 mb-1">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                <span className="text-xs text-muted-foreground">40Y Projection</span>
               </div>
+              <p className="text-xl font-bold text-foreground">
+                ${Math.round(data.projectedNetWorth / 100).toLocaleString()}
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/goals">
+          <Card className="hover:shadow-sm transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <PiggyBank className="h-4 w-4 text-accent" />
+                <span className="text-xs text-muted-foreground">This Week</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">{formatCurrency(data.savingsThisWeek)}</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link to="/streaks">
+          <Card className="hover:shadow-sm transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="text-xs text-muted-foreground">Streak</span>
+              </div>
+              <p className="text-xl font-bold text-foreground">
+                {data.savingStreak > 0 ? `${data.savingStreak} days` : 'Start today'}
+              </p>
             </CardContent>
           </Card>
         </Link>
       </div>
 
-      {/* Feature Discovery Cards */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-muted-foreground px-1">Explore Features</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link to="/save-snaps">
-            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                    <Camera className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground">Save Snaps</h4>
-                    <p className="text-xs text-muted-foreground">Capture your savings journey</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-500/60" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+      {/* Budget Progress */}
+      <BudgetProgress />
 
-          <Link to="/what-if">
-            <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                    <Calculator className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground">What If Calculator</h4>
-                    <p className="text-xs text-muted-foreground">Model your financial future</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-purple-500/60" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/habit-heatmap">
-            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center">
-                    <Activity className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground">Habit Heatmap</h4>
-                    <p className="text-xs text-muted-foreground">Visualize your consistency</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-green-500/60" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link to="/challenge-arena">
-            <Card className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/20 hover:shadow-md transition-all duration-200 active:scale-[0.98]">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center">
-                    <Trophy className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-foreground">Challenge Arena</h4>
-                    <p className="text-xs text-muted-foreground">Compete and win prizes</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-yellow-500/60" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </div>
-
-      {/* System Health Widget - Admin Only */}
-      {isAdminUser && (
-        <div className="mb-4">
-          <ErrorStatusWidget />
-        </div>
-      )}
-
-      {/* Budget Progress - Mobile Optimized */}
-      <div className="mb-4">
-        <BudgetProgress />
-      </div>
-
-      {/* Match Section */}
-      <div className="mb-4">
-        <MatchSection />
-      </div>
-
-      {/* Enhanced Top 3 Friends Streaks - Prominent Section */}
-      {topFriends.length > 0 ? <Card className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10 border-purple-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Crown className="h-5 w-5 text-purple-500" />
-                <h3 className="text-base font-bold text-purple-700 dark:text-purple-300">Friend Streak Leaders</h3>
-              </div>
-              <TouchTarget asChild>
-                <button className="text-sm text-purple-600 dark:text-purple-400 font-medium hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
-                  View All →
-                </button>
-              </TouchTarget>
-            </div>
-            
-            <div className="space-y-4">
-              {topFriends.map((friend, index) => {
-            const isAhead = friend.consecutive_days > data.savingStreak;
-            const streakDiff = Math.abs(friend.consecutive_days - data.savingStreak);
-            return <div key={friend.user_id} className="bg-white/50 dark:bg-black/20 rounded-lg p-3 border border-white/30 dark:border-white/10">
-                    <div className="flex items-center gap-3">
-                      {/* Rank Badge */}
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30' : index === 1 ? 'bg-gray-400/20 text-gray-700 border border-gray-400/30' : 'bg-orange-500/20 text-orange-700 border border-orange-500/30'}`}>
-                        #{index + 1}
-                      </div>
-                      
-                      {/* Avatar */}
-                      <Avatar className="h-12 w-12 border-2 border-white/50">
-                        <AvatarFallback className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 text-purple-700 dark:text-purple-300 text-sm font-bold">
-                          {friend.display_name.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      {/* Name and Streak */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{friend.display_name}</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Flame className="h-4 w-4 text-orange-500" />
-                            <span className="text-lg font-bold text-orange-600">{friend.consecutive_days} days</span>
-                          </div>
-                          {streakDiff > 0 && <Badge variant="outline" className={`text-xs ${isAhead ? 'bg-red-500/10 text-red-700 border-red-500/30' : 'bg-green-500/10 text-green-700 border-green-500/30'}`}>
-                              {isAhead ? `+${streakDiff} ahead` : `-${streakDiff} behind`}
-                            </Badge>}
-                        </div>
-                      </div>
-                      
-                      {/* Cheer Button */}
-                      <TouchTarget asChild>
-                        <button className="px-3 py-1.5 bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 rounded-full text-xs font-medium text-pink-700 dark:text-pink-300 hover:from-pink-500/30 hover:to-purple-500/30 transition-all">
-                          🎉 Cheer
-                        </button>
-                      </TouchTarget>
-                    </div>
-                  </div>;
-          })}
-            </div>
-            
-            {/* Motivational Footer */}
-            <div className="mt-4 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-lg border border-purple-500/20">
-              <p className="text-center text-sm text-muted-foreground">
-                💪 Keep saving to climb the leaderboard!
-              </p>
-            </div>
-          </CardContent>
-        </Card> : <Card className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border-blue-500/20">
-          <CardContent className="p-6 text-center">
-            <div className="mb-3">
-              <Crown className="h-8 w-8 text-blue-500 mx-auto" />
-            </div>
-            <h3 className="text-lg font-bold text-blue-700 dark:text-blue-300 mb-2">No Friend Streaks Yet</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Invite friends to start competing and motivating each other!
-            </p>
-            <TouchTarget asChild>
-              <button className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-purple-600 transition-all">
-                Invite Friends
-              </button>
-            </TouchTarget>
-          </CardContent>
-        </Card>}
-
+      {/* Admin Only */}
+      {isAdminUser && <ErrorStatusWidget />}
     </div>
   );
 }
